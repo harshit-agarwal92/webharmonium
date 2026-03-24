@@ -53,11 +53,11 @@ export function ControlPanel(props: ControlPanelProps) {
   } = props;
 
   return (
-    <div className="flex flex-col gap-6 w-full lg:max-w-[420px] pb-20">
+    <div className="flex flex-col gap-4 lg:gap-6 w-full pb-32 lg:pb-20">
       
       {/* BRAND & MASTER MODULE */}
-      <ModuleBox className="border-accent-gold/20 shadow-[0_0_40px_rgba(212,175,55,0.05)]">
-        <div className="flex items-center justify-between mb-8">
+      <ModuleBox className="border-accent-gold/20 shadow-[0_0_40px_rgba(212,175,55,0.05)] pt-6 lg:pt-8">
+        <div className="flex items-center justify-between mb-6 lg:mb-8">
            <div className="flex flex-col">
               <span className="text-[10px] uppercase font-black tracking-[0.4em] text-accent-gold">Engine Status</span>
               <span className="text-lg font-black tracking-tight text-white/80 italic mt-1">Symmetry Pro v3.5</span>
