@@ -14,23 +14,41 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+# BHAVANA PRO | Professional Virtual Harmonium
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+BHAVANA Pro is a state-of-the-art virtual Indian Harmonium designed for stage performance and practice. It features professional-grade reed synthesis, advanced pitch controls, and an intelligent scale-aware UI.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🌟 Professional Features
 
-## Learn More
+- **Harmonic Reed Engine**: Real-time synthesis of reed acoustics using PWM, Chorus, and Harmonic Distortion.
+- **Dynamic Labeling**: Toggle between Western (CDE), Sargam (SRG), Numbers, and Computer Keyboard mappings.
+- **Stage Mode / Boost**: Increase richness and loudness (up to 200% master gain) with zero clipping thanks to a dedicated mastering limiter.
+- **Chromatic Precision**: Play across any scale with 1-cent fine-tuning and ±12 semitones transpose.
+- **Scale Intelligence**: Select any Raaga or Scale (Major, Minor, Kafi, etc.) to highlight valid notes on the keyboard.
+- **Performance Drones**: Integrated drone banks for Sa, Pa, and Ma with mellow triangle waves.
+- **Responsive Vibrations**: Visual feedback that vibrates the UI based on performance intensity.
 
-To learn more about Next.js, take a look at the following resources:
+## ⌨️ Performance Controls
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **[A-J]**: Middle Octave White Keys
+- **[W, E, T, Y, U]**: Middle Octave Black Keys (Sharps)
+- **[K, L, ;, ']**: Upper Octave
+- **[1-7]**: Lower Octave Shortcuts
+- **Space**: Sustains current bellows pressure.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🛠 Tech Stack
 
-## Deploy on Vercel
+- **Next.js 15+** (App Router)
+- **TypeScript**
+- **Tone.js** (Web Audio API)
+- **Framer Motion** (Pro Animations)
+- **Tailwind CSS** (Glassmorphism & Wooden Accents)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🚀 Launching
+
+1. `npm install`
+2. `npm run dev`
+3. Hit the **Boost** button for high-fidelity stage sound.
+ [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
