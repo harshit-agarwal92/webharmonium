@@ -83,16 +83,16 @@ export function ControlPanel(props: ControlPanelProps) {
                key={p.id}
                onClick={() => setPreset(p.id)}
                className={cn(
-                 "group relative flex items-center gap-3 p-4 rounded-2xl border transition-all duration-500 overflow-hidden",
+                 "group relative flex items-center gap-3 p-3 lg:p-4 rounded-2xl border transition-all duration-500 overflow-hidden min-h-[60px]",
                  currentPreset === p.id 
                   ? "bg-accent-gold border-accent-gold text-black shadow-lg scale-105 z-10" 
                   : "bg-white/[0.03] border-white/5 text-white/40 hover:bg-white/[0.08] hover:border-white/10"
                )}
             >
-              <div className={cn("p-2 rounded-xl transition-colors", currentPreset === p.id ? "bg-black/10" : "bg-white/5")}>
+              <div className={cn("shrink-0 p-2 rounded-xl transition-colors", currentPreset === p.id ? "bg-black/10" : "bg-white/5")}>
                  <Activity className="w-4 h-4" />
               </div>
-              <span className="text-[10px] font-black uppercase tracking-widest">{p.label.split(' ')[0]}</span>
+              <span className="text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-left leading-tight">{p.label}</span>
               {currentPreset === p.id && (
                 <motion.div layoutId="selection-glow" className="absolute inset-0 bg-white/10" transition={{ duration: 1, repeat: Infinity }} />
               )}

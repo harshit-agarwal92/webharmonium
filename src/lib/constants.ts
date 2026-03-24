@@ -27,16 +27,19 @@ for (let octave = START_OCTAVE; octave < START_OCTAVE + OCTAVES; octave++) {
 }
 
 export const KEYBOARD_MAPPING: Record<string, string> = {
-  // WHITE KEYS (A-L;)
+  // WHITE KEYS (Lower Row A-L)
   'a': 'C3', 's': 'D3', 'd': 'E3', 'f': 'F3', 'g': 'G3', 'h': 'A3', 'j': 'B3', 'k': 'C4', 'l': 'D4', ';': 'E4', "'": 'F4',
   
-  // BLACK KEYS (W-P)
+  // BLACK KEYS (Middle Row W-P)
   'w': 'C#3', 'e': 'D#3', 't': 'F#3', 'y': 'G#3', 'u': 'A#3', 'o': 'C#4', 'p': 'D#4', '[': 'F#4',
   
-  // NUMBERS (Octave 2 shortcuts)
+  // ADDITIONAL WHITE (Top Row 1-0)
   '1': 'C2', '2': 'D2', '3': 'E2', '4': 'F2', '5': 'G2', '6': 'A2', '7': 'B2', '8': 'C3', '9': 'D3', '0': 'E3',
   
-  // SPECIAL
+  // ADDITIONAL BLACK (Shift + Top row or Q-I)
+  'q': 'C#2', 'r': 'D#2', 'i': 'F#2', 'v': 'G#2', 'b': 'A#2',
+  
+  // SPECIAL CONTROLS
   ' ': 'SUSTAIN',
   'z': 'OCTAVE_DOWN',
   'x': 'OCTAVE_UP',
@@ -44,29 +47,30 @@ export const KEYBOARD_MAPPING: Record<string, string> = {
 
 export const PRESETS_LIST = [
   { id: 'classic', label: 'Classic Harmonium' },
-  { id: 'bright', label: 'Bright Reed' },
+  { id: 'bright', label: 'Bright Harmonium' },
   { id: 'bass', label: 'Bass Harmonium' },
-  { id: 'soft', label: 'Soft Bellows' },
+  { id: 'soft', label: 'Soft Harmonium' },
+  { id: 'stage', label: 'Stage Performance' },
   { id: 'organ', label: 'Reed Organ' },
   { id: 'e-organ', label: 'Electric Organ' },
-  { id: 'pad', label: 'Synth Pad' },
+  { id: 'pad', label: 'Atmospheric Pad' },
 ];
 
 export const SCALES = [
   { name: 'Chromatic', intervals: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
-  { name: 'Sargam (Bilawal)', intervals: [0, 2, 4, 5, 7, 9, 11] },
-  { name: 'Natural Major', intervals: [0, 2, 4, 5, 7, 9, 11] },
-  { name: 'Natural Minor', intervals: [0, 2, 3, 5, 7, 8, 10] },
-  { name: 'Bhairav Thaat', intervals: [0, 1, 4, 5, 7, 8, 11] },
-  { name: 'Asavari Thaat', intervals: [0, 2, 3, 5, 7, 8, 10] },
-  { name: 'Kalyan Thaat', intervals: [0, 2, 4, 6, 7, 9, 11] },
-  { name: 'Kafi Thaat', intervals: [0, 2, 3, 5, 7, 9, 10] },
-  { name: 'Bhairavi (All Flat)', intervals: [0, 1, 3, 5, 7, 8, 10] },
+  { name: 'Bilawal (Major)', intervals: [0, 2, 4, 5, 7, 9, 11] },
+  { name: 'Asavari (Minor)', intervals: [0, 2, 3, 5, 7, 8, 10] },
+  { name: 'Bhairav', intervals: [0, 1, 4, 5, 7, 8, 11] },
+  { name: 'Kafi', intervals: [0, 2, 3, 5, 7, 9, 10] },
+  { name: 'Kalyan (Lydian)', intervals: [0, 2, 4, 6, 7, 9, 11] },
+  { name: 'Bhairavi', intervals: [0, 1, 3, 5, 7, 8, 10] },
+  { name: 'Khamaaj', intervals: [0, 2, 4, 5, 7, 9, 10] },
+  { name: 'Marwa', intervals: [0, 1, 4, 6, 7, 9, 11] },
 ];
 
 export const LABEL_MODES = [
-  { id: 'western', label: 'CDE' },
   { id: 'sargam', label: 'SRG' },
+  { id: 'western', label: 'CDE' },
   { id: 'numbers', label: '123' },
-  { id: 'none', label: 'None' },
+  { id: 'none', label: 'Off' },
 ];

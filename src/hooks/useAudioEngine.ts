@@ -7,43 +7,76 @@ interface PresetConfig {
   oscillator: any;
   envelope: any;
   filter: { Q: number; baseFrequency: number; octaves: number };
+  eq: { low: number; mid: number; high: number };
+  wet: { reverb: number; chorus: number };
+  gain: number;
 }
 
 const PRESETS: Record<string, PresetConfig> = {
   classic: {
-    oscillator: { type: "pwm", modulationFrequency: 0.2 },
-    envelope: { attack: 0.1, decay: 0.3, sustain: 1, release: 0.8 },
-    filter: { Q: 1, baseFrequency: 300, octaves: 4 }
+    oscillator: { type: "pwm", modulationFrequency: 0.1 },
+    envelope: { attack: 0.08, decay: 0.5, sustain: 1, release: 0.8 },
+    filter: { Q: 0.8, baseFrequency: 300, octaves: 4 },
+    eq: { low: 2, mid: 0, high: -2 },
+    wet: { reverb: 0.15, chorus: 0.3 },
+    gain: 0.8
   },
   bright: {
     oscillator: { type: "sawtooth" },
-    envelope: { attack: 0.05, decay: 0.2, sustain: 0.8, release: 0.5 },
-    filter: { Q: 2, baseFrequency: 800, octaves: 5 }
+    envelope: { attack: 0.03, decay: 0.2, sustain: 0.7, release: 0.4 },
+    filter: { Q: 2.5, baseFrequency: 1200, octaves: 5 },
+    eq: { low: -5, mid: 2, high: 6 },
+    wet: { reverb: 0.05, chorus: 0.1 },
+    gain: 0.7
   },
   bass: {
-    oscillator: { type: "sine", modulationType: "triangle" },
-    envelope: { attack: 0.2, decay: 0.5, sustain: 1, release: 1.5 },
-    filter: { Q: 0.8, baseFrequency: 100, octaves: 2 }
+    // FORCE BASS TO BE DEEP PWM + FATSAW
+    oscillator: { type: "fatsawtooth", count: 8, spread: 40 },
+    envelope: { attack: 0.15, decay: 1, sustain: 1, release: 1.5 },
+    filter: { Q: 1.2, baseFrequency: 80, octaves: 3 }, // VERY LOW FREQUENCY
+    eq: { low: 12, mid: -4, high: -10 }, // ULTRA BASS EQ
+    wet: { reverb: 0.1, chorus: 0.5 },
+    gain: 1.0
   },
   soft: {
     oscillator: { type: "triangle" },
-    envelope: { attack: 0.2, decay: 0.4, sustain: 1, release: 1.2 },
-    filter: { Q: 0.5, baseFrequency: 200, octaves: 2 }
+    envelope: { attack: 0.3, decay: 1, sustain: 1, release: 2.5 },
+    filter: { Q: 0.4, baseFrequency: 250, octaves: 2 },
+    eq: { low: 4, mid: -4, high: -10 },
+    wet: { reverb: 0.4, chorus: 0.5 },
+    gain: 0.75
+  },
+  stage: {
+    oscillator: { type: "fatsawtooth", count: 12, spread: 35 },
+    envelope: { attack: 0.02, decay: 0.1, sustain: 1, release: 0.2 },
+    filter: { Q: 3, baseFrequency: 800, octaves: 4 },
+    eq: { low: 6, mid: 6, high: 4 },
+    wet: { reverb: 0.02, chorus: 0.1 },
+    gain: 1.2
   },
   organ: {
     oscillator: { type: "pulse", width: 0.2 },
-    envelope: { attack: 0.08, decay: 0.1, sustain: 1, release: 0.4 },
-    filter: { Q: 3, baseFrequency: 400, octaves: 3 }
+    envelope: { attack: 0.05, decay: 0.1, sustain: 1, release: 0.3 },
+    filter: { Q: 6, baseFrequency: 400, octaves: 3 },
+    eq: { low: 4, mid: 4, high: 2 },
+    wet: { reverb: 0.3, chorus: 0.2 },
+    gain: 0.85
   },
   'e-organ': {
-    oscillator: { type: "square8" },
-    envelope: { attack: 0.02, decay: 0.1, sustain: 0.7, release: 0.1 },
-    filter: { Q: 5, baseFrequency: 1000, octaves: 4 }
+    oscillator: { type: "square" },
+    envelope: { attack: 0.001, decay: 0.05, sustain: 0.8, release: 0.05 },
+    filter: { Q: 1, baseFrequency: 1500, octaves: 4 },
+    eq: { low: -2, mid: 8, high: 4 },
+    wet: { reverb: 0.1, chorus: 0.6 },
+    gain: 0.6
   },
   pad: {
-    oscillator: { type: "fatsawtooth", count: 3, spread: 30 },
-    envelope: { attack: 1.5, decay: 1, sustain: 1, release: 3 },
-    filter: { Q: 0.5, baseFrequency: 500, octaves: 3 }
+    oscillator: { type: "sine", modulationType: "square" },
+    envelope: { attack: 3, decay: 2, sustain: 1, release: 5 },
+    filter: { Q: 0.2, baseFrequency: 600, octaves: 1.5 },
+    eq: { low: 5, mid: -5, high: -5 },
+    wet: { reverb: 0.9, chorus: 0.5 },
+    gain: 1.0
   }
 };
 
@@ -68,11 +101,11 @@ export function useAudioEngine() {
   useEffect(() => {
     limiterRef.current = new Tone.Limiter(-1).toDestination();
     gainRef.current = new Tone.Gain(0.8).connect(limiterRef.current);
-    reverbRef.current = new Tone.Reverb({ decay: 5, wet: 0.2 }).connect(gainRef.current);
+    reverbRef.current = new Tone.Reverb({ decay: 5, wet: 0.15 }).connect(gainRef.current);
     eqRef.current = new Tone.EQ3(0, 0, 0).connect(reverbRef.current);
     boostRef.current = new Tone.Distortion({ distortion: 0.1, wet: 0 }).connect(eqRef.current);
     filterRef.current = new Tone.Filter({ frequency: 4000, type: "lowpass", Q: 1 }).connect(boostRef.current);
-    chorusRef.current = new Tone.Chorus(4, 2.5, 0.5).connect(filterRef.current).start();
+    chorusRef.current = new Tone.Chorus(4, 2.5, 0.3).connect(filterRef.current).start();
 
     const initialPreset = PRESETS.classic;
     synthRef.current = new Tone.PolySynth(Tone.MonoSynth, {
@@ -107,13 +140,31 @@ export function useAudioEngine() {
     if (!synthRef.current || !PRESETS[name]) return;
     const p = PRESETS[name];
     
-    // cast to any for direct set since PolySynth type generics are complex
+    // PolySynth.set requires direct object mapping for MonoSynth members
     (synthRef.current as any).set({
       oscillator: p.oscillator,
       envelope: p.envelope,
       filter: { Q: p.filter.Q },
-      filterEnvelope: { baseFrequency: p.filter.baseFrequency, octaves: p.filter.octaves }
+      filterEnvelope: { 
+        baseFrequency: p.filter.baseFrequency, 
+        octaves: p.filter.octaves,
+        attack: p.envelope.attack,
+        decay: p.envelope.decay,
+        sustain: p.envelope.sustain,
+        release: p.envelope.release
+      }
     });
+
+    if (eqRef.current) {
+        eqRef.current.low.rampTo(p.eq.low, 0.5);
+        eqRef.current.mid.rampTo(p.eq.mid, 0.5);
+        eqRef.current.high.rampTo(p.eq.high, 0.5);
+    }
+
+    if (reverbRef.current) reverbRef.current.wet.rampTo(p.wet.reverb, 0.5);
+    if (chorusRef.current) chorusRef.current.wet.rampTo(p.wet.chorus, 0.5);
+    if (gainRef.current) gainRef.current.gain.rampTo(p.gain, 0.5);
+
     setPresetName(name);
   }, []);
 
@@ -125,6 +176,7 @@ export function useAudioEngine() {
     const freq = Tone.Frequency(note).transpose(transpose).toFrequency();
     const tunedFreq = freq * Math.pow(2, fineTune / 1200);
 
+    // Multi-voice triggering
     synthRef.current.triggerAttack(tunedFreq, Tone.now(), velocity);
     if (isCoupler) synthRef.current.triggerAttack(tunedFreq * 2, Tone.now(), velocity * 0.4);
 
