@@ -97,25 +97,25 @@ export function Keyboard({
       <div className="absolute inset-y-0 right-0 w-20 md:w-40 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none" />
 
       {/* MAHOGANY HOUSING */}
-      <div className="wood-mahogany rounded-t-[2.5rem] lg:rounded-t-[4rem] border-t-[4px] lg:border-t-[8px] border-white/5 shadow-2xl overflow-hidden pt-4 lg:pt-8 bg-[#1a0b0b]">
+      <div className="wood-mahogany rounded-t-3xl lg:rounded-t-[3rem] border-t-[3px] lg:border-t-[6px] border-white/5 shadow-2xl overflow-hidden pt-2 lg:pt-4 bg-[#1a0b0b]">
         
         {/* REED VENTS */}
-        <div className="h-4 lg:h-8 flex items-center justify-center gap-6 lg:gap-12 opacity-5 mb-2 px-10">
+        <div className="h-2 lg:h-4 flex items-center justify-center gap-4 lg:gap-8 opacity-5 mb-1 px-10">
            {Array.from({length: 16}).map((_, i) => (
-               <div key={i} className="w-12 lg:w-20 h-1.5 bg-black rounded-full" />
+               <div key={i} className="w-10 lg:w-16 h-1 bg-black rounded-full" />
            ))}
         </div>
 
         <div 
           ref={containerRef}
-          className="relative px-4 lg:px-24 pb-8 lg:pb-16 overflow-x-auto flex min-w-max select-none no-scrollbar-on-mobile scroll-smooth"
+          className="relative px-4 lg:px-24 pb-4 lg:pb-8 overflow-x-auto flex min-w-max select-none no-scrollbar-on-mobile scroll-smooth"
           style={{ perspective: "1500px" }}
         >
           <motion.div 
             className="flex relative"
             animate={{ 
-              rotateX: intensity * 0.05,
-              y: intensity * -0.2
+              rotateX: intensity * 0.04,
+              y: intensity * -0.1
             }}
           >
             {noteRange.map((note) => (
@@ -138,7 +138,7 @@ export function Keyboard({
         </div>
 
         {/* BRASS LOGO INSET */}
-        <div className="absolute bottom-4 right-10 opacity-10 pointer-events-none selection:hidden italic font-black text-2xl tracking-tighter text-accent-gold selection:none uppercase">
+        <div className="absolute bottom-2 right-6 opacity-5 pointer-events-none selection:hidden italic font-black text-lg tracking-tighter text-accent-gold selection:none uppercase">
             Artisan Harmonium
         </div>
       </div>

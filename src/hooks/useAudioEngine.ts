@@ -95,25 +95,34 @@ export function useAudioEngine() {
   const metronomeLoopRef = useRef<Tone.Loop | null>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [activeNotes, setActiveNotes] = useState<string[]>([]);
   const [currentPreset, setPresetName] = useState('classic');
 
   useEffect(() => {
+    // AUDIO GRAPH INITIALIZATION
     limiterRef.current = new Tone.Limiter(-1).toDestination();
     gainRef.current = new Tone.Gain(0.8).connect(limiterRef.current);
-    reverbRef.current = new Tone.Reverb({ decay: 5, wet: 0.15 }).connect(gainRef.current);
+    reverbRef.current = new Tone.Reverb({ decay: 4, wet: 0.15 }).connect(gainRef.current);
     eqRef.current = new Tone.EQ3(0, 0, 0).connect(reverbRef.current);
     boostRef.current = new Tone.Distortion({ distortion: 0.1, wet: 0 }).connect(eqRef.current);
-    filterRef.current = new Tone.Filter({ frequency: 4000, type: "lowpass", Q: 1 }).connect(boostRef.current);
+    filterRef.current = new Tone.Filter({ frequency: 6000, type: "lowpass", Q: 1 }).connect(boostRef.current);
     chorusRef.current = new Tone.Chorus(4, 2.5, 0.3).connect(filterRef.current).start();
 
     const initialPreset = PRESETS.classic;
     synthRef.current = new Tone.PolySynth(Tone.MonoSynth, {
       oscillator: initialPreset.oscillator,
       envelope: initialPreset.envelope,
-      filter: { Q: initialPreset.filter.Q, type: "lowpass", rolloff: -12 },
-      filterEnvelope: { ...initialPreset.envelope, baseFrequency: initialPreset.filter.baseFrequency, octaves: initialPreset.filter.octaves }
+      filter: { Q: initialPreset.filter.Q, type: "lowpass", rolloff: -24 },
+      filterEnvelope: { 
+        ...initialPreset.envelope, 
+        baseFrequency: initialPreset.filter.baseFrequency, 
+        octaves: initialPreset.filter.octaves 
+      }
     }).connect(chorusRef.current);
+
+    // POLYPHONY OPTIMIZATION: Max voices to prevent CPU spikes on mobile
+    synthRef.current.maxPolyphony = 12;
 
     droneSynthRef.current = new Tone.PolySynth(Tone.Synth, {
       oscillator: { type: "triangle" },
@@ -133,14 +142,23 @@ export function useAudioEngine() {
   }, []);
 
   const initAudio = useCallback(async () => {
-    await Tone.start();
+    try {
+      await Tone.start();
+      // PRE-WARM ENGINE: Trigger a silent note to initialize buffers
+      if (synthRef.current) {
+        synthRef.current.triggerAttackRelease("C4", "0.001n", undefined, 0);
+      }
+      setIsReady(true);
+      console.log("Audio Engine Initialized Successfully");
+    } catch (e) {
+      console.error("Failed to initialize audio engine", e);
+    }
   }, []);
 
   const changePreset = useCallback((name: string) => {
     if (!synthRef.current || !PRESETS[name]) return;
     const p = PRESETS[name];
     
-    // PolySynth.set requires direct object mapping for MonoSynth members
     (synthRef.current as any).set({
       oscillator: p.oscillator,
       envelope: p.envelope,
@@ -155,15 +173,16 @@ export function useAudioEngine() {
       }
     });
 
+
     if (eqRef.current) {
-        eqRef.current.low.rampTo(p.eq.low, 0.5);
-        eqRef.current.mid.rampTo(p.eq.mid, 0.5);
-        eqRef.current.high.rampTo(p.eq.high, 0.5);
+        eqRef.current.low.rampTo(p.eq.low, 0.3);
+        eqRef.current.mid.rampTo(p.eq.mid, 0.3);
+        eqRef.current.high.rampTo(p.eq.high, 0.3);
     }
 
-    if (reverbRef.current) reverbRef.current.wet.rampTo(p.wet.reverb, 0.5);
-    if (chorusRef.current) chorusRef.current.wet.rampTo(p.wet.chorus, 0.5);
-    if (gainRef.current) gainRef.current.gain.rampTo(p.gain, 0.5);
+    if (reverbRef.current) reverbRef.current.wet.rampTo(p.wet.reverb, 0.3);
+    if (chorusRef.current) chorusRef.current.wet.rampTo(p.wet.chorus, 0.3);
+    if (gainRef.current) gainRef.current.gain.rampTo(p.gain, 0.3);
 
     setPresetName(name);
   }, []);
@@ -176,9 +195,10 @@ export function useAudioEngine() {
     const freq = Tone.Frequency(note).transpose(transpose).toFrequency();
     const tunedFreq = freq * Math.pow(2, fineTune / 1200);
 
-    // Multi-voice triggering
-    synthRef.current.triggerAttack(tunedFreq, Tone.now(), velocity);
-    if (isCoupler) synthRef.current.triggerAttack(tunedFreq * 2, Tone.now(), velocity * 0.4);
+    // Instant Attack for professional feel
+    const now = Tone.now();
+    synthRef.current.triggerAttack(tunedFreq, now, velocity);
+    if (isCoupler) synthRef.current.triggerAttack(tunedFreq * 2, now, velocity * 0.4);
 
     setActiveNotes(prev => prev.includes(note) ? prev : [...prev, note]);
   }, [isLoaded]);
@@ -188,8 +208,9 @@ export function useAudioEngine() {
     const { isCoupler = false, transpose = 0 } = options;
     const freq = Tone.Frequency(note).transpose(transpose).toFrequency();
     
-    synthRef.current.triggerRelease(freq, Tone.now());
-    if (isCoupler) synthRef.current.triggerRelease(freq * 2, Tone.now());
+    const now = Tone.now();
+    synthRef.current.triggerRelease(freq, now);
+    if (isCoupler) synthRef.current.triggerRelease(freq * 2, now);
 
     setActiveNotes(prev => prev.filter(n => n !== note));
   }, []);
@@ -198,11 +219,11 @@ export function useAudioEngine() {
     if (!isLoaded) return;
     switch(param) {
       case 'volume': gainRef.current?.gain.rampTo(Number(val), 0.1); break;
-      case 'reverb': reverbRef.current && (reverbRef.current.wet.value = Number(val)); break;
+      case 'reverb': if (reverbRef.current) reverbRef.current.wet.rampTo(Number(val), 0.1); break;
       case 'brightness': filterRef.current?.frequency.rampTo(Number(val), 0.1); break;
       case 'boost': 
         if (boostRef.current && eqRef.current) {
-          boostRef.current.wet.rampTo(val ? 0.35 : 0, 0.2);
+          boostRef.current.wet.rampTo(val ? 0.4 : 0, 0.1);
           eqRef.current.high.rampTo(val ? 6 : 0, 0.2);
           eqRef.current.mid.rampTo(val ? 3 : 0, 0.2);
         }
@@ -212,7 +233,8 @@ export function useAudioEngine() {
 
   const playDrone = useCallback((note: string, active: boolean) => {
     if (!droneSynthRef.current) return;
-    active ? droneSynthRef.current.triggerAttack(note, Tone.now(), 0.1) : droneSynthRef.current.triggerRelease(note, Tone.now());
+    const now = Tone.now();
+    active ? droneSynthRef.current.triggerAttack(note, now, 0.1) : droneSynthRef.current.triggerRelease(note, now);
   }, []);
 
   const toggleMetronome = useCallback((bpm: number, active: boolean) => {
@@ -224,5 +246,6 @@ export function useAudioEngine() {
     } else Tone.getTransport().stop();
   }, []);
 
-  return { isLoaded, initAudio, playNote, stopNote, playDrone, toggleMetronome, setAudioParam, changePreset, currentPreset, activeNotes };
+  return { isLoaded, isReady, initAudio, playNote, stopNote, playDrone, toggleMetronome, setAudioParam, changePreset, currentPreset, activeNotes };
 }
+

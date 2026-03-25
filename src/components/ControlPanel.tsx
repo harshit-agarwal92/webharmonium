@@ -53,7 +53,7 @@ export function ControlPanel(props: ControlPanelProps) {
   } = props;
 
   return (
-    <div className="flex flex-col gap-4 lg:gap-6 w-full pb-32 lg:pb-20">
+    <div className="flex flex-col gap-4 w-full pb-12">
       
       {/* BRAND & MASTER MODULE */}
       <ModuleBox className="border-accent-gold/20 shadow-[0_0_40px_rgba(212,175,55,0.05)] pt-6 lg:pt-8">
@@ -101,12 +101,11 @@ export function ControlPanel(props: ControlPanelProps) {
         </div>
       </ModuleBox>
 
-      {/* PERFORMANCE SWITCHES */}
-      <div className="grid grid-cols-2 gap-4">
-        <ControlToggle active={boost} onClick={() => setBoost(!boost)} icon={<Zap className="w-5 h-5" />} label="PRO BOOST" />
-        <ControlToggle active={coupler} onClick={() => setCoupler(!coupler)} icon={<Layers className="w-5 h-5" />} label="COUPLER" />
-        <ControlToggle active={sustain} onClick={() => setSustain(!sustain)} icon={<InfinityIcon className="w-5 h-5" />} label="SUSTAIN" />
-        <ControlToggle active={isMetronome} onClick={() => setMetronome(!isMetronome)} icon={<Music2 className="w-5 h-5" />} label={`${bpm} BPM`} />
+      <div className="grid grid-cols-2 gap-3">
+        <ControlToggle active={boost} onClick={() => setBoost(!boost)} icon={<Zap className="w-4 h-4" />} label="PRO BOOST" />
+        <ControlToggle active={coupler} onClick={() => setCoupler(!coupler)} icon={<Layers className="w-4 h-4" />} label="COUPLER" />
+        <ControlToggle active={sustain} onClick={() => setSustain(!sustain)} icon={<InfinityIcon className="w-4 h-4" />} label="SUSTAIN" />
+        <ControlToggle active={isMetronome} onClick={() => setMetronome(!isMetronome)} icon={<Music2 className="w-4 h-4" />} label={`${bpm} BPM`} />
       </div>
 
       {/* SCALE & TUNING MODULE */}
@@ -174,25 +173,25 @@ export function ControlPanel(props: ControlPanelProps) {
       </ModuleBox>
 
       {/* DRONE & REC */}
-      <ModuleBox className="bg-accent-gold/[0.02]">
-        <div className="flex gap-2 mb-4">
+      <ModuleBox className="bg-accent-gold/[0.01] border-accent-gold/10">
+        <div className="flex gap-2 mb-3">
            {['C3', 'G3', 'F3'].map(note => (
              <button key={note} onClick={() => toggleDrone(note)} className={cn(
-               "flex-1 py-4 rounded-2xl text-[10px] font-black tracking-widest border transition-all duration-500",
+               "flex-1 py-3 rounded-xl text-[9px] font-black tracking-widest border transition-all duration-500",
                activeDrone === note ? "bg-accent-gold text-black border-accent-gold" : "bg-white/[0.02] border-white/5 text-white/20"
              )}>
-                {note.replace('3', '')} DRONE
+                {note.replace('3', '')}
              </button>
            ))}
         </div>
         <button 
            onClick={isRecording ? stopRecording : startRecording}
            className={cn(
-             "w-full py-6 rounded-3xl font-black uppercase tracking-[0.4em] text-sm border transition-all duration-700 flex items-center justify-center gap-4",
+             "w-full py-4 rounded-2xl font-black uppercase tracking-[0.4em] text-xs border transition-all duration-700 flex items-center justify-center gap-3",
              isRecording ? "bg-red-500 text-white border-red-400" : "bg-accent-gold text-black border-accent-gold shadow-lg"
            )}
         >
-          {isRecording ? <Disc className="animate-spin" /> : <Mic />}
+          {isRecording ? <Disc className="animate-spin w-4 h-4" /> : <Mic className="w-4 h-4" />}
           {isRecording ? "STOP STREAM" : "START CAPTURE"}
         </button>
       </ModuleBox>
@@ -203,8 +202,8 @@ export function ControlPanel(props: ControlPanelProps) {
 
 function ModuleBox({ title, icon, children, className }: any) {
     return (
-        <div className={cn("glass rounded-[2.5rem] p-6 border border-white/[0.08] shadow-2xl relative group overflow-hidden", className)}>
-            <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity animate-sweep pointer-events-none" />
+        <div className={cn("glass rounded-3xl p-5 border border-white/[0.05] shadow-xl relative group overflow-hidden", className)}>
+            <div className="absolute inset-0 bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity animate-sweep pointer-events-none" />
             {title && (
                 <div className="flex items-center gap-3 mb-6 opacity-30 group-hover:opacity-60 transition-opacity">
                     {icon}
@@ -250,14 +249,14 @@ function ControlToggle({ active, onClick, icon, label }: any) {
     <button
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center gap-3 p-5 rounded-[2.2rem] border transition-all duration-700 w-full group overflow-hidden",
+        "flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all duration-500 w-full group overflow-hidden",
         active 
-          ? "bg-accent-gold text-black border-accent-gold shadow-lg scale-105" 
-          : "bg-white/[0.03] border-white/5 text-white/30 hover:bg-white/[0.08]"
+          ? "bg-accent-gold text-black border-accent-gold shadow-md scale-[1.02]" 
+          : "bg-white/[0.02] border-white/5 text-white/30 hover:bg-white/[0.05]"
       )}
     >
-      <div className={cn("p-2 rounded-2xl bg-black/20", active ? "bg-black/10" : "")}>{icon}</div>
-      <span className="font-black uppercase tracking-[0.2em] text-[10px]">{label}</span>
+      <div className={cn("p-1.5 rounded-xl bg-black/20", active ? "bg-black/10" : "")}>{icon}</div>
+      <span className="font-black uppercase tracking-[0.1em] text-[9px]">{label}</span>
     </button>
   );
 }

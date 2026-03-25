@@ -3,12 +3,14 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music, Play, Keyboard as PianoIcon, Sparkles, Activity } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 interface LandingPageProps {
   onStart: () => void;
+  isInitializing: boolean;
 }
 
-export function LandingPage({ onStart }: LandingPageProps) {
+export function LandingPage({ onStart, isInitializing }: LandingPageProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -113,14 +115,27 @@ export function LandingPage({ onStart }: LandingPageProps) {
         </div>
 
         <motion.button
-          whileHover={{ scale: 1.05, letterSpacing: '0.3em' }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={!isInitializing ? { scale: 1.05, letterSpacing: '0.3em' } : {}}
+          whileTap={!isInitializing ? { scale: 0.95 } : {}}
           onClick={onStart}
-          className="group relative px-12 md:px-20 py-6 md:py-8 bg-accent-gold text-[#07080a] rounded-full font-black uppercase tracking-[0.2em] text-xl md:text-3xl shadow-[0_30px_60px_-15px_rgba(212,175,55,0.5)] transition-all duration-700 hover:shadow-[0_0_120px_rgba(212,175,55,1)]"
+          disabled={isInitializing}
+          className={cn(
+            "group relative px-12 md:px-20 py-6 md:py-8 bg-accent-gold text-[#07080a] rounded-full font-black uppercase tracking-[0.2em] text-xl md:text-3xl transition-all duration-700",
+            isInitializing ? "opacity-70 cursor-wait" : "shadow-[0_30px_60px_-15px_rgba(212,175,55,0.5)] hover:shadow-[0_0_120px_rgba(212,175,55,1)]"
+          )}
         >
           <div className="absolute inset-0 bg-white/40 translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-out" />
           <span className="relative z-10 flex items-center gap-4 md:gap-6">
-             <Play className="fill-current w-6 h-6 md:w-8 h-8" /> Start Master
+             {isInitializing ? (
+               <>
+                 <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-8 h-8 border-4 border-black border-t-transparent rounded-full" />
+                 Warming Reeds...
+               </>
+             ) : (
+               <>
+                 <Play className="fill-current w-6 h-6 md:w-8 h-8" /> Start Master
+               </>
+             )}
           </span>
         </motion.button>
 

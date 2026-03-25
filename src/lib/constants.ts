@@ -27,23 +27,30 @@ for (let octave = START_OCTAVE; octave < START_OCTAVE + OCTAVES; octave++) {
 }
 
 export const KEYBOARD_MAPPING: Record<string, string> = {
-  // WHITE KEYS (Lower Row A-L)
-  'a': 'C3', 's': 'D3', 'd': 'E3', 'f': 'F3', 'g': 'G3', 'h': 'A3', 'j': 'B3', 'k': 'C4', 'l': 'D4', ';': 'E4', "'": 'F4',
+  // MIDDLE OCTAVE (Starting from C4) - Number Keys
+  '1': 'C4', '2': 'D4', '3': 'E4', '4': 'F4', '5': 'G4', '6': 'A4', '7': 'B4',
+  '8': 'C5', '9': 'D5', '0': 'E5', '-': 'F5', '=': 'G5',
   
-  // BLACK KEYS (Middle Row W-P)
-  'w': 'C#3', 'e': 'D#3', 't': 'F#3', 'y': 'G#3', 'u': 'A#3', 'o': 'C#4', 'p': 'D#4', '[': 'F#4',
-  
-  // ADDITIONAL WHITE (Top Row 1-0)
-  '1': 'C2', '2': 'D2', '3': 'E2', '4': 'F2', '5': 'G2', '6': 'A2', '7': 'B2', '8': 'C3', '9': 'D3', '0': 'E3',
-  
-  // ADDITIONAL BLACK (Shift + Top row or Q-I)
-  'q': 'C#2', 'r': 'D#2', 'i': 'F#2', 'v': 'G#2', 'b': 'A#2',
-  
+  // BLACK KEYS FOR MIDDLE OCTAVE
+  'q': 'C#4', 'w': 'D#4', 'e': 'F#4', 'r': 'G#4', 't': 'A#4',
+  'y': 'C#5', 'u': 'D#5', 'i': 'F#5', 'o': 'G#5', 'p': 'A#5',
+
+  // LOWER OCTAVE (Standard Home Row) - White Keys
+  'a': 'C3', 's': 'D3', 'd': 'E3', 'f': 'F3', 'g': 'G3', 'h': 'A3', 'j': 'B3',
+  'k': 'C4', 'l': 'D4', ';': 'E4', "'": 'F4',
+
+  // LOWER OCTAVE - Black Keys
+  'z': 'C#3', 'x': 'D#3', 'c': 'F#3', 'v': 'G#3', 'b': 'A#3',
+  'n': 'C#4', 'm': 'D#4', ',': 'F#4', '.': 'G#4', '/': 'A#4',
+
   // SPECIAL CONTROLS
   ' ': 'SUSTAIN',
-  'z': 'OCTAVE_DOWN',
-  'x': 'OCTAVE_UP',
+  'ArrowLeft': 'OCTAVE_DOWN',
+  'ArrowRight': 'OCTAVE_UP',
 };
+
+
+
 
 export const PRESETS_LIST = [
   { id: 'classic', label: 'Classic Harmonium' },
