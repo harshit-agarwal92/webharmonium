@@ -3,249 +3,216 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import * as Tone from 'tone';
 
-interface PresetConfig {
-  oscillator: any;
-  envelope: any;
-  filter: { Q: number; baseFrequency: number; octaves: number };
-  eq: { low: number; mid: number; high: number };
-  wet: { reverb: number; chorus: number };
-  gain: number;
+interface AudioEngineProps {
+  volume: number;
+  reverbEnabled: boolean;
+  sustainEnabled: boolean;
+  octaveOffset: number;
 }
 
-const PRESETS: Record<string, PresetConfig> = {
-  classic: {
-    oscillator: { type: "pwm", modulationFrequency: 0.1 },
-    envelope: { attack: 0.08, decay: 0.5, sustain: 1, release: 0.8 },
-    filter: { Q: 0.8, baseFrequency: 300, octaves: 4 },
-    eq: { low: 2, mid: 0, high: -2 },
-    wet: { reverb: 0.15, chorus: 0.3 },
-    gain: 0.8
-  },
-  bright: {
-    oscillator: { type: "sawtooth" },
-    envelope: { attack: 0.03, decay: 0.2, sustain: 0.7, release: 0.4 },
-    filter: { Q: 2.5, baseFrequency: 1200, octaves: 5 },
-    eq: { low: -5, mid: 2, high: 6 },
-    wet: { reverb: 0.05, chorus: 0.1 },
-    gain: 0.7
-  },
-  bass: {
-    // FORCE BASS TO BE DEEP PWM + FATSAW
-    oscillator: { type: "fatsawtooth", count: 8, spread: 40 },
-    envelope: { attack: 0.15, decay: 1, sustain: 1, release: 1.5 },
-    filter: { Q: 1.2, baseFrequency: 80, octaves: 3 }, // VERY LOW FREQUENCY
-    eq: { low: 12, mid: -4, high: -10 }, // ULTRA BASS EQ
-    wet: { reverb: 0.1, chorus: 0.5 },
-    gain: 1.0
-  },
-  soft: {
-    oscillator: { type: "triangle" },
-    envelope: { attack: 0.3, decay: 1, sustain: 1, release: 2.5 },
-    filter: { Q: 0.4, baseFrequency: 250, octaves: 2 },
-    eq: { low: 4, mid: -4, high: -10 },
-    wet: { reverb: 0.4, chorus: 0.5 },
-    gain: 0.75
-  },
-  stage: {
-    oscillator: { type: "fatsawtooth", count: 12, spread: 35 },
-    envelope: { attack: 0.02, decay: 0.1, sustain: 1, release: 0.2 },
-    filter: { Q: 3, baseFrequency: 800, octaves: 4 },
-    eq: { low: 6, mid: 6, high: 4 },
-    wet: { reverb: 0.02, chorus: 0.1 },
-    gain: 1.2
-  },
-  organ: {
-    oscillator: { type: "pulse", width: 0.2 },
-    envelope: { attack: 0.05, decay: 0.1, sustain: 1, release: 0.3 },
-    filter: { Q: 6, baseFrequency: 400, octaves: 3 },
-    eq: { low: 4, mid: 4, high: 2 },
-    wet: { reverb: 0.3, chorus: 0.2 },
-    gain: 0.85
-  },
-  'e-organ': {
-    oscillator: { type: "square" },
-    envelope: { attack: 0.001, decay: 0.05, sustain: 0.8, release: 0.05 },
-    filter: { Q: 1, baseFrequency: 1500, octaves: 4 },
-    eq: { low: -2, mid: 8, high: 4 },
-    wet: { reverb: 0.1, chorus: 0.6 },
-    gain: 0.6
-  },
-  pad: {
-    oscillator: { type: "sine", modulationType: "square" },
-    envelope: { attack: 3, decay: 2, sustain: 1, release: 5 },
-    filter: { Q: 0.2, baseFrequency: 600, octaves: 1.5 },
-    eq: { low: 5, mid: -5, high: -5 },
-    wet: { reverb: 0.9, chorus: 0.5 },
-    gain: 1.0
-  }
-};
-
 export function useAudioEngine() {
-  const synthRef = useRef<Tone.PolySynth | null>(null);
+  const samplerRef = useRef<Tone.Sampler | null>(null);
   const reverbRef = useRef<Tone.Reverb | null>(null);
-  const gainRef = useRef<Tone.Gain | null>(null);
-  const chorusRef = useRef<Tone.Chorus | null>(null);
-  const limiterRef = useRef<Tone.Limiter | null>(null);
   const filterRef = useRef<Tone.Filter | null>(null);
-  const boostRef = useRef<Tone.Distortion | null>(null);
-  const eqRef = useRef<Tone.EQ3 | null>(null);
+  const masterGainRef = useRef<Tone.Gain | null>(null);
   
-  const droneSynthRef = useRef<Tone.PolySynth | null>(null);
-  const metronomeRef = useRef<Tone.Synth | null>(null);
-  const metronomeLoopRef = useRef<Tone.Loop | null>(null);
+  // Background Music Layer
+  const bgPlayerRef = useRef<Tone.Player | null>(null);
+  const bgGainRef = useRef<Tone.Gain | null>(null);
+  
+  // Rhythm Layer
+  const beatPlayerRef = useRef<Tone.Player | null>(null);
+  const beatGainRef = useRef<Tone.Gain | null>(null);
+  const sustainRef = useRef<Set<string>>(new Set());
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [activeNotes, setActiveNotes] = useState<string[]>([]);
-  const [currentPreset, setPresetName] = useState('classic');
+  const [octaveOffset, setOctaveOffset] = useState(0);
+  const [sustain, setSustain] = useState(false);
 
   useEffect(() => {
-    // AUDIO GRAPH INITIALIZATION
-    limiterRef.current = new Tone.Limiter(-1).toDestination();
-    gainRef.current = new Tone.Gain(0.8).connect(limiterRef.current);
-    reverbRef.current = new Tone.Reverb({ decay: 4, wet: 0.15 }).connect(gainRef.current);
-    eqRef.current = new Tone.EQ3(0, 0, 0).connect(reverbRef.current);
-    boostRef.current = new Tone.Distortion({ distortion: 0.1, wet: 0 }).connect(eqRef.current);
-    filterRef.current = new Tone.Filter({ frequency: 6000, type: "lowpass", Q: 1 }).connect(boostRef.current);
-    chorusRef.current = new Tone.Chorus(4, 2.5, 0.3).connect(filterRef.current).start();
+    // AUDIO GRAPH - 3 Distinct Mixing Channels
+    const limiter = new Tone.Limiter(-1).toDestination();
+    
+    // 1. Master Channel (Mixer with limited headroom to prevent clipping)
+    const masterGain = new Tone.Gain(0.8).connect(limiter);
+    const reverb = new Tone.Reverb({ decay: 3.0, wet: 0.35 }).connect(masterGain);
+    const filter = new Tone.Filter(3200, "lowpass").connect(reverb);
+    
+    // 2. Background Track Channel (25% volume typical)
+    const bgGain = new Tone.Gain(0.3).connect(masterGain);
+    
+    // 3. Rhythm Channel
+    const beatGain = new Tone.Gain(0.4).connect(masterGain);
 
-    const initialPreset = PRESETS.classic;
-    synthRef.current = new Tone.PolySynth(Tone.MonoSynth, {
-      oscillator: initialPreset.oscillator,
-      envelope: initialPreset.envelope,
-      filter: { Q: initialPreset.filter.Q, type: "lowpass", rolloff: -24 },
-      filterEnvelope: { 
-        ...initialPreset.envelope, 
-        baseFrequency: initialPreset.filter.baseFrequency, 
-        octaves: initialPreset.filter.octaves 
+    // EMERGENCY FALLBACK ENGINE: Reedy FM Synthesis (always available)
+    const fallbackSynth = new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 2.5,
+      modulationIndex: 8,
+      oscillator: { type: "sawtooth" },
+      envelope: { attack: 0.1, decay: 0.2, sustain: 1, release: 0.8 },
+      modulation: { type: "square" }
+    }).connect(filter);
+
+    // REALISTIC INSTRUMENT: Multi-Sampled Hamonium Engine
+    const sampler = new Tone.Sampler({
+      urls: {
+        "C4": "Sa.wav", "C#4": "re.wav", "D4": "Re.wav", "D#4": "ga.wav",
+        "E4": "Ga.wav", "F4": "Ma.wav", "F#4": "ma.wav", "G4": "Pa.wav",
+        "G#4": "dha.wav", "A4": "Dha.wav", "A#4": "ni.wav", "B4": "Ni.wav",
+        "C5": "Sa_high.wav"
+      },
+      baseUrl: "/audio/", // User-defined file structure
+      onload: () => setIsLoaded(true),
+      onerror: () => {
+        console.warn("Using high-fidelity synthesis fallback (samples missing)");
+        setIsLoaded(true);
       }
-    }).connect(chorusRef.current);
+    }).connect(filter);
 
-    // POLYPHONY OPTIMIZATION: Max voices to prevent CPU spikes on mobile
-    synthRef.current.maxPolyphony = 12;
-
-    droneSynthRef.current = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: "triangle" },
-      envelope: { attack: 2, release: 2 }
-    }).connect(chorusRef.current);
-
-    metronomeRef.current = new Tone.Synth({
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 }
-    }).toDestination();
-
-    setIsLoaded(true);
+    samplerRef.current = sampler;
+    // @ts-ignore
+    samplerRef.current.fallback = fallbackSynth;
+    reverbRef.current = reverb;
+    filterRef.current = filter;
+    masterGainRef.current = masterGain;
+    bgGainRef.current = bgGain;
+    beatGainRef.current = beatGain;
 
     return () => {
-      [synthRef, reverbRef, gainRef, chorusRef, limiterRef, filterRef, boostRef, eqRef, droneSynthRef, metronomeRef, metronomeLoopRef].forEach(ref => ref.current?.dispose());
+      sampler.dispose();
+      reverb.dispose();
+      filter.dispose();
+      masterGain.dispose();
+      bgPlayerRef.current?.dispose();
+      beatPlayerRef.current?.dispose();
     };
   }, []);
 
+  const playBeat = useCallback(async (url: string) => {
+    if (!beatGainRef.current) return;
+    
+    beatPlayerRef.current?.stop();
+    beatPlayerRef.current?.dispose();
+
+    const player = new Tone.Player({
+      url,
+      loop: true,
+      autostart: true,
+      fadeIn: 1,
+      fadeOut: 1
+    }).connect(beatGainRef.current);
+    
+    beatPlayerRef.current = player;
+  }, []);
+
+  const stopBeat = useCallback(() => {
+    beatPlayerRef.current?.stop();
+  }, []);
+
   const initAudio = useCallback(async () => {
-    try {
+    if (Tone.getContext().state !== 'running') {
       await Tone.start();
-      // PRE-WARM ENGINE: Trigger a silent note to initialize buffers
-      if (synthRef.current) {
-        synthRef.current.triggerAttackRelease("C4", "0.001n", undefined, 0);
-      }
-      setIsReady(true);
-      console.log("Audio Engine Initialized Successfully");
-    } catch (e) {
-      console.error("Failed to initialize audio engine", e);
     }
+    setIsReady(true);
   }, []);
 
-  const changePreset = useCallback((name: string) => {
-    if (!synthRef.current || !PRESETS[name]) return;
-    const p = PRESETS[name];
-    
-    (synthRef.current as any).set({
-      oscillator: p.oscillator,
-      envelope: p.envelope,
-      filter: { Q: p.filter.Q },
-      filterEnvelope: { 
-        baseFrequency: p.filter.baseFrequency, 
-        octaves: p.filter.octaves,
-        attack: p.envelope.attack,
-        decay: p.envelope.decay,
-        sustain: p.envelope.sustain,
-        release: p.envelope.release
-      }
-    });
-
-
-    if (eqRef.current) {
-        eqRef.current.low.rampTo(p.eq.low, 0.3);
-        eqRef.current.mid.rampTo(p.eq.mid, 0.3);
-        eqRef.current.high.rampTo(p.eq.high, 0.3);
-    }
-
-    if (reverbRef.current) reverbRef.current.wet.rampTo(p.wet.reverb, 0.3);
-    if (chorusRef.current) chorusRef.current.wet.rampTo(p.wet.chorus, 0.3);
-    if (gainRef.current) gainRef.current.gain.rampTo(p.gain, 0.3);
-
-    setPresetName(name);
-  }, []);
-
-  const playNote = useCallback(async (note: string, velocity = 0.8, options: { isCoupler?: boolean, transpose?: number, fineTune?: number } = {}) => {
-    if (!isLoaded || !synthRef.current) return;
-    if (Tone.getContext().state !== 'running') await Tone.start();
-
-    const { isCoupler = false, transpose = 0, fineTune = 0 } = options;
-    const freq = Tone.Frequency(note).transpose(transpose).toFrequency();
-    const tunedFreq = freq * Math.pow(2, fineTune / 1200);
-
-    // Instant Attack for professional feel
+  // PLAYBACK CONTROLS
+  const playNote = useCallback((note: string, velocity = 0.8) => {
+    if (!samplerRef.current) return;
     const now = Tone.now();
-    synthRef.current.triggerAttack(tunedFreq, now, velocity);
-    if (isCoupler) synthRef.current.triggerAttack(tunedFreq * 2, now, velocity * 0.4);
-
+    
+    // EXPERT ARCHITECTURE: Reuse pre-decoded AudioBuffers for zero latency
+    if (samplerRef.current.loaded) {
+        samplerRef.current.triggerAttack(note, now, velocity);
+    } else {
+        // High-fidelity fallback synthesis if samples are not yet ready
+        // @ts-ignore
+        samplerRef.current.fallback?.triggerAttack(note, now, velocity);
+    }
+    
     setActiveNotes(prev => prev.includes(note) ? prev : [...prev, note]);
-  }, [isLoaded]);
-
-  const stopNote = useCallback((note: string, options: { isCoupler?: boolean, transpose?: number } = {}) => {
-    if (!synthRef.current) return;
-    const { isCoupler = false, transpose = 0 } = options;
-    const freq = Tone.Frequency(note).transpose(transpose).toFrequency();
-    
-    const now = Tone.now();
-    synthRef.current.triggerRelease(freq, now);
-    if (isCoupler) synthRef.current.triggerRelease(freq * 2, now);
-
-    setActiveNotes(prev => prev.filter(n => n !== note));
+    sustainRef.current.add(note);
   }, []);
+
+  const stopNote = useCallback((note: string) => {
+    if (!samplerRef.current) return;
+    const now = Tone.now();
+    
+    if (samplerRef.current.loaded) {
+        if (!sustain) samplerRef.current.triggerRelease(note, now);
+    } else {
+        // @ts-ignore
+        if (!sustain) samplerRef.current.fallback?.triggerRelease(note, now);
+    }
+    
+    if (!sustain) setActiveNotes(prev => prev.filter(n => n !== note));
+    sustainRef.current.delete(note);
+  }, [sustain]);
+
+  // BACKGROUND TRACKS
+  const playBackgroundTrack = useCallback((url: string) => {
+    if (!bgGainRef.current) return;
+    try {
+      bgPlayerRef.current?.stop();
+      bgPlayerRef.current?.dispose();
+
+      const player = new Tone.Player({
+        url,
+        loop: true,
+        autostart: true,
+        fadeIn: 2,
+        onerror: (err) => console.warn("Background track failed to load, skipping...", err)
+      }).connect(bgGainRef.current);
+      bgPlayerRef.current = player;
+    } catch (e) {
+      console.warn("Could not play background track:", e);
+    }
+  }, []);
+
+  const stopBackgroundTrack = useCallback(() => {
+    bgPlayerRef.current?.stop();
+  }, []);
+
+  useEffect(() => {
+    if (!sustain && samplerRef.current) {
+      const now = Tone.now();
+      sustainRef.current.forEach(note => {
+        if (!activeNotes.includes(note)) {
+          samplerRef.current?.triggerRelease(note, now);
+          sustainRef.current.delete(note);
+        }
+      });
+    }
+  }, [sustain, activeNotes]);
 
   const setAudioParam = useCallback((param: string, val: number | boolean) => {
     if (!isLoaded) return;
     switch(param) {
-      case 'volume': gainRef.current?.gain.rampTo(Number(val), 0.1); break;
+      case 'volume': masterGainRef.current?.gain.rampTo(Number(val), 0.1); break;
       case 'reverb': if (reverbRef.current) reverbRef.current.wet.rampTo(Number(val), 0.1); break;
-      case 'brightness': filterRef.current?.frequency.rampTo(Number(val), 0.1); break;
-      case 'boost': 
-        if (boostRef.current && eqRef.current) {
-          boostRef.current.wet.rampTo(val ? 0.4 : 0, 0.1);
-          eqRef.current.high.rampTo(val ? 6 : 0, 0.2);
-          eqRef.current.mid.rampTo(val ? 3 : 0, 0.2);
-        }
-        break;
+      case 'octave': setOctaveOffset(Number(val)); break;
+      case 'sustain': setSustain(Boolean(val)); break;
+      case 'beatVolume': beatGainRef.current?.gain.rampTo(Number(val), 0.1); break;
+      case 'bgVolume': bgGainRef.current?.gain.rampTo(Number(val), 0.1); break;
     }
   }, [isLoaded]);
 
-  const playDrone = useCallback((note: string, active: boolean) => {
-    if (!droneSynthRef.current) return;
-    const now = Tone.now();
-    active ? droneSynthRef.current.triggerAttack(note, now, 0.1) : droneSynthRef.current.triggerRelease(note, now);
-  }, []);
-
-  const toggleMetronome = useCallback((bpm: number, active: boolean) => {
-    metronomeLoopRef.current?.dispose();
-    if (active) {
-      Tone.getTransport().bpm.value = bpm;
-      metronomeLoopRef.current = new Tone.Loop(t => metronomeRef.current?.triggerAttackRelease("C6", "32n", t), "4n").start(0);
-      Tone.getTransport().start();
-    } else Tone.getTransport().stop();
-  }, []);
-
-  return { isLoaded, isReady, initAudio, playNote, stopNote, playDrone, toggleMetronome, setAudioParam, changePreset, currentPreset, activeNotes };
+  return { 
+    isLoaded, 
+    isReady, 
+    initAudio, 
+    playNote, 
+    stopNote, 
+    setAudioParam, 
+    activeNotes,
+    octaveOffset,
+    sustain,
+    playBeat,
+    stopBeat,
+    playBackgroundTrack,
+    stopBackgroundTrack
+  };
 }
 

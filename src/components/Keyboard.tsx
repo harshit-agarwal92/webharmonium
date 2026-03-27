@@ -2,7 +2,8 @@
 
 import { Key } from './Key';
 import { motion, AnimatePresence } from 'framer-motion';
-import { noteRange, SCALES, RADIX_NOTES } from '@/lib/constants';
+import { noteRange, SCALES, RADIX_NOTES, KEYBOARD_MAPPING } from '@/lib/constants';
+import { getSargamNote } from '@/lib/theory';
 import { cn } from '@/lib/utils';
 import { useRef, useEffect } from 'react';
 
@@ -13,8 +14,8 @@ interface KeyboardProps {
   labelMode: string;
   selectedScale: string;
   rootNote: string;
-  boostMode: boolean;
   intensity: number;
+  guideNotes: string[]; // Notes to highlight in song mode
 }
 
 export function Keyboard({
@@ -24,8 +25,8 @@ export function Keyboard({
   labelMode,
   selectedScale,
   rootNote,
-  boostMode,
-  intensity
+  intensity,
+  guideNotes
 }: KeyboardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -40,29 +41,7 @@ export function Keyboard({
   }, [rootNote]);
 
   const getSargam = (note: string) => {
-    const pitch = note.replace(/\d+$/, '');
-    const noteIdx = RADIX_NOTES.indexOf(pitch);
-    const rootIdx = RADIX_NOTES.indexOf(rootNote);
-    const distance = (noteIdx - rootIdx + 12) % 12;
-    
-    // INDIAN CLASSICAL NOTATION: 
-    // Komal (Flat) = underlined/lowercase
-    // Tivra (Sharp) = line-above/uppercase
-    const sargamMapping = [
-        'Sa',   // 0
-        're',   // 1 (Komal Re)
-        'Re',   // 2 (Shuddha Re)
-        'ga',   // 3 (Komal Ga)
-        'Ga',   // 4 (Shuddha Ga)
-        'Ma',   // 5 (Shuddha Ma)
-        'Mă',   // 6 (Tivra Ma)
-        'Pa',   // 7 
-        'dha',  // 8 (Komal Dha)
-        'Dha',  // 9 (Shuddha Dha)
-        'ni',   // 10 (Komal Ni)
-        'Ni'    // 11 (Shuddha Ni)
-    ];
-    return sargamMapping[distance] || '';
+    return getSargamNote(note, rootNote);
   };
 
   const isHighlighted = (note: string) => {
@@ -90,32 +69,37 @@ export function Keyboard({
     return ''; 
   };
 
+  const getKeyLabel = (note: string) => {
+    const entry = Object.entries(KEYBOARD_MAPPING).find(([key, val]) => val === note);
+    return entry ? entry[0].toUpperCase() : '';
+  };
+
   return (
     <div className="relative group w-full">
       {/* SCROLL FADERS */}
-      <div className="absolute inset-y-0 left-0 w-20 md:w-40 bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none" />
-      <div className="absolute inset-y-0 right-0 w-20 md:w-40 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none" />
+      <div className="absolute inset-y-0 left-0 w-12 md:w-32 bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none" />
+      <div className="absolute inset-y-0 right-0 w-12 md:w-32 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none" />
 
       {/* MAHOGANY HOUSING */}
-      <div className="wood-mahogany rounded-t-3xl lg:rounded-t-[3rem] border-t-[3px] lg:border-t-[6px] border-white/5 shadow-2xl overflow-hidden pt-2 lg:pt-4 bg-[#1a0b0b]">
+      <div className="wood-mahogany rounded-t-3xl lg:rounded-t-[4rem] border-t-[4px] lg:border-t-[8px] border-white/10 shadow-3xl overflow-hidden pt-4 lg:pt-8 bg-[#1a0b0b]">
         
         {/* REED VENTS */}
-        <div className="h-2 lg:h-4 flex items-center justify-center gap-4 lg:gap-8 opacity-5 mb-1 px-10">
-           {Array.from({length: 16}).map((_, i) => (
-               <div key={i} className="w-10 lg:w-16 h-1 bg-black rounded-full" />
+        <div className="h-4 lg:h-6 flex items-center justify-center gap-4 lg:gap-12 opacity-10 mb-2 px-10">
+           {Array.from({length: 12}).map((_, i) => (
+               <div key={i} className="w-12 lg:w-20 h-1.5 bg-black rounded-full" />
            ))}
         </div>
 
         <div 
           ref={containerRef}
-          className="relative px-4 lg:px-24 pb-4 lg:pb-8 overflow-x-auto flex min-w-max select-none no-scrollbar-on-mobile scroll-smooth"
+          className="relative px-4 lg:px-24 pb-6 lg:pb-12 overflow-x-auto flex min-w-max select-none no-scrollbar-on-mobile scroll-smooth"
           style={{ perspective: "1500px" }}
         >
           <motion.div 
             className="flex relative"
             animate={{ 
-              rotateX: intensity * 0.04,
-              y: intensity * -0.1
+              rotateX: intensity * 0.05,
+              y: intensity * -0.2
             }}
           >
             {noteRange.map((note) => (
@@ -123,10 +107,11 @@ export function Keyboard({
                  <Key 
                     note={note}
                     label={getLabel(note)}
+                    keyLabel={getKeyLabel(note)}
                     type={note.includes('#') ? 'black' : 'white'}
                     active={activeNotes.includes(note)}
                     highlighted={isHighlighted(note)}
-                    boosted={boostMode}
+                    guideHighlight={guideNotes.includes(note)}
                     onMouseDown={() => playNote(note)}
                     onMouseUp={() => stopNote(note)}
                     onMouseEnter={() => playNote(note)}
@@ -136,15 +121,7 @@ export function Keyboard({
             ))}
           </motion.div>
         </div>
-
-        {/* BRASS LOGO INSET */}
-        <div className="absolute bottom-2 right-6 opacity-5 pointer-events-none selection:hidden italic font-black text-lg tracking-tighter text-accent-gold selection:none uppercase">
-            Artisan Harmonium
-        </div>
       </div>
-      
-      {/* FOOT SHADOW */}
-      <div className="h-6 bg-black/60 blur-2xl" />
     </div>
   );
 }

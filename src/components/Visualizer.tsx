@@ -37,30 +37,31 @@ export function Visualizer() {
       const centerY = height / 2;
 
       ctx.clearRect(0, 0, width, height);
+      
+      // Optimization: Disable expensive shadows unless absolutely needed
+      ctx.shadowBlur = 0; 
 
       // --- 1. DYNAMIC BACKGROUND SPECTROGRAM (Subtle) ---
       const barWidth = (width / 2) / freq.length;
+      ctx.fillStyle = `rgba(212, 175, 55, 0.05)`;
       for (let i = 0; i < freq.length; i++) {
-          const v = Math.abs(freq[i]) / 100; // Normalized
-          ctx.fillStyle = `rgba(212, 175, 55, ${v * 0.1})`;
-          ctx.fillRect(centerX + i * barWidth, 0, barWidth, height);
-          ctx.fillRect(centerX - i * barWidth, 0, -barWidth, height);
+          const v = Math.abs(freq[i]) / 100;
+          if (v > 0.01) {
+            ctx.fillRect(centerX + i * barWidth, 0, barWidth, height);
+            ctx.fillRect(centerX - i * barWidth, 0, -barWidth, height);
+          }
       }
 
       // --- 2. MAIN SYMMETRICAL WAVEFORM ---
       ctx.beginPath();
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 3;
       ctx.strokeStyle = '#d4af37';
-      ctx.shadowBlur = 25;
-      ctx.shadowColor = 'rgba(212, 175, 55, 0.8)';
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
 
       const sliceWidth = (width / 2) / waveform.length;
-      
       ctx.moveTo(centerX, centerY);
       
-      // RIGHT SIDE
       for (let i = 0; i < waveform.length; i++) {
         const v = waveform[i] * 3.5;
         const x = centerX + (i * sliceWidth);
@@ -68,7 +69,6 @@ export function Visualizer() {
         ctx.lineTo(x, y);
       }
 
-      // LEFT SIDE
       ctx.moveTo(centerX, centerY);
       for (let i = 0; i < waveform.length; i++) {
         const v = waveform[i] * 3.5;
@@ -81,31 +81,18 @@ export function Visualizer() {
       // --- 3. HARMONIC LIGHT PULSE (Secondary dim wave) ---
       ctx.beginPath();
       ctx.lineWidth = 1;
-      ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
-      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.2)';
       
-      for (let i = 0; i < waveform.length; i += 2) {
-        const v = waveform[i] * -12; // Massive reverse
-        const x = centerX + (i * sliceWidth);
-        const y = centerY + (v);
-        ctx.lineTo(x, y);
+      for (let i = 0; i < waveform.length; i += 4) {
+        const v = waveform[i] * -8;
+        ctx.lineTo(centerX + (i * sliceWidth), centerY + (v));
       }
-      for (let i = 0; i < waveform.length; i += 2) {
-        const v = waveform[i] * -12;
-        const x = centerX - (i * sliceWidth);
-        const y = centerY + (v);
-        ctx.lineTo(x, y);
+      ctx.moveTo(centerX, centerY);
+      for (let i = 0; i < waveform.length; i += 4) {
+        const v = waveform[i] * -8;
+        ctx.lineTo(centerX - (i * sliceWidth), centerY + (v));
       }
       ctx.stroke();
-
-      // --- 4. CENTER RADIANCE ---
-      const grad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 100);
-      grad.addColorStop(0, 'rgba(212, 175, 55, 0.2)');
-      grad.addColorStop(1, 'transparent');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, 100, 0, Math.PI * 2);
-      ctx.fill();
 
       animationId = requestAnimationFrame(render);
     };

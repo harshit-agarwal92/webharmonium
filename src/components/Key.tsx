@@ -1,28 +1,29 @@
-'use client';
-
+import { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface KeyProps {
   note: string;
   label: string;
+  keyLabel: string;
   type: 'white' | 'black';
   active: boolean;
   highlighted: boolean;
-  boosted: boolean;
+  guideHighlight: boolean;
   onMouseDown: () => void;
   onMouseUp: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
 }
 
-export function Key({
+export const Key = memo(function Key({
   note,
   label,
+  keyLabel,
   type,
   active,
   highlighted,
-  boosted,
+  guideHighlight,
   onMouseDown,
   onMouseUp,
   onMouseEnter,
@@ -30,13 +31,12 @@ export function Key({
 }: KeyProps) {
   const isWhite = type === 'white';
   
-  // SHARED HANDLERS FOR MOUSE AND TOUCH
-  const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
+  const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
     onMouseDown();
   };
 
-  const handleEnd = (e: React.MouseEvent | React.TouchEvent) => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
     e.preventDefault();
     onMouseUp();
   };
@@ -44,86 +44,88 @@ export function Key({
   return (
     <motion.div
       className={cn(
-        "relative flex flex-col items-center justify-end pb-6 lg:pb-8 transition-all duration-300 pointer-events-auto select-none touch-none will-change-transform",
+        "relative flex flex-col items-center justify-end pb-8 sm:pb-12 transition-all duration-200 pointer-events-auto select-none touch-none will-change-transform cursor-pointer",
         isWhite 
-          ? "w-[min(48px,7vw)] sm:w-[56px] h-[35vh] sm:h-[45vh] bg-gradient-to-b from-[#ffffff] via-[#f8f8f8] to-[#e0e0e0] border-b-[6px] lg:border-b-[10px] border-[#bbb] rounded-b-[1.2rem] lg:rounded-b-[1.5rem] z-0 border-x border-[#f0f0f0]" 
-          : "w-[min(30px,4.5vw)] sm:w-[36px] h-[20vh] sm:h-[28vh] bg-gradient-to-b from-[#555] via-[#222] to-[#010101] rounded-b-lg lg:rounded-b-xl shadow-[0_10px_25px_rgba(0,0,0,0.8)] z-10 -mx-[min(15px,2.25vw)] sm:-mx-[18px] border-t-[2px] lg:border-t-[4px] border-[#666] border-x border-black/95",
-        active && "z-20 scale-[0.98] brightness-110",
-
-        !active && highlighted && "ring-[1.5px] lg:ring-[2.5px] ring-accent-gold/40 shadow-[0_0_15px_rgba(212,175,55,0.2)]"
+          ? "w-[min(56px,8.5vw)] sm:w-[68px] h-[40vh] sm:h-[48vh] bg-gradient-to-b from-[#ffffff] via-[#fdfdfd] to-[#f2f2f2] border-b-[8px] sm:border-b-[12px] border-[#c0c0c0] rounded-b-[1.5rem] lg:rounded-b-[2rem] z-0 border-x border-[#f5f5f5]" 
+          : "w-[min(34px,5.5vw)] sm:w-[42px] h-[24vh] sm:h-[30vh] bg-gradient-to-b from-[#404040] via-[#1a1a1a] to-[#000000] rounded-b-xl sm:rounded-b-2xl shadow-[0_12px_30px_rgba(0,0,0,0.85)] z-10 -mx-[min(17px,2.75vw)] sm:-mx-[21px] border-t-[3px] sm:border-t-[5px] border-[#555] border-x border-black/90",
+        
+        active && (isWhite ? "bg-[#eee] brightness-90 shadow-inner" : "brightness-125"),
+        !active && highlighted && "after:content-[''] after:absolute after:bottom-4 after:w-1.5 after:h-1.5 after:bg-accent-gold/40 after:rounded-full after:blur-[2px]",
+        guideHighlight && "ring-4 ring-accent-gold ring-inset shadow-[0_0_20px_var(--accent-gold)] z-30"
       )}
-      style={{ transformOrigin: "top center", touchAction: 'none' }}
+      style={{ transformOrigin: "top center" }}
 
       animate={{
-        rotateX: active ? -8 : 0,
-        y: active ? 3 : 0,
+        rotateX: active ? -10 : 0,
+        y: active ? 4 : 0,
+        filter: active ? "brightness(1.1)" : "brightness(1)",
         boxShadow: active 
-          ? `0 0 ${boosted ? '60px' : '35px'} var(--accent-gold)` 
-          : highlightsToShadow(highlighted, isWhite),
+          ? `0 0 40px var(--accent-gold)` 
+          : guideHighlight ? `0 0 30px var(--accent-gold)` : "none",
       }}
-      onMouseDown={handleStart}
-      onMouseUp={handleEnd}
+      onMouseDown={(e) => { e.preventDefault(); onMouseDown(); }}
+      onMouseUp={(e) => { e.preventDefault(); onMouseUp(); }}
       onMouseEnter={(e) => { if (e.buttons === 1) onMouseEnter(); }}
       onMouseLeave={onMouseLeave}
       
-      // TOUCH SUPPORT (Polyphonic Multi-Touch)
-      onTouchStart={handleStart}
-      onTouchEnd={handleEnd}
-      onTouchCancel={handleEnd}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       
       initial={false}
     >
-      {/* RADIANCE */}
-      {highlighted && !active && (
-        <motion.div 
-          animate={{ opacity: [0.2, 0.4, 0.2] }}
-          transition={{ duration: 3, repeat: Infinity }}
-          className={cn(
-            "absolute top-4 w-2 h-2 rounded-full blur-[3px]",
-            isWhite ? "bg-accent-gold/15" : "bg-accent-gold/30"
-          )} 
-        />
-      )}
+      <AnimatePresence>
+        {guideHighlight && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.1, 1] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="absolute inset-0 bg-accent-gold/20 rounded-inherit z-[-1] pointer-events-none"
+          />
+        )}
+      </AnimatePresence>
 
-      {/* LABEL (Mobile Responsive sizing) */}
       <div className={cn(
-        "flex flex-col items-center gap-1 lg:gap-2 select-none pointer-events-none transition-all duration-300",
-        active ? "opacity-100 scale-110 translate-y-[-3px]" : "opacity-30 translate-y-0",
+        "absolute top-6 sm:top-8 flex flex-col items-center opacity-70",
+        isWhite ? "text-black/40" : "text-white/30"
+      )}>
+        <span className="text-[10px] sm:text-xs font-black font-mono border border-current px-1.5 py-0.5 rounded-md uppercase tracking-widest">{keyLabel}</span>
+      </div>
+
+      <div className={cn(
+        "flex flex-col items-center gap-0.5 sm:gap-1 select-none pointer-events-none transition-all duration-300",
+        active ? "opacity-100 scale-110 translate-y-[-4px]" : "opacity-60",
         isWhite ? "text-black" : "text-white"
       )}>
         <span className={cn(
-          "font-black tracking-tightest uppercase",
-          isWhite ? "text-base lg:text-2xl" : "text-xs lg:text-lg",
-          highlighted && "text-accent-gold drop-shadow-lg"
+          "font-black tracking-tighter uppercase leading-none",
+          isWhite ? "text-xl sm:text-3xl" : "text-sm sm:text-xl",
+          (active || guideHighlight) && "text-accent-gold drop-shadow-md"
         )}>
-          {label}
+          {label.replace(/[0-9']|\./g, '')}
         </span>
-        <span className="text-[6px] lg:text-[9px] font-black uppercase tracking-widest opacity-60">
-            {note.replace(/\d+$/, '') === 'C' && note.includes('4') ? 'Mid' : ''}
+        <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-widest opacity-40 text-center">
+            {label.includes("'") ? "High" : label.includes(".") ? "Low" : ""}
+            {label.toLowerCase().includes('re') && label === 're' ? 'Komal' : 
+             label.toLowerCase().includes('ga') && label === 'ga' ? 'Komal' :
+             label.toLowerCase().includes('dha') && label === 'dha' ? 'Komal' :
+             label.toLowerCase().includes('ni') && label === 'ni' ? 'Komal' :
+             label.includes('#') ? 'Tivra' : 'Shuddh'}
         </span>
       </div>
 
-      {/* REED IGNITION */}
       <AnimatePresence>
         {active && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8, repeat: Infinity }}
-            className="absolute top-1.5 w-3 h-0.5 lg:w-5 lg:h-1 bg-accent-gold rounded-full shadow-[0_0_15px_var(--accent-gold)] z-30"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: -2 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="absolute bottom-20 sm:bottom-28 w-4 h-1 lg:w-6 lg:h-1.5 bg-accent-gold rounded-full shadow-[0_0_20px_var(--accent-gold)] z-30"
           />
         )}
       </AnimatePresence>
     </motion.div>
   );
-}
+});
 
-function highlightsToShadow(highlighted: boolean, isWhite: boolean) {
-  if (highlighted) {
-    return isWhite 
-      ? "inset 0 -15px 25px rgba(212,175,55,0.08), 0 15px 40px rgba(0,0,0,0.5)" 
-      : "inset 0 -15px 25px rgba(212,175,55,0.15), 0 20px 45px rgba(0,0,0,0.7)";
-  }
-  return isWhite ? "0 15px 40px rgba(0,0,0,0.4)" : "0 20px 50px rgba(0,0,0,0.8)";
-}

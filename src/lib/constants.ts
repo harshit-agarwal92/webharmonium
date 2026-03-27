@@ -27,26 +27,27 @@ for (let octave = START_OCTAVE; octave < START_OCTAVE + OCTAVES; octave++) {
 }
 
 export const KEYBOARD_MAPPING: Record<string, string> = {
-  // MIDDLE OCTAVE (Starting from C4) - Number Keys
-  '1': 'C4', '2': 'D4', '3': 'E4', '4': 'F4', '5': 'G4', '6': 'A4', '7': 'B4',
-  '8': 'C5', '9': 'D5', '0': 'E5', '-': 'F5', '=': 'G5',
-  
-  // BLACK KEYS FOR MIDDLE OCTAVE
-  'q': 'C#4', 'w': 'D#4', 'e': 'F#4', 'r': 'G#4', 't': 'A#4',
-  'y': 'C#5', 'u': 'D#5', 'i': 'F#5', 'o': 'G#5', 'p': 'A#5',
+  // WHITE KEYS (SA RE GA MA PA DHA NI SA)
+  'a': 'C4', // Sa
+  's': 'D4', // Re
+  'd': 'E4', // Ga
+  'f': 'F4', // Ma
+  'g': 'G4', // Pa
+  'h': 'A4', // Dha
+  'j': 'B4', // Ni
+  'k': 'C5', // Sa (higher)
 
-  // LOWER OCTAVE (Standard Home Row) - White Keys
-  'a': 'C3', 's': 'D3', 'd': 'E3', 'f': 'F3', 'g': 'G3', 'h': 'A3', 'j': 'B3',
-  'k': 'C4', 'l': 'D4', ';': 'E4', "'": 'F4',
-
-  // LOWER OCTAVE - Black Keys
-  'z': 'C#3', 'x': 'D#3', 'c': 'F#3', 'v': 'G#3', 'b': 'A#3',
-  'n': 'C#4', 'm': 'D#4', ',': 'F#4', '.': 'G#4', '/': 'A#4',
+  // BLACK KEYS (KOMAL RE, KOMAL GA, TIVRA MA, KOMAL DHA, KOMAL NI)
+  'w': 'C#4', // Komal Re
+  'e': 'D#4', // Komal Ga
+  't': 'F#4', // Tivra Ma
+  'y': 'G#4', // Komal Dha
+  'u': 'A#4', // Komal Ni
 
   // SPECIAL CONTROLS
   ' ': 'SUSTAIN',
-  'ArrowLeft': 'OCTAVE_DOWN',
-  'ArrowRight': 'OCTAVE_UP',
+  'arrowleft': 'OCTAVE_DOWN',
+  'arrowright': 'OCTAVE_UP',
 };
 
 
