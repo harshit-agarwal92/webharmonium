@@ -6,12 +6,13 @@ import { Keyboard } from '@/components/Keyboard';
 import { ControlPanel } from '@/components/ControlPanel';
 import { Visualizer } from '@/components/Visualizer';
 import { LandingPage } from '@/components/LandingPage';
-import { KEYBOARD_MAPPING } from '@/lib/constants';
+import { KEYBOARD_MAPPING, RADIX_NOTES } from '@/lib/constants';
 import { PRELOADED_SONGS } from '@/lib/songs';
 import { PRELOADED_BEATS } from '@/lib/beats';
 import { getSargamNote } from '@/lib/theory';
 import * as Tone from 'tone';
-import { LayoutPanelLeft, Music, Volume2, VolumeX } from 'lucide-react';
+import { LayoutPanelLeft, Music, Volume2, VolumeX, X, ArrowLeft } from 'lucide-react';
+import { SongSearch } from '@/components/SongSearch';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -29,7 +30,7 @@ export default function ProfessionalHarmonium() {
   const { 
     isLoaded, isReady, initAudio, playNote, stopNote, 
     setAudioParam, activeNotes, octaveOffset, sustain,
-    playBeat, stopBeat, playBackgroundTrack, stopBackgroundTrack
+    playBeat, stopBeat, stopAll, playBackgroundTrack, stopBackgroundTrack
   } = useAudioEngine();
 
   const [isStarted, setIsStarted] = useState(false);
@@ -49,10 +50,12 @@ export default function ProfessionalHarmonium() {
   const [rootNote, setRootNote] = useState('C');
   const [showConsole, setShowConsole] = useState(false);
   const [intensity, setIntensity] = useState(0);
+  const [selectedPreset, setSelectedPreset] = useState('classic');
 
   // Song Mode State
   const [currentSongId, setCurrentSongId] = useState(PRELOADED_SONGS[0].id);
   const [isPlayingSong, setIsPlayingSong] = useState(false);
+  const [isSongsOpen, setIsSongsOpen] = useState(false);
   const [songSpeed, setSongSpeed] = useState(1);
   const [guideNotes, setGuideNotes] = useState<string[]>([]);
   
@@ -71,26 +74,48 @@ export default function ProfessionalHarmonium() {
     setIsInitializing(false);
   };
 
-  const wrapPlayNote = useCallback((noteName: string) => {
+  const wrapPlayNote = useCallback((noteName: string, time?: number) => {
     if (!isStarted || !isReady || isMuted) return;
-    playNote(noteName);
-    setIntensity(prev => Math.min(prev + 8, 25));
-    setTimeout(() => setIntensity(prev => Math.max(0, prev - 4)), 150);
-  }, [playNote, isStarted, isReady, isMuted]);
+    
+    // APPLY GLOBAL ROOT OFFSET (TRANSPOSE BASED ON SELECTED SCALE)
+    const originalRootIdx = 0; // C
+    const currentRootIdx = RADIX_NOTES.indexOf(rootNote);
+    const rootOffset = currentRootIdx - originalRootIdx;
+    
+    const transposedNote = Tone.Frequency(noteName).transpose(rootOffset).toNote();
+    playNote(transposedNote, 0.8, time);
+    
+    if (!time) {
+        setIntensity(prev => Math.min(prev + 8, 25));
+        setTimeout(() => setIntensity(prev => Math.max(0, prev - 4)), 150);
+    }
+  }, [playNote, isStarted, isReady, isMuted, rootNote]);
 
-  const wrapStopNote = useCallback((noteName: string) => {
-    stopNote(noteName);
-  }, [stopNote]);
+  const wrapStopNote = useCallback((noteName: string, time?: number) => {
+    const originalRootIdx = 0; 
+    const currentRootIdx = RADIX_NOTES.indexOf(rootNote);
+    const rootOffset = currentRootIdx - originalRootIdx;
+    
+    const transposedNote = Tone.Frequency(noteName).transpose(rootOffset).toNote();
+    stopNote(transposedNote, time);
+  }, [stopNote, rootNote]);
 
-  // SYNC AUDIO PARAMS
+  // SYNC AUDIO ENGINE PARAMS
   useEffect(() => {
     setAudioParam('volume', isMuted ? 0 : volume);
+  }, [volume, isMuted, setAudioParam]);
+
+  useEffect(() => {
     setAudioParam('reverb', reverb);
     setAudioParam('octave', octaveShift);
     setAudioParam('sustain', sustainEffect);
+    setAudioParam('preset', selectedPreset);
+  }, [reverb, octaveShift, sustainEffect, selectedPreset, setAudioParam]);
+
+  useEffect(() => {
     setAudioParam('beatVolume', isMuted ? 0 : beatVolume);
-    setAudioParam('bgVolume', isMuted ? 0 : bgVolume);
-  }, [volume, reverb, octaveShift, sustainEffect, isMuted, beatVolume, bgVolume, setAudioParam]);
+    setAudioParam('bgVolume', (isMuted || !isBGActive) ? 0 : bgVolume);
+  }, [beatVolume, bgVolume, isMuted, isBGActive, setAudioParam]);
 
   // KEYBOARD EVENTS
   useEffect(() => {
@@ -136,15 +161,12 @@ export default function ProfessionalHarmonium() {
 
   // SONG PLAYBACK LOGIC
   const stopSong = useCallback(() => {
-    Tone.getTransport().stop();
-    Tone.getTransport().loop = false;
-    Tone.getTransport().cancel();
+    stopAll();
     scheduledEvents.current.forEach(id => Tone.getTransport().clear(id));
     scheduledEvents.current = [];
     setGuideNotes([]);
     setIsPlayingSong(false);
-    stopBackgroundTrack();
-  }, [stopBackgroundTrack]);
+  }, [stopAll]);
 
   const executePlaySong = useCallback((songId: string, speed: number) => {
     stopSong();
@@ -183,22 +205,37 @@ export default function ProfessionalHarmonium() {
     song.notes.forEach((item) => {
       const actualNote = translateNote(item.note);
       const transposedNote = Tone.Frequency(actualNote).transpose(rootOffset).toNote();
+      
+      // 1. SCHEDULE AUDIO
       const eventId = Tone.getTransport().schedule((time) => {
-        Tone.Draw.schedule(() => {
-          wrapPlayNote(transposedNote);
-          setGuideNotes([transposedNote]);
-        }, time);
+        wrapPlayNote(transposedNote, time);
       }, item.time);
       scheduledEvents.current.push(eventId);
 
+      // 2. SCHEDULE UI (Visualizer Pulse & Guide Notes)
+      const visualId = Tone.getTransport().schedule((time) => {
+        Tone.Draw.schedule(() => {
+          setGuideNotes([transposedNote]);
+          setIntensity(20);
+          setTimeout(() => setIntensity(0), 100);
+        }, time);
+      }, item.time);
+      scheduledEvents.current.push(visualId);
+
+      // 3. SCHEDULE AUDIO OFF
       const duration = Tone.Time(item.duration).toSeconds() / speed;
       const offEventId = Tone.getTransport().schedule((time) => {
+          wrapStopNote(transposedNote, time);
+      }, item.time + duration);
+      scheduledEvents.current.push(offEventId);
+
+      // 4. SCHEDULE UI OFF
+      const visualOffId = Tone.getTransport().schedule((time) => {
           Tone.Draw.schedule(() => {
-              wrapStopNote(transposedNote);
               setGuideNotes(prev => prev.filter(n => n !== transposedNote));
           }, time);
       }, item.time + duration);
-      scheduledEvents.current.push(offEventId);
+      scheduledEvents.current.push(visualOffId);
     });
 
     const lastNote = song.notes[song.notes.length - 1];
@@ -323,11 +360,61 @@ export default function ProfessionalHarmonium() {
                         bgVolume, isBGActive,
                         onToggleBG: setIsBGActive,
                         onBGVolumeChange: setBGVolume,
+                        selectedPreset,
+                        onPresetSelect: (id: string) => setAudioParam('preset', id),
+                        onSearchSongSelect: (url: string, name?: string, artist?: string) => {
+                          setIsBGActive(true);
+                          playBackgroundTrack(url, name, artist);
+                        },
+                        onStopBackground: stopBackgroundTrack,
+                        onOpenExplorer: () => setIsSongsOpen(true),
                         isLoaded
                       }}
                     />
                   </motion.aside>
                 </>
+              )}
+            </AnimatePresence>
+
+            {/* FULL SCREEN SONGS EXPLORER OVERLAY */}
+            <AnimatePresence>
+              {isSongsOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 1.1 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="fixed inset-0 z-[200] bg-[#0a0500] p-6 md:p-12 overflow-hidden flex flex-col"
+                >
+                  <div className="max-w-4xl mx-auto w-full h-full flex flex-col space-y-8">
+                     <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-6">
+                           <button 
+                             onClick={() => setIsSongsOpen(false)}
+                             className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-accent-gold hover:text-black transition-all group"
+                           >
+                             <ArrowLeft className="w-6 h-6 transition-transform group-hover:-translate-x-1" />
+                           </button>
+                           <h1 className="text-3xl font-black italic uppercase tracking-tighter">JIOSAAVN <span className="text-accent-gold">STUDIO</span></h1>
+                        </div>
+                        <button 
+                          onClick={() => setIsSongsOpen(false)}
+                          className="p-3 bg-white/5 rounded-full hover:bg-red-500/20 hover:text-red-500 transition-all"
+                        >
+                          <X className="w-6 h-6" />
+                        </button>
+                     </div>
+
+                     <div className="flex-1 bg-black/40 rounded-[32px] border border-white/5 p-8 overflow-hidden">
+                        <SongSearch 
+                          onSelectSong={(url, name, artist) => {
+                            setIsBGActive(true);
+                            playBackgroundTrack(url, name, artist);
+                          }}
+                          onStopSong={stopBackgroundTrack}
+                        />
+                     </div>
+                  </div>
+                </motion.div>
               )}
             </AnimatePresence>
 
@@ -365,7 +452,7 @@ export default function ProfessionalHarmonium() {
                                    className="px-4 py-1.5 glass rounded-xl border-accent-gold/20 text-accent-gold font-black text-sm italic shadow-lg"
                                >
                                    {/* Note name with octave indicators via display formatting */}
-                                   {getSargamNote(note, rootNote)}
+                                   {getSargamNote(Tone.Frequency(note).transpose(octaveShift * 12).toNote(), rootNote)}
                                </motion.div>
                            ))}
                        </div>
@@ -397,7 +484,33 @@ export default function ProfessionalHarmonium() {
 
                 {/* KEYBOARD BOTTOM */}
                 <div className="shrink-0 w-full bg-black/60 border-t border-white/5 pb-6 lg:pb-16 pt-4 relative">
-                    <Keyboard 
+                    {/* QUICK ACCESS SARGAM PADS */}
+        <div className="flex justify-center gap-2 sm:gap-4 mb-4 sm:mb-8 px-4">
+           {['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4'].map((noteName, idx) => {
+              const label = ['Sa', 'Re', 'Ga', 'Ma', 'Pa', 'Dha', 'Ni'][idx];
+              const isActive = activeNotes.includes(noteName);
+              return (
+                <button
+                  key={noteName}
+                  onMouseDown={() => wrapPlayNote(noteName)}
+                  onMouseUp={() => wrapStopNote(noteName)}
+                  onTouchStart={(e) => { e.preventDefault(); wrapPlayNote(noteName); }}
+                  onTouchEnd={(e) => { e.preventDefault(); wrapStopNote(noteName); }}
+                  className={cn(
+                    "flex-1 max-w-[80px] h-12 sm:h-20 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-1 border-t-[3px] sm:border-t-[5px] transition-all active:scale-95 shadow-2xl",
+                    isActive 
+                      ? "bg-accent-gold text-black border-yellow-200 brightness-125" 
+                      : "bg-gradient-to-b from-[#4d3319] to-[#2b1d0e] border-[#8a5a2b] text-white/80 hover:brightness-110"
+                  )}
+                >
+                  <span className="text-[8px] sm:text-[10px] uppercase font-black tracking-widest opacity-40">{noteName.replace('4', '')}</span>
+                  <span className="text-sm sm:text-2xl font-black uppercase tracking-tighter">{label}</span>
+                </button>
+              );
+           })}
+        </div>
+        
+        <Keyboard 
                        playNote={wrapPlayNote} stopNote={wrapStopNote} 
                        activeNotes={activeNotes} guideNotes={guideNotes}
                        labelMode={labelMode} selectedScale={selectedScale} rootNote={rootNote}

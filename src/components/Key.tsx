@@ -46,8 +46,8 @@ export const Key = memo(function Key({
       className={cn(
         "relative flex flex-col items-center justify-end pb-8 sm:pb-12 transition-all duration-200 pointer-events-auto select-none touch-none will-change-transform cursor-pointer",
         isWhite 
-          ? "w-[min(56px,8.5vw)] sm:w-[68px] h-[40vh] sm:h-[48vh] bg-gradient-to-b from-[#ffffff] via-[#fdfdfd] to-[#f2f2f2] border-b-[8px] sm:border-b-[12px] border-[#c0c0c0] rounded-b-[1.5rem] lg:rounded-b-[2rem] z-0 border-x border-[#f5f5f5]" 
-          : "w-[min(34px,5.5vw)] sm:w-[42px] h-[24vh] sm:h-[30vh] bg-gradient-to-b from-[#404040] via-[#1a1a1a] to-[#000000] rounded-b-xl sm:rounded-b-2xl shadow-[0_12px_30px_rgba(0,0,0,0.85)] z-10 -mx-[min(17px,2.75vw)] sm:-mx-[21px] border-t-[3px] sm:border-t-[5px] border-[#555] border-x border-black/90",
+          ? "w-[min(56px,8.5vw)] sm:w-[68px] h-[40vh] sm:h-[48vh] bg-gradient-to-b from-[#fffff0] via-[#f8f8e0] to-[#f0f0d0] border-b-[8px] sm:border-b-[12px] border-[#d2b48c] rounded-b-[1.5rem] lg:rounded-b-[2rem] z-0 border-x border-black/5" 
+          : "w-[min(34px,5.5vw)] sm:w-[42px] h-[24vh] sm:h-[30vh] bg-gradient-to-b from-[#2a2a2a] via-[#111] to-[#000] rounded-b-xl sm:rounded-b-2xl shadow-[0_12px_30px_rgba(0,0,0,0.85)] z-10 -mx-[min(17px,2.75vw)] sm:-mx-[21px] border-t-[3px] sm:border-t-[5px] border-[#333] border-x border-black/90",
         
         active && (isWhite ? "bg-[#eee] brightness-90 shadow-inner" : "brightness-125"),
         !active && highlighted && "after:content-[''] after:absolute after:bottom-4 after:w-1.5 after:h-1.5 after:bg-accent-gold/40 after:rounded-full after:blur-[2px]",
@@ -99,9 +99,13 @@ export const Key = memo(function Key({
         isWhite ? "text-black" : "text-white"
       )}>
         <span className={cn(
-          "font-black tracking-tighter uppercase leading-none",
+          "font-black tracking-tighter uppercase leading-none drop-shadow-sm",
           isWhite ? "text-xl sm:text-3xl" : "text-sm sm:text-xl",
-          (active || guideHighlight) && "text-accent-gold drop-shadow-md"
+          active || guideHighlight ? "text-accent-gold scale-125 brightness-150" : (
+            ['Sa', 'Ga', 'Pa'].some(n => label.includes(n)) ? "text-blue-600/60" : 
+            ['Re', 'Ma', 'Dha', 'Ni'].some(n => label.toLowerCase().includes(n.toLowerCase())) ? "text-red-600/60" : 
+            isWhite ? "text-black/60" : "text-white/60"
+          )
         )}>
           {label.replace(/[0-9']|\./g, '')}
         </span>

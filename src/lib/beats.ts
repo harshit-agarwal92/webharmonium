@@ -149,5 +149,17 @@ export const PRELOADED_BEATS: Beat[] = [
     name: 'Bass & Tabla Fusion',
     url: 'https://cdn.pixabay.com/audio/2025/01/24/audio_9a6a83d3c7.mp3',
     bpm: 100
+  },
+  {
+    id: 'synth-lofi-kick',
+    name: 'Synth Lo-fi Kick (Custom)',
+    url: 'synth',
+    bpm: 100
+  },
+  {
+    id: 'ishqa-ve-custom',
+    name: 'Ishqa Ve Custom Style',
+    url: '/custom/ishqa-ve-koshalworldcom_qBL8lWcB.mp3',
+    bpm: 120
   }
 ];

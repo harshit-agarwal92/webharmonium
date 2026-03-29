@@ -11,8 +11,10 @@ export const getSargamNote = (note: string, rootNote: string) => {
   let label = sargamMapping[distance] || '';
   
   // Octave logic (Middle octave is 4 in our system)
-  if (octave < 4) label = `.${label}`;
-  else if (octave > 4) label = `${label}'`;
+  if (octave === 3) label = `.${label}`;
+  else if (octave < 3) label = `..${label}`;
+  else if (octave === 5) label = `${label}'`;
+  else if (octave > 5) label = `${label}''`;
   
   return label;
 };

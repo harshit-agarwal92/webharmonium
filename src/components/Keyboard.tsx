@@ -80,8 +80,19 @@ export function Keyboard({
       <div className="absolute inset-y-0 left-0 w-12 md:w-32 bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none" />
       <div className="absolute inset-y-0 right-0 w-12 md:w-32 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none" />
 
-      {/* MAHOGANY HOUSING */}
-      <div className="wood-mahogany rounded-t-3xl lg:rounded-t-[4rem] border-t-[4px] lg:border-t-[8px] border-white/10 shadow-3xl overflow-hidden pt-4 lg:pt-8 bg-[#1a0b0b]">
+      {/* HONEY OAK HOUSING */}
+      <div className="bg-[#5c3a21] rounded-t-3xl lg:rounded-t-[4rem] border-t-[4px] lg:border-t-[8px] border-white/20 shadow-3xl overflow-hidden pt-4 lg:pt-8 relative">
+        <div className="absolute inset-0 opacity-40 mix-blend-overlay pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]" />
+        
+        {/* BRASS STOPPERS (KNOBS) */}
+        <div className="flex justify-center gap-4 sm:gap-12 mb-6 sm:mb-10 relative z-20">
+           {Array.from({length: 9}).map((_, i) => (
+             <div key={i} className="flex flex-col items-center gap-1">
+                <div className="w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-[#8a6d3b] via-[#d4af37] to-[#f9d423] shadow-lg border border-black/20" />
+                <div className="w-1.5 h-4 sm:w-2 sm:h-6 bg-black/40 rounded-full" />
+             </div>
+           ))}
+        </div>
         
         {/* REED VENTS */}
         <div className="h-4 lg:h-6 flex items-center justify-center gap-4 lg:gap-12 opacity-10 mb-2 px-10">

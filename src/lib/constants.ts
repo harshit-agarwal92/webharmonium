@@ -16,7 +16,7 @@ export const NOTES = [
 ];
 
 export const OCTAVES = 4;
-export const START_OCTAVE = 2;
+export const START_OCTAVE = 3;
 
 // CACHE OF ALL NOTES FOR THE KEYBOARD
 export const noteRange: string[] = [];
@@ -44,6 +44,10 @@ export const KEYBOARD_MAPPING: Record<string, string> = {
   'y': 'G#4', // Komal Dha
   'u': 'A#4', // Komal Ni
 
+  // NUMBER KEYS (QUICK SARGAM PLAY)
+  '1': 'C4', '2': 'D4', '3': 'E4', '4': 'F4', '5': 'G4', '6': 'A4', '7': 'B4', '8': 'C5',
+  '9': 'D5', '0': 'E5',
+
   // SPECIAL CONTROLS
   ' ': 'SUSTAIN',
   'arrowleft': 'OCTAVE_DOWN',
@@ -54,7 +58,9 @@ export const KEYBOARD_MAPPING: Record<string, string> = {
 
 
 export const PRESETS_LIST = [
+  { id: 'custom', label: 'Custom Voice (MP3)' },
   { id: 'classic', label: 'Classic Harmonium' },
+  { id: 'piano', label: 'Grand Piano' },
   { id: 'bright', label: 'Bright Harmonium' },
   { id: 'bass', label: 'Bass Harmonium' },
   { id: 'soft', label: 'Soft Harmonium' },

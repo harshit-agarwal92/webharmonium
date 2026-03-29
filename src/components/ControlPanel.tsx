@@ -15,7 +15,10 @@ import {
   FastForward
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SCALES, RADIX_NOTES } from '@/lib/constants';
+import { SCALES, RADIX_NOTES, PRESETS_LIST } from '@/lib/constants';
+import { SongSearch } from './SongSearch';
+import Link from 'next/link';
+
 interface ControlPanelProps {
   volume: number; setVolume: (v: number) => void;
   reverb: number; setReverb: (v: number) => void;
@@ -50,7 +53,11 @@ interface ControlPanelProps {
   isBGActive: boolean;
   onToggleBG: (active: boolean) => void;
   onBGVolumeChange: (vol: number) => void;
-
+  selectedPreset: string;
+  onPresetSelect: (id: string) => void;
+  onSearchSongSelect: (url: string, name?: string, artist?: string) => void;
+  onStopBackground: () => void;
+  onOpenExplorer: () => void;
   isLoaded: boolean;
 }
 
@@ -64,6 +71,9 @@ export function ControlPanel(props: ControlPanelProps) {
     isPlayingSong, currentSongId, songSpeed, onToggleSong, onSongSelect, onSpeedSelect,
     isPlayingBeat, currentBeatId, beatVolume, onToggleBeat, onBeatSelect, onBeatVolumeChange,
     bgVolume, isBGActive, onToggleBG, onBGVolumeChange,
+    selectedPreset, onPresetSelect,
+    onSearchSongSelect, onStopBackground,
+    onOpenExplorer,
     isLoaded
   } = props;
 
@@ -76,6 +86,21 @@ export function ControlPanel(props: ControlPanelProps) {
         icon={<Music className="w-4 h-4" />} 
         className={cn("border-accent-gold/10 transition-all duration-500", isPlayingSong && "border-accent-gold/60 shadow-[0_0_40px_-10px_rgba(212,175,55,0.3)] bg-accent-gold/[0.04] animate-pulse-slow")}
       >
+        <div className="bg-white/5 rounded-2xl p-4 border border-white/5 overflow-hidden mb-6">
+          <div className="flex items-center justify-between mb-4">
+             <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">JioSaavn Search</span>
+             <button 
+               onClick={onOpenExplorer}
+               className="text-[9px] font-black uppercase tracking-widest text-accent-gold hover:underline"
+             >
+               Full Explorer →
+             </button>
+          </div>
+          <div className="h-[300px]">
+            <SongSearch onSelectSong={onSearchSongSelect} onStopSong={onStopBackground} />
+          </div>
+        </div>
+
         <div className="flex flex-col gap-4">
            {isPlayingSong && (
              <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-gold/10 rounded-full w-fit">
@@ -84,7 +109,7 @@ export function ControlPanel(props: ControlPanelProps) {
              </div>
            )}
            <div className="flex flex-col gap-2">
-              <span className="text-[10px] uppercase font-black text-white/20 tracking-widest pl-1">Select Song</span>
+              <span className="text-[10px] uppercase font-black text-white/20 tracking-widest pl-1">Select Classic Song</span>
               <select 
                 value={currentSongId} 
                 onChange={(e) => onSongSelect(e.target.value)} 
@@ -97,7 +122,7 @@ export function ControlPanel(props: ControlPanelProps) {
            {/* Background Track Controls */}
            <div className="bg-white/5 rounded-2xl p-4 border border-white/5 space-y-3">
               <div className="flex items-center justify-between">
-                 <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">Background Track</span>
+                 <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">Tune Volume</span>
                  <button 
                   onClick={() => onToggleBG?.(!isBGActive)}
                   className={cn("px-3 py-1 rounded-full text-[9px] font-black transition-all", isBGActive ? "bg-accent-gold text-black" : "bg-white/10 text-white/40")}
@@ -109,29 +134,11 @@ export function ControlPanel(props: ControlPanelProps) {
            </div>
 
            <div className="flex gap-3">
-              <div className="flex-1 flex flex-col gap-2">
-                 <span className="text-[10px] uppercase font-black text-white/20 tracking-widest pl-1">Speed</span>
-                 <div className="flex gap-1">
-                    {[0.5, 1, 1.5].map(s => (
-                      <button 
-                        key={s} 
-                        onClick={() => onSpeedSelect(s)}
-                        className={cn(
-                          "flex-1 py-2 rounded-xl text-[10px] font-black border transition-all",
-                          songSpeed === s ? "bg-accent-gold text-black border-accent-gold" : "bg-white/5 border-white/5 text-white/40"
-                        )}
-                      >
-                         {s}x
-                      </button>
-                    ))}
-                 </div>
-              </div>
-              
               <button 
                 onClick={onToggleSong}
                 disabled={!isLoaded}
                 className={cn(
-                  "flex-[1.5] rounded-2xl font-black uppercase tracking-widest text-xs border transition-all flex items-center justify-center gap-3 shadow-xl",
+                  "flex-1 rounded-2xl font-black uppercase tracking-widest text-xs border transition-all h-14 flex items-center justify-center gap-3 shadow-xl",
                   isPlayingSong ? "bg-red-500 text-white border-red-400" : "bg-accent-gold text-black border-accent-gold",
                   !isLoaded && "opacity-50 cursor-not-allowed grayscale"
                 )}
@@ -148,6 +155,32 @@ export function ControlPanel(props: ControlPanelProps) {
         <div className="grid grid-cols-2 gap-4">
            <KnobControl label="VOLUME" value={volume} onChange={setVolume} min={0} max={1.5} />
            <KnobControl label="REVERB" value={reverb} onChange={setReverb} min={0} max={1.0} />
+        </div>
+
+        {/* INSTRUMENT PRESET SELECTOR */}
+        <div className="mt-6 flex flex-col gap-2">
+           <span className="text-[10px] uppercase font-black text-white/20 tracking-widest pl-1">Instrument Preset</span>
+           <div className="grid grid-cols-2 gap-2">
+              {PRESETS_LIST.slice(0, 4).map(p => (
+                <button 
+                  key={p.id} 
+                  onClick={() => onPresetSelect(p.id)}
+                  className={cn(
+                    "py-2.5 rounded-xl text-[10px] font-black border transition-all uppercase tracking-widest",
+                    selectedPreset === p.id ? "bg-accent-gold text-black border-accent-gold" : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
+                  )}
+                >
+                   {p.label}
+                </button>
+              ))}
+           </div>
+           <select 
+              value={selectedPreset} 
+              onChange={(e) => onPresetSelect(e.target.value)}
+              className="mt-1 w-full bg-black/40 border border-white/10 rounded-xl p-3 text-[10px] font-black outline-none text-accent-gold"
+           >
+              {PRESETS_LIST.map(p => <option key={p.id} value={p.id} className="bg-[#111]">{p.label}</option>)}
+           </select>
         </div>
         
         <div className="grid grid-cols-2 gap-3 mt-6">
