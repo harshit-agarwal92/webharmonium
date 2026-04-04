@@ -1,102 +1,94 @@
 @import "tailwindcss";
 
 @theme {
-  --color-accent-gold: #d4af37;
-  --color-accent-gold-glow: rgba(212, 175, 55, 0.4);
+  --color-spotify-green: #1DB954;
+  --color-spotify-green-glow: rgba(29, 185, 84, 0.4);
+  --color-spotify-black: #000000;
+  --color-spotify-dark-gray: #121212;
+  --color-spotify-light-gray: #181818;
+  --color-spotify-card-hover: #282828;
+  --color-spotify-text-secondary: #b3b3b3;
 }
 
 @layer base {
   body {
-    background-color: #0a0c10;
-    color: #f4ece1;
+    background-color: var(--color-spotify-black);
+    color: #ffffff;
     overflow-x: hidden;
+    scroll-behavior: smooth;
+    min-height: 100vh;
+    font-family: var(--font-inter), sans-serif;
   }
 }
 
 @layer components {
-  .glass {
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+  .spotify-sidebar {
+    background-color: var(--color-spotify-black);
+    width: 240px;
+    flex-shrink: 0;
   }
 
-  /* FLAGSHIP WOOD GRAINS */
-  .wood-mahogany {
-    background: linear-gradient(135deg, #3d1c1c 0%, #1e0b0b 100%);
-    position: relative;
+  .spotify-card {
+    background-color: var(--color-spotify-light-gray);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    border-radius: 12px;
   }
 
-  .wood-mahogany::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    opacity: 0.15;
-    background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png');
-    pointer-events: none;
+  .spotify-card:hover {
+    background-color: var(--color-spotify-card-hover);
+    transform: translateY(-4px);
   }
 
-  .wood-mahogany::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to right, rgba(0,0,0,0.6), transparent 15%, transparent 85%, rgba(0,0,0,0.6));
-    pointer-events: none;
+  .player-bar {
+    background: rgba(18, 18, 18, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .active-nav-item {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .active-nav-glow {
+    box-shadow: 0 0 20px var(--color-spotify-green-glow);
   }
 
   .custom-scrollbar::-webkit-scrollbar {
-    height: 6px;
-    width: 6px;
+    width: 12px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 10px;
+    background: transparent;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(212, 175, 55, 0.2);
-    border-radius: 10px;
-    border: 2px solid rgba(0, 0, 0, 0);
+    background: rgba(255, 255, 255, 0.3);
+    border: 3px solid transparent;
     background-clip: padding-box;
+    border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(212, 175, 55, 0.4);
-    border: 2px solid rgba(0, 0, 0, 0);
-    background-clip: padding-box;
+    background: rgba(255, 255, 255, 0.5);
   }
 
-  .animate-sweep {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .animate-sweep::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 60%;
-    height: 100%;
-    background: linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent);
-    animation: light-sweep 3.5s infinite linear;
-    pointer-events: none;
+  .glass-effect {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
   }
 }
 
-@keyframes light-sweep {
-  0% { transform: translateX(-100%) skewX(-15deg); }
-  100% { transform: translateX(200%) skewX(-15deg); }
+.bg-gradient-spotify {
+  background: linear-gradient(to bottom, #121212 0%, #000000 100%);
 }
 
-/* NO SCROLLBAR FOR MOBILE KEYBOARD */
-.no-scrollbar-on-mobile::-webkit-scrollbar {
-    display: none;
+.nav-link {
+  @apply flex items-center gap-4 px-4 py-3 rounded-lg text-spotify-text-secondary font-bold transition-all hover:text-white duration-300;
 }
 
-@media (min-width: 1024px) {
-    .no-scrollbar-on-mobile::-webkit-scrollbar {
-        display: block;
-    }
+.nav-link-active {
+  @apply text-white;
 }

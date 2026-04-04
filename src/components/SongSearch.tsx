@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Play, Music, Loader2, TrendingUp, Filter } from 'lucide-react';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Search, Play, Loader2, Flame, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface Song {
   id: string;
@@ -13,130 +16,150 @@ interface Song {
 }
 
 interface SongSearchProps {
-  onSelectSong: (url: string, name?: string, artist?: string) => void;
-  onStopSong: () => void;
+  query?: string;
+  onResultsUpdate?: (results: Song[]) => void;
+  onSelectSong: (url: string, name?: string, artist?: string, img?: string) => void;
+  onStopSong?: () => void;
+  isBGActive: boolean;
+  setIsBGActive: (active: boolean) => void;
 }
 
-export const SongSearch: React.FC<SongSearchProps> = ({ onSelectSong, onStopSong }) => {
-  const [query, setQuery] = useState('');
+export const SongSearch = ({ query = '', onResultsUpdate, onSelectSong, isBGActive, setIsBGActive }: SongSearchProps) => {
   const [results, setResults] = useState<Song[]>([]);
+  const [trending, setTrending] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    searchSongs('@trending');
+    fetchTrending();
   }, []);
 
-  const searchSongs = async (searchQuery?: string) => {
-    const activeQuery = searchQuery || query;
-    if (!activeQuery) return;
-    
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    if (query) {
+      const delayDebounceFn = setTimeout(() => {
+        searchSongs(query);
+      }, 500);
+      return () => clearTimeout(delayDebounceFn);
+    } else {
+      setResults([]);
+    }
+  }, [query]);
+
+  const fetchTrending = async () => {
     try {
-      const response = await fetch(`/api/songs?query=${encodeURIComponent(activeQuery)}`);
+      const response = await fetch(`/api/songs?query=${encodeURIComponent('@trending')}`);
+      if (response.ok) {
+        const data = await response.json();
+        setTrending(data.results || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch trending:", e);
+    }
+  };
+
+  const searchSongs = async (searchQuery: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/songs?query=${encodeURIComponent(searchQuery)}`);
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
-      setResults(data.results || []);
+      const songs = data.results || [];
+      setResults(songs);
+      onResultsUpdate?.(songs);
     } catch (e) {
-      setError('Connection failed. Please check your network.');
+      console.error("Search failed:", e);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-full text-white font-sans">
-      {/* JioSaavn-Style Search Header */}
-      <div className="relative group mb-8">
-        <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-[24px] blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-        <div className="relative flex items-center bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[20px] p-2 pr-4 shadow-2xl">
-          <div className="p-3 bg-teal-500/20 rounded-xl mr-3">
-             <Search className="h-5 w-5 text-teal-400" />
-          </div>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && searchSongs()}
-            placeholder="Search on JioSaavn..."
-            className="flex-1 bg-transparent border-none outline-none text-sm font-medium placeholder-white/20"
-          />
-          <button
-            onClick={() => searchSongs()}
-            disabled={loading}
-            className="bg-emerald-500 text-black px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all"
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "FIND"}
-          </button>
-        </div>
-      </div>
+    <div className="flex flex-col h-full text-white font-sans animate-fade-in">
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-12">
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pr-2">
-        {loading && results.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-teal-500/40">
-            <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin mb-4" />
-            <p className="text-[10px] font-black uppercase tracking-[0.4em]">Fetching JioSaavn Library...</p>
-          </div>
+        {/* IF SEARCHING SHOW RESULTS */}
+        {query && (
+          <section className="space-y-6">
+            <div className="flex items-center gap-2 px-2">
+              <Search className="w-4 h-4 text-spotify-green" />
+              <h3 className="text-2xl font-black font-poppins tracking-tight">Search Results</h3>
+            </div>
+
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-24">
+                <Loader2 className="w-10 h-10 animate-spin text-spotify-green" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                <AnimatePresence>
+                  {results.map((song, i) => (
+                    <SongCard key={song.id + i} song={song} onClick={() => onSelectSong(song.url, song.name, song.artist, song.image)} />
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </section>
         )}
 
-        {/* Empty State / Trending Chips */}
-        {!query && results.length === 0 && !loading && (
-           <div className="space-y-6">
-              <div className="flex items-center gap-2 px-1">
-                 <TrendingUp className="w-4 h-4 text-emerald-400" />
-                 <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">Trending Categories</span>
+        {/* DEFAULT VIEW: TRENDING & CATEGORIES */}
+        {!query && (
+          <>
+            <section className="space-y-6">
+              <div className="flex items-center justify-between px-2">
+                <div className="flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-orange-500 fill-orange-500" />
+                  <h3 className="text-2xl font-black font-poppins tracking-tight">Trending Now</h3>
+                </div>
+                <button className="text-xs font-bold text-spotify-text-secondary uppercase tracking-widest hover:underline">Show All</button>
               </div>
-              <div className="flex flex-wrap gap-2">
-                 {['Bollywood Hits', 'Devotional', 'Arijit Singh', 'Indie Hindi', 'MS Dhoni'].map(tag => (
-                   <button 
-                     key={tag} 
-                     onClick={() => { setQuery(tag); searchSongs(tag); }}
-                     className="px-4 py-2 bg-white/5 border border-white/5 rounded-full text-[10px] font-bold hover:bg-teal-500 hover:text-black transition-all"
-                   >
-                     {tag}
-                   </button>
-                 ))}
+
+              <div className="flex gap-6 overflow-x-auto pb-6 custom-scrollbar no-scrollbar-on-mobile snap-x h-[280px] items-start">
+                {trending.map((song, i) => (
+                  <SongCard key={'trend' + song.id + i} song={song} onClick={() => onSelectSong(song.url, song.name, song.artist, song.image)} large />
+                ))}
               </div>
-           </div>
+            </section>
+
+            <section className="space-y-6">
+              <div className="flex items-center gap-2 px-2">
+                <Sparkles className="w-5 h-5 text-spotify-green" />
+                <h3 className="text-2xl font-black font-poppins tracking-tight">Recently Played</h3>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                {trending.slice(0, 5).map((song, i) => (
+                  <SongCard key={'recent' + song.id + i} song={song} onClick={() => onSelectSong(song.url, song.name, song.artist, song.image)} />
+                ))}
+              </div>
+            </section>
+          </>
         )}
-
-        {/* Search Results in JioSaavn Layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <AnimatePresence>
-            {results.map((song, i) => (
-              <motion.div
-                key={song.id + i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="group relative flex items-center gap-4 bg-white/5 p-4 rounded-3xl border border-white/5 hover:bg-white/10 hover:border-teal-500/20 transition-all cursor-pointer overflow-hidden"
-                onClick={() => onSelectSong(song.url, song.name, song.artist)}
-              >
-                <div className="absolute top-2 right-2 flex gap-1">
-                   {song.source === 'saavn' && <span className="text-[6px] font-black bg-teal-500 text-black px-1.2 rounded-sm rotate-12">SAAVN</span>}
-                </div>
-                <div className="relative shrink-0">
-                  <img src={song.image} alt={song.name} className="w-16 h-16 rounded-2xl object-cover shadow-2xl group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-teal-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
-                     <Play className="w-6 h-6 fill-current text-white" />
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-bold text-white truncate leading-tight group-hover:text-teal-400 transition-colors">{song.name}</h4>
-                  <p className="text-[10px] text-white/40 font-medium truncate mt-1 uppercase tracking-tighter">{song.artist}</p>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
       </div>
-
-      <button
-        onClick={onStopSong}
-        className="mt-6 w-full py-4 bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 text-[10px] font-black rounded-2xl border border-red-500/20 transition-all uppercase tracking-[0.3em]"
-      >
-        SILENCE BACKGROUND
-      </button>
     </div>
   );
 };
+
+function SongCard({ song, onClick, large = false }: { song: Song, onClick: () => void, large?: boolean }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -5 }}
+      onClick={onClick}
+      className={cn(
+        "group relative flex flex-col gap-4 spotify-card p-4 cursor-pointer snap-start",
+        large ? "w-52" : "w-full"
+      )}
+    >
+      <div className="relative aspect-square w-full rounded-lg overflow-hidden shadow-2xl">
+        <img src={song.image} alt={song.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+        <div className="absolute right-2 bottom-2 bg-spotify-green p-3 rounded-full shadow-2xl opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+          <Play className="w-6 h-6 fill-current text-black" />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1 min-w-0">
+        <h4 className="text-sm font-bold text-white truncate leading-tight group-hover:underline">{song.name}</h4>
+        <p className="text-xs text-spotify-text-secondary truncate">{song.artist}</p>
+      </div>
+    </motion.div>
+  );
+}

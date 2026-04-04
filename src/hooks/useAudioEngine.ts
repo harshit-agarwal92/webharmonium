@@ -37,6 +37,8 @@ export function useAudioEngine() {
   const [sustain, setSustain] = useState(false);
   const [currentPreset, setCurrentPreset] = useState('classic');
   const [isSynthBeat, setIsSynthBeat] = useState(false);
+  const [bgTime, setBgTime] = useState(0);
+  const [bgDuration, setBgDuration] = useState(0);
 
   useEffect(() => {
     // AUDIO GRAPH - 3 Distinct Mixing Channels
@@ -258,7 +260,7 @@ export function useAudioEngine() {
   }, [sustain, octaveOffset, currentPreset]);
 
   // BACKGROUND TRACKS
-  const playBackgroundTrack = useCallback(async (url: string, songName?: string, artist?: string) => {
+  const playBackgroundTrack = useCallback(async (url: string, songName?: string, artist?: string, onStateChange?: (playing: boolean) => void) => {
     if (!bgGainRef.current || !url) return;
     try {
       // FORCE AUDIO RESUME
@@ -346,6 +348,12 @@ export function useAudioEngine() {
       bgAudioRef.current = audio;
       bgNodeRef.current = source;
 
+      // Real-time metadata listeners
+      audio.ontimeupdate = () => setBgTime(audio.currentTime);
+      audio.onloadedmetadata = () => setBgDuration(audio.duration);
+      audio.onplay = () => onStateChange?.(true);
+      audio.onpause = () => onStateChange?.(false);
+
       // Start playback
       const playPromise = audio.play();
       if (playPromise !== undefined) {
@@ -395,6 +403,7 @@ export function useAudioEngine() {
       case 'preset': setCurrentPreset(String(val)); break;
       case 'beatVolume': beatGainRef.current?.gain.rampTo(Number(val), 0.1); break;
       case 'bgVolume': bgGainRef.current?.gain.rampTo(Number(val), 0.1); break;
+      case 'bgRepeat': if (bgAudioRef.current) bgAudioRef.current.loop = Boolean(val); break;
     }
   }, [isLoaded]);
 
@@ -412,7 +421,9 @@ export function useAudioEngine() {
     stopBeat,
     stopAll,
     playBackgroundTrack,
-    stopBackgroundTrack
+    stopBackgroundTrack,
+    bgTime,
+    bgDuration
   };
 }
 

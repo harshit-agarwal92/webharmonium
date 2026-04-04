@@ -9,9 +9,7 @@ export function Visualizer() {
   const fftRef = useRef<Tone.Analyser | null>(null);
 
   useEffect(() => {
-    // Waveform for smooth curves
     const analyser = new Tone.Analyser('waveform', 256);
-    // FFT for high-energy bars
     const fft = new Tone.Analyser('fft', 64);
     
     Tone.getDestination().connect(analyser);
@@ -38,24 +36,23 @@ export function Visualizer() {
 
       ctx.clearRect(0, 0, width, height);
       
-      // Optimization: Disable expensive shadows unless absolutely needed
-      ctx.shadowBlur = 0; 
-
-      // --- 1. DYNAMIC BACKGROUND SPECTROGRAM (Subtle) ---
+      // 1. NEON BARS (FFT)
       const barWidth = (width / 2) / freq.length;
-      ctx.fillStyle = `rgba(212, 175, 55, 0.05)`;
       for (let i = 0; i < freq.length; i++) {
-          const v = Math.abs(freq[i]) / 100;
+          const v = (freq[i] + 140) / 100; // Normalized -140 to 0dB approx
           if (v > 0.01) {
+            ctx.fillStyle = `rgba(0, 255, 204, ${v * 0.1})`;
             ctx.fillRect(centerX + i * barWidth, 0, barWidth, height);
             ctx.fillRect(centerX - i * barWidth, 0, -barWidth, height);
           }
       }
 
-      // --- 2. MAIN SYMMETRICAL WAVEFORM ---
+      // 2. MAIN SYMMETRICAL WAVEFORM (Neon Green)
       ctx.beginPath();
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#00ffcc';
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = '#00ffcc88';
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
 
@@ -78,18 +75,19 @@ export function Visualizer() {
       }
       ctx.stroke();
 
-      // --- 3. HARMONIC LIGHT PULSE (Secondary dim wave) ---
+      // 3. CYAN GLOW WAVE (Subtle)
       ctx.beginPath();
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = 'rgba(212, 175, 55, 0.2)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
+      ctx.shadowBlur = 0;
       
       for (let i = 0; i < waveform.length; i += 4) {
-        const v = waveform[i] * -8;
+        const v = waveform[i] * -8 + Math.sin(Date.now() / 1000 + i) * 5;
         ctx.lineTo(centerX + (i * sliceWidth), centerY + (v));
       }
       ctx.moveTo(centerX, centerY);
       for (let i = 0; i < waveform.length; i += 4) {
-        const v = waveform[i] * -8;
+        const v = waveform[i] * -8 + Math.sin(Date.now() / 1000 + i) * 5;
         ctx.lineTo(centerX - (i * sliceWidth), centerY + (v));
       }
       ctx.stroke();
@@ -107,14 +105,16 @@ export function Visualizer() {
   }, []);
 
   return (
-    <div className="w-full h-full relative flex items-center justify-center">
-      <div className="absolute w-[1px] h-full bg-accent-gold/5 blur-[2px]" />
+    <div className="w-full h-full relative flex items-center justify-center pointer-events-none">
+      <div className="absolute w-[1px] h-full bg-neon-green/10 blur-[4px]" />
       <canvas 
         ref={canvasRef} 
         width={1024} 
         height={400} 
-        className="w-full h-full object-contain filter contrast-[1.2] brightness-[1.1]"
+        className="w-full h-full object-contain filter contrast-[1.1]"
       />
+      {/* AMBIENT RADIAL GLOW AT CENTER */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,204,0.05)_0%,transparent_70%)]" />
     </div>
   );
 }

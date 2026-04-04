@@ -50,7 +50,7 @@ export async function GET(request: Request) {
       return {
         id: s.id,
         name: s.name || s.title,
-        artist: s.primaryArtists || s.artist || 'JioSaavn Artist',
+        artist: s.primaryArtists || s.artist || 'Professional Artist',
         album: s.album?.name || s.album || 'Single',
         image: typeof bestImage === 'string' ? bestImage : bestImage?.url,
         url: typeof bestAudio === 'string' ? bestAudio : bestAudio?.url,

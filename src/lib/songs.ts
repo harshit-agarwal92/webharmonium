@@ -38,7 +38,7 @@ export const PRELOADED_SONGS: Song[] = [
   },
   {
     id: 'arzkiyajain',
-    name: 'Arz Kiya Hai (JioSaavn)',
+    name: 'Arz Kiya Hai (Studio)',
     difficulty: 'hard',
     backgroundUrl: 'https://aac.saavncdn.com/393/9860c239328a6f3a7f8a7e0d37e3d8f2_320.mp4',
     notes: [
