@@ -45,15 +45,15 @@ export function useAudioEngine() {
     const limiter = new Tone.Limiter(-1).toDestination();
     
     // 1. Master Channel (Mixer with limited headroom to prevent clipping)
-    const masterGain = new Tone.Gain(0.8).connect(limiter);
+    const masterGain = new Tone.Gain(1.2).connect(limiter);
     const reverb = new Tone.Reverb({ decay: 3.0, wet: 0.35 }).connect(masterGain);
     const filter = new Tone.Filter(3200, "lowpass").connect(reverb);
     
-    // 2. Background Track Channel (25% volume typical)
-    const bgGain = new Tone.Gain(0.3).connect(masterGain);
+    // 2. Background Track Channel (Boosted default)
+    const bgGain = new Tone.Gain(0.6).connect(masterGain);
     
-    // 3. Rhythm Channel
-    const beatGain = new Tone.Gain(0.4).connect(masterGain);
+    // 3. Rhythm Channel (Boosted default)
+    const beatGain = new Tone.Gain(0.6).connect(masterGain);
 
     // CLASSIC REED SYNTHESIS (DUAL OSCILLATORS)
     const fallbackSynth = new Tone.PolySynth(Tone.Synth, {

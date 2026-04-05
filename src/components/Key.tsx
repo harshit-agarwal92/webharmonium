@@ -50,8 +50,8 @@ export const Key = memo(function Key({
           : "w-[36px] md:w-[44px] h-[28vh] md:h-[32vh] bg-gradient-to-b from-[#2a2d2e] via-[#1a1c1d] to-[#0a0b0c] rounded-b-[14px] md:rounded-b-[18px] shadow-2xl z-10 -mx-[18px] md:-mx-[22px] border-t-[4px] border-white/5 border-x border-black/90",
         
         active && (isWhite ? "brightness-125" : "brightness-150"),
-        !active && highlighted && "after:content-[''] after:absolute after:bottom-4 after:w-1 after:h-1 after:bg-neon-green/30 after:rounded-full after:blur-[1px]",
-        guideHighlight && "ring-2 ring-neon-green/50 shadow-[0_0_30px_rgba(0,255,204,0.3)] z-30"
+        !active && highlighted && "after:content-[''] after:absolute after:bottom-4 after:w-1 after:h-1 after:bg-harmonium-accent/30 after:rounded-full after:blur-[1px]",
+        guideHighlight && "ring-2 ring-harmonium-accent/50 shadow-[0_0_30px_rgba(168,85,247,0.3)] z-30"
       )}
       style={{ transformOrigin: "top center" }}
 
@@ -59,9 +59,9 @@ export const Key = memo(function Key({
         rotateX: active ? -8 : 0,
         y: active ? 4 : 0,
         boxShadow: active 
-          ? `0 0 50px rgba(0, 255, 204, 0.5)` 
-          : guideHighlight ? `0 0 30px rgba(0, 255, 204, 0.2)` : "none",
-        borderColor: active ? "var(--color-neon-green)" : "rgba(255, 255, 255, 0.05)",
+          ? `0 0 50px rgba(168, 85, 247, 0.5)` 
+          : guideHighlight ? `0 0 30px rgba(168, 85, 247, 0.2)` : "none",
+        borderColor: active ? "var(--color-harmonium-accent)" : "rgba(255, 255, 255, 0.05)",
       }}
       onMouseDown={(e) => { e.preventDefault(); onMouseDown(); }}
       onMouseUp={(e) => { e.preventDefault(); onMouseUp(); }}
@@ -81,7 +81,7 @@ export const Key = memo(function Key({
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 0.1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-neon-green rounded-inherit z-0"
+            className="absolute inset-0 bg-harmonium-accent rounded-inherit z-0"
           />
         )}
       </AnimatePresence>
@@ -101,7 +101,7 @@ export const Key = memo(function Key({
         <span className={cn(
           "font-black font-poppins tracking-tighter uppercase leading-none",
           isWhite ? "text-2xl md:text-4xl" : "text-lg md:text-2xl",
-          active || guideHighlight ? "text-neon-green neon-text" : "text-white"
+          active || guideHighlight ? "text-harmonium-accent neon-text" : "text-white"
         )}>
           {label.replace(/[0-9']|\./g, '')}
         </span>
@@ -117,7 +117,7 @@ export const Key = memo(function Key({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: -4 }}
             exit={{ opacity: 0, y: 10 }}
-            className="absolute bottom-6 w-1/2 h-1 bg-neon-green rounded-full shadow-[0_0_15px_rgba(0,255,204,0.8)] z-30"
+            className="absolute bottom-6 w-1/2 h-1 bg-harmonium-accent rounded-full shadow-[0_0_15px_rgba(168,85,247,0.8)] z-30"
           />
         )}
       </AnimatePresence>

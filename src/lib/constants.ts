@@ -60,7 +60,7 @@ export const KEYBOARD_MAPPING: Record<string, string> = {
 export const PRESETS_LIST = [
   { id: 'custom', label: 'Custom Voice (MP3)' },
   { id: 'classic', label: 'Classic Harmonium' },
-  { id: 'piano', label: 'Grand Piano' },
+  { id: 'piano', label: 'Harmonium (Royal)' },
   { id: 'bright', label: 'Bright Harmonium' },
   { id: 'bass', label: 'Bass Harmonium' },
   { id: 'soft', label: 'Soft Harmonium' },

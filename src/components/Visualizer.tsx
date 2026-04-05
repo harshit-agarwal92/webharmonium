@@ -41,18 +41,18 @@ export function Visualizer() {
       for (let i = 0; i < freq.length; i++) {
           const v = (freq[i] + 140) / 100; // Normalized -140 to 0dB approx
           if (v > 0.01) {
-            ctx.fillStyle = `rgba(0, 255, 204, ${v * 0.1})`;
+            ctx.fillStyle = `rgba(168, 85, 247, ${v * 0.1})`;
             ctx.fillRect(centerX + i * barWidth, 0, barWidth, height);
             ctx.fillRect(centerX - i * barWidth, 0, -barWidth, height);
           }
       }
 
-      // 2. MAIN SYMMETRICAL WAVEFORM (Neon Green)
+      // 2. MAIN SYMMETRICAL WAVEFORM (Neon Purple)
       ctx.beginPath();
       ctx.lineWidth = 4;
-      ctx.strokeStyle = '#00ffcc';
+      ctx.strokeStyle = '#a855f7';
       ctx.shadowBlur = 15;
-      ctx.shadowColor = '#00ffcc88';
+      ctx.shadowColor = '#a855f788';
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
 
@@ -75,10 +75,10 @@ export function Visualizer() {
       }
       ctx.stroke();
 
-      // 3. CYAN GLOW WAVE (Subtle)
+      // 3. VIOLET GLOW WAVE (Subtle)
       ctx.beginPath();
       ctx.lineWidth = 1.5;
-      ctx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
+      ctx.strokeStyle = 'rgba(216, 180, 254, 0.4)';
       ctx.shadowBlur = 0;
       
       for (let i = 0; i < waveform.length; i += 4) {
@@ -106,7 +106,7 @@ export function Visualizer() {
 
   return (
     <div className="w-full h-full relative flex items-center justify-center pointer-events-none">
-      <div className="absolute w-[1px] h-full bg-neon-green/10 blur-[4px]" />
+      <div className="absolute w-[1px] h-full bg-harmonium-accent/10 blur-[4px]" />
       <canvas 
         ref={canvasRef} 
         width={1024} 
@@ -114,7 +114,7 @@ export function Visualizer() {
         className="w-full h-full object-contain filter contrast-[1.1]"
       />
       {/* AMBIENT RADIAL GLOW AT CENTER */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,204,0.05)_0%,transparent_70%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.05)_0%,transparent_70%)]" />
     </div>
   );
 }

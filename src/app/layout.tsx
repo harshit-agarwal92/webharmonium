@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
+import { AudioProvider } from "@/context/AudioContext";
+import { MainLayout } from "@/components/MainLayout";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -14,8 +16,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "SurSync AI | Futuristic Music & Harmonium Explorer",
-  description: "A premium, modern web-based music and harmonium learning platform.",
+  title: "Web Harmonium | Premium Music Experience",
+  description: "A professional, modern web harmonium and music streaming application.",
 };
 
 export default function RootLayout({
@@ -26,10 +28,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${poppins.variable} h-full antialiased`}
+      className={`${inter.variable} ${poppins.variable} h-full antialiased dark`}
     >
-      <body className="min-h-full flex flex-col font-sans bg-mesh selection:bg-neon-green/20">
-        {children}
+      <body className="min-h-full font-sans bg-black text-white selection:bg-harmonium-accent/20 overflow-x-hidden">
+        <AudioProvider>
+          <MainLayout>
+            {children}
+          </MainLayout>
+        </AudioProvider>
       </body>
     </html>
   );

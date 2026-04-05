@@ -8,11 +8,18 @@
   --color-spotify-light-gray: #181818;
   --color-spotify-card-hover: #282828;
   --color-spotify-text-secondary: #b3b3b3;
+
+  /* New Web Harmonium Theme */
+  --color-harmonium-purple: #6b21a8;
+  --color-harmonium-deep-purple: #3b0764;
+  --color-harmonium-accent: #a855f7;
+  --color-neon-purple: #d8b4fe;
 }
 
 @layer base {
   body {
-    background-color: var(--color-spotify-black);
+    background: radial-gradient(circle at top right, #1a0b2e, #000000 80%);
+    background-attachment: fixed;
     color: #ffffff;
     overflow-x: hidden;
     scroll-behavior: smooth;
@@ -22,41 +29,39 @@
 }
 
 @layer components {
-  .spotify-sidebar {
-    background-color: var(--color-spotify-black);
-    width: 240px;
-    flex-shrink: 0;
+  .glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  .spotify-card {
-    background-color: var(--color-spotify-light-gray);
-    transition: background-color 0.3s ease, transform 0.3s ease;
-    border-radius: 12px;
+  .glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .spotify-card:hover {
-    background-color: var(--color-spotify-card-hover);
-    transform: translateY(-4px);
-  }
-
-  .player-bar {
-    background: rgba(18, 18, 18, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .active-nav-item {
-    color: white;
+  .glass-card:hover {
     background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 10px 40px -10px rgba(168, 85, 247, 0.4);
   }
 
-  .active-nav-glow {
-    box-shadow: 0 0 20px var(--color-spotify-green-glow);
+  .neon-text {
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.8), 0 0 20px rgba(168, 85, 247, 0.4);
+  }
+
+  .neon-border {
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+    border-color: rgba(168, 85, 247, 0.5);
   }
 
   .custom-scrollbar::-webkit-scrollbar {
-    width: 12px;
+    width: 6px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
@@ -64,31 +69,33 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border: 3px solid transparent;
-    background-clip: padding-box;
+    background: rgba(168, 85, 247, 0.3);
     border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(168, 85, 247, 0.5);
   }
 
-  .glass-effect {
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
+  /* No horizontal scroll on mobile */
+  .no-scrollbar-on-mobile {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .no-scrollbar-on-mobile::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
   }
 }
 
-.bg-gradient-spotify {
-  background: linear-gradient(to bottom, #121212 0%, #000000 100%);
+.bg-purple-gradient {
+  background: linear-gradient(135deg, #000000 0%, #3b0764 100%);
 }
 
-.nav-link {
-  @apply flex items-center gap-4 px-4 py-3 rounded-lg text-spotify-text-secondary font-bold transition-all hover:text-white duration-300;
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
 }
 
-.nav-link-active {
-  @apply text-white;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
