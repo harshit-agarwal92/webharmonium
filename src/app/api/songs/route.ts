@@ -21,19 +21,28 @@ export async function GET(request: Request) {
       .map(f => {
         let cover = 'https://images.unsplash.com/photo-1459749411177-042180ce673b?q=80&w=200';
         const name = f.toLowerCase();
-        if (name.includes('bairan')) cover = '/covers/bairan.png';
+        if (name.includes('bairan')) cover = '/covers/sabat_batin.png';
         else if (name.includes('ishqa')) cover = '/covers/ishqa_ve.png';
         else if (name.includes('bieber')) cover = '/covers/justin_bieber.png';
         else if (name.includes('khat')) cover = '/covers/khat.png';
         else if (name.includes('kitab')) cover = '/covers/kitab.png';
         else if (name.includes('not_guilty') || name.includes('guilty')) cover = '/covers/not_guilty.png';
+        else if (name.includes('gal sun')) cover = '/covers/gal_sun.png';
+        else if (name.includes('tere liye')) cover = '/covers/tere_liye.png';
+        else if (name.includes('bekhayali') && name.includes('acoustic')) cover = '/covers/bekhayali_acoustic.png';
+        else if (name.includes('bekhayali')) cover = '/covers/bekhayali_male.png';
         else if (name.includes('plate')) cover = 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?q=80&w=600';
         else if (name.includes('padhe')) cover = 'https://images.unsplash.com/photo-1545128485-c400e7702796?q=80&w=600';
         else if (name.includes('sheesha')) cover = 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=600';
         
+        let displayName = f.replace(/\.(mp3|wav|ogg)$/i, '').replace(/(-|\(.*?\)|\[.*?\]|djjohal\.fm|naasongs|pagalworld|koshalworld)/gi, ' ').trim().replace(/\s+/g, ' ');
+        if (name.includes('bairan')) displayName = 'Sabat Batin';
+        else if (name.includes('bekhayali') && name.includes('acoustic')) displayName = 'Bekhayali (Acoustic - Female Version)';
+        else if (name.includes('bekhayali')) displayName = 'Bekhayali (Kabir Singh - Male Version)';
+
         return {
           id: `local-${f}`,
-          name: f.replace(/\.(mp3|wav|ogg)$/i, '').replace(/-/g, ' '),
+          name: displayName,
           artist: 'Local Studio',
           album: 'Public Vault',
           image: cover,
