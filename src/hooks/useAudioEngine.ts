@@ -74,15 +74,15 @@ export function useAudioEngine() {
       }
     });
 
-    // REALISTIC INSTRUMENT: Multi-Sampled Hamonium Engine (Using JS Delivr CDN)
+    // REALISTIC INSTRUMENT: Multi-Sampled Harmonium Engine (Using Offline Local Samples)
     const sampler = new Tone.Sampler({
       urls: {
         "C2": "C2.wav", "C3": "C3.wav", "C4": "C4.wav", "C5": "C5.wav",
-        "D#2": "Ds2.wav", "D#3": "Ds3.wav", "D#4": "Ds4.wav", "D#5": "Ds5.wav",
-        "F#2": "Fs2.wav", "F#3": "Fs3.wav", "F#4": "Fs4.wav", "F#5": "Fs5.wav",
-        "A2": "A2.wav", "A3": "A3.wav", "A4": "A4.wav", "A5": "A5.wav"
+        "D#2": "Ds2.wav", "D#3": "Ds3.wav", "D#4": "Ds4.wav",
+        "F#2": "Fs2.wav", "F#3": "Fs3.wav",
+        "A2": "A2.wav", "A3": "A3.wav", "A4": "A4.wav"
       },
-      baseUrl: "https://cdn.jsdelivr.net/gh/nbrosowsky/tonejs-instruments/samples/harmonium/",
+      baseUrl: "/harmonium/",
       onload: () => setIsLoaded(true),
       onerror: () => setIsLoaded(true)
     }).connect(filter);
@@ -404,6 +404,7 @@ export function useAudioEngine() {
       case 'beatVolume': beatGainRef.current?.gain.rampTo(Number(val), 0.1); break;
       case 'bgVolume': bgGainRef.current?.gain.rampTo(Number(val), 0.1); break;
       case 'bgRepeat': if (bgAudioRef.current) bgAudioRef.current.loop = Boolean(val); break;
+      case 'seek': if (bgAudioRef.current) bgAudioRef.current.currentTime = Number(val); break;
     }
   }, [isLoaded]);
 

@@ -1,0 +1,902 @@
+[
+  {
+    "index": 1,
+    "title": "12 YEARS",
+    "artists": "Lucky Rathore, PNKJ, MaxxTurnn",
+    "durationMs": 147272,
+    "durationText": "2:27",
+    "previewUrl": "https://p.scdn.co/mp3-preview/f3c8ed3ea71859129c2cb2f92a2017a77a23ebc1",
+    "spotifyUri": "spotify:track:0cIA4bUqEKOSxJGudhEUlc"
+  },
+  {
+    "index": 2,
+    "title": "Deewana Kar Raha Hai",
+    "artists": "Javed Ali",
+    "durationMs": 338922,
+    "durationText": "5:38",
+    "previewUrl": "https://p.scdn.co/mp3-preview/d757a32703be6f313837c51abc49c04cbdb6603d",
+    "spotifyUri": "spotify:track:2tva3nN2kQhBjHMC7Zlty6"
+  },
+  {
+    "index": 3,
+    "title": "Sanam Teri Kasam",
+    "artists": "Himesh Reshammiya, Ankit Tiwari, Palak Muchhal",
+    "durationMs": 314000,
+    "durationText": "5:14",
+    "previewUrl": "https://p.scdn.co/mp3-preview/eeaed41f7c1bf7ee942819c5bf91c9cbc70d1577",
+    "spotifyUri": "spotify:track:6Wuj97Iy5tDUCng1PX9x5H"
+  },
+  {
+    "index": 4,
+    "title": "Bol Kaffara Kya Hoga",
+    "artists": "Dj Chetas, Neha Kakkar, Farhan Sabri",
+    "durationMs": 207073,
+    "durationText": "3:27",
+    "previewUrl": "https://p.scdn.co/mp3-preview/c8608c33fdc2ec20c20da29ba05d0044e35d90c9",
+    "spotifyUri": "spotify:track:0tE7G1E9Mc2Eo5ZUIfKQbo"
+  },
+  {
+    "index": 5,
+    "title": "Sunn Le Zara",
+    "artists": "Arnab Dutta",
+    "durationMs": 277681,
+    "durationText": "4:37",
+    "previewUrl": "https://p.scdn.co/mp3-preview/540510f6a513c5c4a7d861f06f4b824eb26e2e9a",
+    "spotifyUri": "spotify:track:5td0Iz1f7nbC4GX1npZte2"
+  },
+  {
+    "index": 6,
+    "title": "Ye Tune Kya Kiya",
+    "artists": "Pritam, Javed Bashir, Rajat Arora",
+    "durationMs": 314239,
+    "durationText": "5:14",
+    "previewUrl": "https://p.scdn.co/mp3-preview/15bae6265cd512ec4c182921afa158cd4b0b618e",
+    "spotifyUri": "spotify:track:2cPUB8EOT6AfJ8oxhyoNXL"
+  },
+  {
+    "index": 7,
+    "title": "Tanha Hua",
+    "artists": "Jyoti Nooran, Rahat Fateh Ali Khan",
+    "durationMs": 242555,
+    "durationText": "4:02",
+    "previewUrl": "https://p.scdn.co/mp3-preview/a77b61c465e36c6adb82e3ab170327b06c1f8001",
+    "spotifyUri": "spotify:track:4pvWJ4u5cQ5Mmb123iA6hj"
+  },
+  {
+    "index": 8,
+    "title": "Bewajah",
+    "artists": "Himesh Reshammiya",
+    "durationMs": 308000,
+    "durationText": "5:08",
+    "previewUrl": "https://p.scdn.co/mp3-preview/bf03debc9a46d7230079ab640efcb7f051470fc4",
+    "spotifyUri": "spotify:track:2Pf4gxPUxLOZ5buYFBVWev"
+  },
+  {
+    "index": 9,
+    "title": "Sunn Raha Hai",
+    "artists": "Ankit Tiwari, Sandeep Nath",
+    "durationMs": 390222,
+    "durationText": "6:30",
+    "previewUrl": "https://p.scdn.co/mp3-preview/66bea517c537e37b3aa162213583403583551f08",
+    "spotifyUri": "spotify:track:5PvwPy5eRO8BPwpRzCHK3D"
+  },
+  {
+    "index": 10,
+    "title": "Bekhayali (From \"Kabir Singh\")",
+    "artists": "Sachet Tandon, Sachet-Parampara",
+    "durationMs": 371790,
+    "durationText": "6:11",
+    "previewUrl": "https://p.scdn.co/mp3-preview/bd81daa82f9ef99a27aa6be34325623f8ec8ccb4",
+    "spotifyUri": "spotify:track:1feANd8EfcDP5UqSvbheM3"
+  },
+  {
+    "index": 11,
+    "title": "Tu hai kahaan",
+    "artists": "Tuneit, Ajima, slow hindi",
+    "durationMs": 256000,
+    "durationText": "4:16",
+    "previewUrl": "https://p.scdn.co/mp3-preview/11816669cc01f491712194176b03828c7f1193ac",
+    "spotifyUri": "spotify:track:7HQbaN76WIUcpcWy9KpLJv"
+  },
+  {
+    "index": 12,
+    "title": "Tu Hain Kahan (Slowed & Reverb)",
+    "artists": "Karan Bhambhani",
+    "durationMs": 289541,
+    "durationText": "4:49",
+    "previewUrl": null,
+    "spotifyUri": "spotify:track:6cWPmcGedrAyCxPefvkX1k"
+  },
+  {
+    "index": 13,
+    "title": "Pal Pal",
+    "artists": "Abhishek Thapa",
+    "durationMs": 157377,
+    "durationText": "2:37",
+    "previewUrl": "https://p.scdn.co/mp3-preview/aec83e2f61cb35cd99c5e825629401cd64cdc3f3",
+    "spotifyUri": "spotify:track:2V82bSJqzG3PqIpRP5FIVD"
+  },
+  {
+    "index": 14,
+    "title": "TU HAI YAHAN",
+    "artists": "Akpanku",
+    "durationMs": 159069,
+    "durationText": "2:39",
+    "previewUrl": "https://p.scdn.co/mp3-preview/66fe3f47c97d4cb59cb28cfd0583751e50b9927e",
+    "spotifyUri": "spotify:track:3vFIsZCMu2UxW9VK9wJNLX"
+  },
+  {
+    "index": 15,
+    "title": "Mann Mera - Original Version",
+    "artists": "Gajendra Verma",
+    "durationMs": 228000,
+    "durationText": "3:48",
+    "previewUrl": "https://p.scdn.co/mp3-preview/8528712680fe81dd281d672ed34b3bdc5c8ce133",
+    "spotifyUri": "spotify:track:1As2Jo89VTF9V3D6GuOPr9"
+  },
+  {
+    "index": 16,
+    "title": "Hasi - Male Version",
+    "artists": "Ami Mishra, Kunaal Vermaa",
+    "durationMs": 272668,
+    "durationText": "4:32",
+    "previewUrl": "https://p.scdn.co/mp3-preview/b2568f8c707640fdcb67ce663ceb7e6efd03ff5a",
+    "spotifyUri": "spotify:track:32765xcLM1fd6wQIpkN9A0"
+  },
+  {
+    "index": 17,
+    "title": "Shiddat Title Track",
+    "artists": "Manan Bhardwaj",
+    "durationMs": 230875,
+    "durationText": "3:50",
+    "previewUrl": "https://p.scdn.co/mp3-preview/c23ffb30323d201def33254bd4f73f400096a3d0",
+    "spotifyUri": "spotify:track:5O9jxRlG72h1sYxtqWwUcF"
+  },
+  {
+    "index": 18,
+    "title": "Khamoshiyan",
+    "artists": "Jeet Gannguli, Arijit Singh, Rashmi Virag",
+    "durationMs": 335709,
+    "durationText": "5:35",
+    "previewUrl": "https://p.scdn.co/mp3-preview/515533d5ae056e4e6b4cba7262e7efd116745ba5",
+    "spotifyUri": "spotify:track:6zCQF5tu7HVwU9shhKqiuF"
+  },
+  {
+    "index": 19,
+    "title": "Tadap Tadap",
+    "artists": "KK, Dominique",
+    "durationMs": 397773,
+    "durationText": "6:37",
+    "previewUrl": "https://p.scdn.co/mp3-preview/9cb31802f385ceae6d10ba4ae9203fdebde9557e",
+    "spotifyUri": "spotify:track:6n6hEYHXBzWfdSzBX20ZRw"
+  },
+  {
+    "index": 20,
+    "title": "Ek Bewafaa Hai",
+    "artists": "Sonu Nigam",
+    "durationMs": 459000,
+    "durationText": "7:39",
+    "previewUrl": "https://p.scdn.co/mp3-preview/de0a79348ac1a3b02184e2151014d985d2418d1b",
+    "spotifyUri": "spotify:track:1PL4f0FhA8SW79C4h5mWM2"
+  },
+  {
+    "index": 21,
+    "title": "Hale Dil",
+    "artists": "Harshit Saxena, Sayeed Quadri",
+    "durationMs": 346627,
+    "durationText": "5:46",
+    "previewUrl": "https://p.scdn.co/mp3-preview/d08e9f95ca889b53b50fc0407ca30b1362f3aa55",
+    "spotifyUri": "spotify:track:6GQK4G5o60E8YA18DGpAzv"
+  },
+  {
+    "index": 22,
+    "title": "Khayaal",
+    "artists": "Talwiinder, NDS",
+    "durationMs": 162031,
+    "durationText": "2:42",
+    "previewUrl": "https://p.scdn.co/mp3-preview/1d88021e7a159622dd60086eca8db06b1f4687e1",
+    "spotifyUri": "spotify:track:4D8eFUu6Hvulrq6CGqGaLR"
+  },
+  {
+    "index": 23,
+    "title": "Ehsaas",
+    "artists": "Faheem Abdullah, Duha Shah, Vaibhav Pani, Hyder Dar",
+    "durationMs": 233000,
+    "durationText": "3:53",
+    "previewUrl": "https://p.scdn.co/mp3-preview/561304f2b30c7b3c6d8657f7daef5024acdfd431",
+    "spotifyUri": "spotify:track:5PetOhEX9N0oyBB0Keqobv"
+  },
+  {
+    "index": 24,
+    "title": "Aye Khuda",
+    "artists": "Kshitij Tarey, Saim Bhat, Mithoon",
+    "durationMs": 410459,
+    "durationText": "6:50",
+    "previewUrl": "https://p.scdn.co/mp3-preview/afb83ff67931cdfeef4c28d53664e93eb4fc7ddc",
+    "spotifyUri": "spotify:track:1SdMHj6tJp2YZ5INflJR1T"
+  },
+  {
+    "index": 25,
+    "title": "Teri Yaadon Se",
+    "artists": "Pranaay, Mustafa Zahid, Sayeed Quadri",
+    "durationMs": 276280,
+    "durationText": "4:36",
+    "previewUrl": "https://p.scdn.co/mp3-preview/21791fa5ca6d3e93d79d7fee863147995cd6d1bf",
+    "spotifyUri": "spotify:track:0FXXvePGfMxgENnXLpBc76"
+  },
+  {
+    "index": 26,
+    "title": "Hum Jee Lenge",
+    "artists": "Mustafa Zahid, Roxen Band, Sayeed Quadri",
+    "durationMs": 275920,
+    "durationText": "4:35",
+    "previewUrl": "https://p.scdn.co/mp3-preview/764d97d27c1eedc448ccf412ba6c891a5811959f",
+    "spotifyUri": "spotify:track:1gekzL984xr4fbxVgVGQhC"
+  },
+  {
+    "index": 27,
+    "title": "Uska Hi Banana (From \"1920 Evil Returns\")",
+    "artists": "Arijit Singh",
+    "durationMs": 327029,
+    "durationText": "5:27",
+    "previewUrl": "https://p.scdn.co/mp3-preview/eaf80f43167c1bb48dc70b406cddbf0e3c6e5507",
+    "spotifyUri": "spotify:track:3h6Xvd0lISog6GxTk4X6MK"
+  },
+  {
+    "index": 28,
+    "title": "O Khuda",
+    "artists": "Amaal Mallik, Palak Muchhal",
+    "durationMs": 307451,
+    "durationText": "5:07",
+    "previewUrl": "https://p.scdn.co/mp3-preview/3f83501cb4e96e97d5d7e22bf597023f091c32ff",
+    "spotifyUri": "spotify:track:5bdX7jiXtSbHX35pgxJo8p"
+  },
+  {
+    "index": 29,
+    "title": "Bhula Dena",
+    "artists": "Mustafa Zahid, Jeet Gannguli, Sanjay Masoom",
+    "durationMs": 240723,
+    "durationText": "4:00",
+    "previewUrl": "https://p.scdn.co/mp3-preview/a56cfda634e097aa5aaed11fe766c9dd5860114c",
+    "spotifyUri": "spotify:track:0WNCYgCd33LnBnw22WFuq8"
+  },
+  {
+    "index": 30,
+    "title": "Chaahat",
+    "artists": "Jeet Gannguli, Rahat Fateh Ali Khan, Sayeed Quadri",
+    "durationMs": 262573,
+    "durationText": "4:22",
+    "previewUrl": "https://p.scdn.co/mp3-preview/e61ab5399e2628d2223cd1829982146b90f062d0",
+    "spotifyUri": "spotify:track:6cLdrOr82mTQdwaqT9fkou"
+  },
+  {
+    "index": 31,
+    "title": "Tum Hi Aana (From \"Marjaavaan\")",
+    "artists": "Payal Dev, Jubin Nautiyal, Kunaal Vermaa",
+    "durationMs": 249126,
+    "durationText": "4:09",
+    "previewUrl": "https://p.scdn.co/mp3-preview/47bb2d8c3d2ae94176d3775f4a003ba610dffd86",
+    "spotifyUri": "spotify:track:6E9UwSfT80age2xknoMS7Y"
+  },
+  {
+    "index": 32,
+    "title": "O Saathi",
+    "artists": "Atif Aslam, Arko",
+    "durationMs": 251818,
+    "durationText": "4:11",
+    "previewUrl": "https://p.scdn.co/mp3-preview/bb097ad9ef39431248c601681958444485192f34",
+    "spotifyUri": "spotify:track:6fScgF2Y63ScU73nYju0ny"
+  },
+  {
+    "index": 33,
+    "title": "Muskurane - Romantic",
+    "artists": "Jeet Gannguli, Arijit Singh, Rashmi Virag",
+    "durationMs": 334331,
+    "durationText": "5:34",
+    "previewUrl": "https://p.scdn.co/mp3-preview/75529a810276ed871f297e01e6315dad9d6320ff",
+    "spotifyUri": "spotify:track:6fW78cd0p3ZDUzoqvx2Xqe"
+  },
+  {
+    "index": 34,
+    "title": "Ishq",
+    "artists": "Faheem Abdullah, Rauhan Malik, Amir Ameer",
+    "durationMs": 224842,
+    "durationText": "3:44",
+    "previewUrl": "https://p.scdn.co/mp3-preview/c09d0eed5f995f7784edf47e3ac9556dabef212e",
+    "spotifyUri": "spotify:track:1hlbywc8Jhl1FFqJxAMabE"
+  },
+  {
+    "index": 35,
+    "title": "Aaja We Mahiya",
+    "artists": "Imran Khan",
+    "durationMs": 232066,
+    "durationText": "3:52",
+    "previewUrl": "https://p.scdn.co/mp3-preview/8648d96a6e46424ceb760448dc3d20cc5b20528a",
+    "spotifyUri": "spotify:track:5MoJ3MVKGGf25LxrFoxDSK"
+  },
+  {
+    "index": 36,
+    "title": "Milne Hai Mujhse Aayi (From \"Aashiqui 2\")",
+    "artists": "Arijit Singh",
+    "durationMs": 295798,
+    "durationText": "4:55",
+    "previewUrl": "https://p.scdn.co/mp3-preview/a9fa0fd07561b73d658d1f9b7293206627461786",
+    "spotifyUri": "spotify:track:24b9eObMccIrDSs3NvdrRd"
+  },
+  {
+    "index": 37,
+    "title": "Jo Tum Mere Ho",
+    "artists": "Anuv Jain",
+    "durationMs": 251813,
+    "durationText": "4:11",
+    "previewUrl": "https://p.scdn.co/mp3-preview/3a031660b71a0f633205d140cdd63096d222213f",
+    "spotifyUri": "spotify:track:0eCajpR75pDW0r64U6hP2x"
+  },
+  {
+    "index": 38,
+    "title": "Tera Chehra",
+    "artists": "Himesh Reshammiya, Arijit Singh",
+    "durationMs": 274000,
+    "durationText": "4:34",
+    "previewUrl": "https://p.scdn.co/mp3-preview/86723b47d86117bbe79694076ee4ae33d54042b3",
+    "spotifyUri": "spotify:track:0fU73va0bnroitbOzudBU4"
+  },
+  {
+    "index": 39,
+    "title": "Dard Dilo Ke",
+    "artists": "Mohammed Irfan, Himesh Reshammiya, Sameer Anjaan",
+    "durationMs": 304000,
+    "durationText": "5:04",
+    "previewUrl": "https://p.scdn.co/mp3-preview/e3bbd8d15d1ef67db399bc16c96913078b05ee0f",
+    "spotifyUri": "spotify:track:2NxMbuIckpHvpXe220f4uw"
+  },
+  {
+    "index": 40,
+    "title": "Tujhe Kitna Chahne Lage (From \"Kabir Singh\")",
+    "artists": "Arijit Singh, Mithoon",
+    "durationMs": 284779,
+    "durationText": "4:44",
+    "previewUrl": "https://p.scdn.co/mp3-preview/092f63158ea9656db86c0d716dd834336c6d19e8",
+    "spotifyUri": "spotify:track:2Fv2injs4qAm8mJBGaxVKU"
+  },
+  {
+    "index": 41,
+    "title": "Gulabi Aankhen",
+    "artists": "Sanam",
+    "durationMs": 197759,
+    "durationText": "3:17",
+    "previewUrl": "https://p.scdn.co/mp3-preview/3951c43cdc279523c271188bb961947f1a0ca194",
+    "spotifyUri": "spotify:track:1ccZZf0IQi5y0bHMl2aGDF"
+  },
+  {
+    "index": 42,
+    "title": "Apna Bana Le",
+    "artists": "Sachin-Jigar, Arijit Singh, Amitabh Bhattacharya",
+    "durationMs": 261702,
+    "durationText": "4:21",
+    "previewUrl": "https://p.scdn.co/mp3-preview/c2ee84b491edafb8f988c619feb241181343be07",
+    "spotifyUri": "spotify:track:1hA697u7e1jX2XM8sWA6Uy"
+  },
+  {
+    "index": 43,
+    "title": "Tu Hi Tu",
+    "artists": "Mohammed Irfan, Himesh Reshammiya, Mayur Puri",
+    "durationMs": 329063,
+    "durationText": "5:29",
+    "previewUrl": "https://p.scdn.co/mp3-preview/a81eb0b25c05906d8c02c113a5af2383850e8473",
+    "spotifyUri": "spotify:track:2f5sTEhwX8qwCPgGPBavdx"
+  },
+  {
+    "index": 44,
+    "title": "Zara Zara",
+    "artists": "Bombay Jayashri",
+    "durationMs": 298266,
+    "durationText": "4:58",
+    "previewUrl": "https://p.scdn.co/mp3-preview/8ab656518ed8ab4f565b508abde6093c0b1b538c",
+    "spotifyUri": "spotify:track:4Q7Q9bmbY5Lo7YamHngO4O"
+  },
+  {
+    "index": 45,
+    "title": "Bekhayali (Arijit Singh Version) [From \"Kabir Singh\"]",
+    "artists": "Arijit Singh, Sachet-Parampara",
+    "durationMs": 370444,
+    "durationText": "6:10",
+    "previewUrl": "https://p.scdn.co/mp3-preview/35a3ea9d78aae180bd94215ef1568ccd595b3a56",
+    "spotifyUri": "spotify:track:6aPMWbbdhDhiJHlknZb9Yx"
+  },
+  {
+    "index": 46,
+    "title": "Banjaara",
+    "artists": "Mohammed Irfan, Mithoon",
+    "durationMs": 336567,
+    "durationText": "5:36",
+    "previewUrl": "https://p.scdn.co/mp3-preview/2fb2fb52b9dade451e4b27fdaedecf3777eba749",
+    "spotifyUri": "spotify:track:4eFnk661RcdOuH9ajiTO3j"
+  },
+  {
+    "index": 47,
+    "title": "Kabhi Jo Baadal Barse (From \"Jackpot)",
+    "artists": "Arijit Singh",
+    "durationMs": 254300,
+    "durationText": "4:14",
+    "previewUrl": "https://p.scdn.co/mp3-preview/c1097064b6a4632a4c8789a44e6b4331df747ede",
+    "spotifyUri": "spotify:track:2dOWkdPfiT9SU2Wm734Rh6"
+  },
+  {
+    "index": 48,
+    "title": "Baarish",
+    "artists": "Mohammed Irfan, Gajendra Verma, Mithoon",
+    "durationMs": 374938,
+    "durationText": "6:14",
+    "previewUrl": "https://p.scdn.co/mp3-preview/2d91684282b92b52df705b0a74af9cf8692265ac",
+    "spotifyUri": "spotify:track:6ABHr8kYCws5z6gC9Lwith"
+  },
+  {
+    "index": 49,
+    "title": "Tera Deedar Hua",
+    "artists": "Pritam, Anupam Amod, Rahat Fateh Ali Khan",
+    "durationMs": 347573,
+    "durationText": "5:47",
+    "previewUrl": "https://p.scdn.co/mp3-preview/e09fe5f4ecf0a0569b5fa5d5153a6ca50c33980e",
+    "spotifyUri": "spotify:track:0d1JQdBaeetUo8xAiKCT3C"
+  },
+  {
+    "index": 50,
+    "title": "Itni Si Baat Hain (From \"Azhar\")",
+    "artists": "Arijit Singh, Antara Mitra",
+    "durationMs": 294846,
+    "durationText": "4:54",
+    "previewUrl": "https://p.scdn.co/mp3-preview/4c15968841c044b443094e274af853fd3ae54d79",
+    "spotifyUri": "spotify:track:55TlMMnPJTk9Qq6CrqB6dx"
+  },
+  {
+    "index": 51,
+    "title": "Let Her Go x Husn",
+    "artists": "Lewis Hanton",
+    "durationMs": 239060,
+    "durationText": "3:59",
+    "previewUrl": "https://p.scdn.co/mp3-preview/8b9e141b9990cb04b1db59946ea5e3b95babbaf2",
+    "spotifyUri": "spotify:track:06fP8ZtG6SRN5gs9MMB1dQ"
+  },
+  {
+    "index": 52,
+    "title": "People X Nainowale Ne - Lofi",
+    "artists": "Callen Row",
+    "durationMs": 167209,
+    "durationText": "2:47",
+    "previewUrl": null,
+    "spotifyUri": "spotify:track:5jCnhZKmBykDEvQPoRcyTP"
+  },
+  {
+    "index": 53,
+    "title": "Let Me Down Slowly x Main Dhoondne",
+    "artists": "sunnyys",
+    "durationMs": 147408,
+    "durationText": "2:27",
+    "previewUrl": "https://p.scdn.co/mp3-preview/b76ff09e3a39b5e7dfa7cdea8c580a8a82004325",
+    "spotifyUri": "spotify:track:0WZDdNTbEhvesp8uCjAQCk"
+  },
+  {
+    "index": 54,
+    "title": "Mujhe Peene Do",
+    "artists": "Arshman Naeem",
+    "durationMs": 116197,
+    "durationText": "1:56",
+    "previewUrl": "https://p.scdn.co/mp3-preview/9077e33c9778867d3d44def847e9806efc397dad",
+    "spotifyUri": "spotify:track:4RDPlsamlf5IQdYKNRT6l4"
+  },
+  {
+    "index": 55,
+    "title": "Paaro",
+    "artists": "Aditya Rikhari",
+    "durationMs": 153214,
+    "durationText": "2:33",
+    "previewUrl": "https://p.scdn.co/mp3-preview/6a8e930816b178d4589e8f39fa419daea6576214",
+    "spotifyUri": "spotify:track:5ByLpy1feHoHXoM4IC4BvW"
+  },
+  {
+    "index": 56,
+    "title": "Akhiyan Udeek Diyan",
+    "artists": "Master Saleem",
+    "durationMs": 273066,
+    "durationText": "4:33",
+    "previewUrl": "https://p.scdn.co/mp3-preview/e4ee1e9c2f9f8dcc9838d1baff30e2e521b8fc96",
+    "spotifyUri": "spotify:track:5ZHglFJ4SxGJWfgfeSekmj"
+  },
+  {
+    "index": 57,
+    "title": "Hum Dum",
+    "artists": "Ankit Tiwari",
+    "durationMs": 305038,
+    "durationText": "5:05",
+    "previewUrl": "https://p.scdn.co/mp3-preview/46ad39a8145076702bbac0f1edd186a89111f16d",
+    "spotifyUri": "spotify:track:1QhcBKt0schkJBhiZx6lxn"
+  },
+  {
+    "index": 58,
+    "title": "Barbaadiyan",
+    "artists": "Sachet Tandon, Nikhita Gandhi, Madhubanti Bagchi, Sachin-Jigar",
+    "durationMs": 230185,
+    "durationText": "3:50",
+    "previewUrl": "https://p.scdn.co/mp3-preview/d9fd7e7395aa6c0e4247736af942070f04d49577",
+    "spotifyUri": "spotify:track:6qZyM6JV8ohLC4S2EL5sFh"
+  },
+  {
+    "index": 59,
+    "title": "Chitta",
+    "artists": "Manan Bhardwaj",
+    "durationMs": 228189,
+    "durationText": "3:48",
+    "previewUrl": "https://p.scdn.co/mp3-preview/ce618459d7ec574363993befc1c3fd88eb085626",
+    "spotifyUri": "spotify:track:6JUQViD0hLXlvWXCV4uUF8"
+  },
+  {
+    "index": 60,
+    "title": "Jug Jug Jeeve",
+    "artists": "Sachet Tandon, Parampara Tandon, Sachin-Jigar",
+    "durationMs": 199174,
+    "durationText": "3:19",
+    "previewUrl": "https://p.scdn.co/mp3-preview/506b45da3f312949f53d45c9637cb3912f13d54b",
+    "spotifyUri": "spotify:track:0tjnLIbuF8mwLUKq3CNIdH"
+  },
+  {
+    "index": 61,
+    "title": "Shiddat (Reprise)",
+    "artists": "Manan Bhardwaj",
+    "durationMs": 133099,
+    "durationText": "2:13",
+    "previewUrl": "https://p.scdn.co/mp3-preview/aff88a24bac76868838edc7837808019c4c3ebae",
+    "spotifyUri": "spotify:track:4dy4m6vhOY3BcCVp5fdhQQ"
+  },
+  {
+    "index": 62,
+    "title": "Teri Yaadon Mein",
+    "artists": "KK, Shreya Ghoshal",
+    "durationMs": 287213,
+    "durationText": "4:47",
+    "previewUrl": "https://p.scdn.co/mp3-preview/ae31aaf07135d6d16cd756d58e4a041a42c29a74",
+    "spotifyUri": "spotify:track:4ZVfIGaZP93t0stmBj4FqA"
+  },
+  {
+    "index": 63,
+    "title": "Apnaa Mujhe Tu Lagaa",
+    "artists": "Sonu Nigam, Chirantan Bhatt, Shakeel Azmi",
+    "durationMs": 364019,
+    "durationText": "6:04",
+    "previewUrl": "https://p.scdn.co/mp3-preview/d528b0db4e411b57213a217c6175449ddd77d38b",
+    "spotifyUri": "spotify:track:70O5Rpo2B2FB4B5bf68JWw"
+  },
+  {
+    "index": 64,
+    "title": "Tujhe Main Pyar Karu",
+    "artists": "Kailash Kher",
+    "durationMs": 307478,
+    "durationText": "5:07",
+    "previewUrl": "https://p.scdn.co/mp3-preview/e0084bee71ed188c5dabe686f9f8869155fdcc0f",
+    "spotifyUri": "spotify:track:0xZNtGobZ3wnDeGoFPwN2N"
+  },
+  {
+    "index": 65,
+    "title": "Uska Hi Banana",
+    "artists": "Arijit Singh, Chirantan Bhatt, Junaid Wasi",
+    "durationMs": 327029,
+    "durationText": "5:27",
+    "previewUrl": "https://p.scdn.co/mp3-preview/eaf80f43167c1bb48dc70b406cddbf0e3c6e5507",
+    "spotifyUri": "spotify:track:5TJOAIWHRYW8pRBpnvLUo1"
+  },
+  {
+    "index": 66,
+    "title": "Aaj Ro Len De",
+    "artists": "Sharib Sabri, Shaarib, Toshi, Kalim Sheikh",
+    "durationMs": 285512,
+    "durationText": "4:45",
+    "previewUrl": "https://p.scdn.co/mp3-preview/8fee08227a16439c17c4705a07cbbc870e020293",
+    "spotifyUri": "spotify:track:4PNvrhAowLbeOxX5VOHBGf"
+  },
+  {
+    "index": 67,
+    "title": "Tu Hai Ki Nahi",
+    "artists": "Ankit Tiwari, Abhendra Kumar Upadhyay",
+    "durationMs": 333922,
+    "durationText": "5:33",
+    "previewUrl": "https://p.scdn.co/mp3-preview/fa81f74c5b9854b57259a4794dec3222cc56b0ec",
+    "spotifyUri": "spotify:track:4brSaQIT3bnnE41D042fgL"
+  },
+  {
+    "index": 68,
+    "title": "Teri Deewani",
+    "artists": "Kailash Kher, Paresh Kamath, Naresh Kamath",
+    "durationMs": 323520,
+    "durationText": "5:23",
+    "previewUrl": "https://p.scdn.co/mp3-preview/a03c6dad8ec426cb4ddacd20f2549057524ce671",
+    "spotifyUri": "spotify:track:2iNqdCchlUZEgjJbQyZf8T"
+  },
+  {
+    "index": 69,
+    "title": "Awari",
+    "artists": "Adnan Dhool, Momina Mustehsan, Rabi Ahmed",
+    "durationMs": 320756,
+    "durationText": "5:20",
+    "previewUrl": "https://p.scdn.co/mp3-preview/1b1a95e4353fa72e9f128013096e26b2d291c0ef",
+    "spotifyUri": "spotify:track:7IEww1rwWe1scos6rarOYh"
+  },
+  {
+    "index": 70,
+    "title": "Mareez - E - Ishq",
+    "artists": "Shaarib Toshi, Arijit Singh",
+    "durationMs": 291148,
+    "durationText": "4:51",
+    "previewUrl": "https://p.scdn.co/mp3-preview/6ee6f5a60578e9205c9c395537b5fffd614f5bc6",
+    "spotifyUri": "spotify:track:2HqSND303T7sT0wOPj3K3C"
+  },
+  {
+    "index": 71,
+    "title": "Baatein Ye Kabhi Na - Male",
+    "artists": "Jeet Gannguli, Arijit Singh, Sayeed Quadri",
+    "durationMs": 289012,
+    "durationText": "4:49",
+    "previewUrl": "https://p.scdn.co/mp3-preview/c49c1de30b29f99f0a054edcd5636d38f75b5aa7",
+    "spotifyUri": "spotify:track:0PxMHdQ6bSz9q0eJj3kJzb"
+  },
+  {
+    "index": 72,
+    "title": "Aasan Nahin Yahan",
+    "artists": "Arijit Singh, Jeet Gannguli, Irshad Kamil",
+    "durationMs": 214470,
+    "durationText": "3:34",
+    "previewUrl": "https://p.scdn.co/mp3-preview/68d1a780ca883be055b8f92bbff0988613512a72",
+    "spotifyUri": "spotify:track:06zJUeKU5KFy50Cho6pDcr"
+  },
+  {
+    "index": 73,
+    "title": "Main Agar",
+    "artists": "Pritam, Atif Aslam",
+    "durationMs": 279500,
+    "durationText": "4:39",
+    "previewUrl": "https://p.scdn.co/mp3-preview/33d98f5fe66bba790fb9ae8da8fbfb49698f443b",
+    "spotifyUri": "spotify:track:45IVxWsY3y0wLLk77bZWlA"
+  },
+  {
+    "index": 74,
+    "title": "Zaroorat",
+    "artists": "Mustafa Zahid, Mithoon",
+    "durationMs": 368852,
+    "durationText": "6:08",
+    "previewUrl": "https://p.scdn.co/mp3-preview/56d17d7d23a56e42eb18c3c026c7664911b79185",
+    "spotifyUri": "spotify:track:32U1XMh3DKlm45uvpofhvY"
+  },
+  {
+    "index": 75,
+    "title": "Allah Waariyan",
+    "artists": "Shafqat Amanat Ali, Arko Pravo Mukherjee",
+    "durationMs": 314522,
+    "durationText": "5:14",
+    "previewUrl": "https://p.scdn.co/mp3-preview/a940bfd052b772ce12a0ef15c2ef8036b7b39586",
+    "spotifyUri": "spotify:track:6YYVzVapUF3UnZQ0igasl3"
+  },
+  {
+    "index": 76,
+    "title": "Lambiyaan Si Judaiyaan",
+    "artists": "Arijit Singh, Shadab, Altamash Faridi, Jam8, Amitabh Bhattacharya",
+    "durationMs": 238243,
+    "durationText": "3:58",
+    "previewUrl": "https://p.scdn.co/mp3-preview/4319cfa2510e965f8fc4e79128e4f2e50795da65",
+    "spotifyUri": "spotify:track:5eycUcX0HZsZjSKPD58pF8"
+  },
+  {
+    "index": 77,
+    "title": "Zara Zara",
+    "artists": "Omkar Singh",
+    "durationMs": 187164,
+    "durationText": "3:07",
+    "previewUrl": "https://p.scdn.co/mp3-preview/57c5ebbbe76bcdbfc2c684e59a5a38077cfb0d0a",
+    "spotifyUri": "spotify:track:5wPcoRRCCuhST2JAL2iBAt"
+  },
+  {
+    "index": 78,
+    "title": "Ek Raat",
+    "artists": "Vilen",
+    "durationMs": 224064,
+    "durationText": "3:44",
+    "previewUrl": "https://p.scdn.co/mp3-preview/4a2f4d040368ef813b7eba882639d2906fbbaaae",
+    "spotifyUri": "spotify:track:5trLYW0GIV2xESg4lbJrhY"
+  },
+  {
+    "index": 79,
+    "title": "Yeh Dil Deewana",
+    "artists": "Sonu Nigam, Hema Sardesai, Shankar Mahadevan",
+    "durationMs": 426400,
+    "durationText": "7:06",
+    "previewUrl": "https://p.scdn.co/mp3-preview/f1dc157afbdae985a607fa94ee5bfb8297b85af0",
+    "spotifyUri": "spotify:track:1dZuiEX0EjvQai3N7BlUmT"
+  },
+  {
+    "index": 80,
+    "title": "Ae Dil Hai Mushkil Title Track",
+    "artists": "Pritam, Arijit Singh",
+    "durationMs": 269032,
+    "durationText": "4:29",
+    "previewUrl": "https://p.scdn.co/mp3-preview/13a37c7abbabba5e89fb411124202eaabe040261",
+    "spotifyUri": "spotify:track:1UWacd8x8tPPwmrPB1MoBI"
+  },
+  {
+    "index": 81,
+    "title": "Lo Maan Liya (From \"Raaz Reboot\")",
+    "artists": "Arijit Singh",
+    "durationMs": 300274,
+    "durationText": "5:00",
+    "previewUrl": "https://p.scdn.co/mp3-preview/359abaa1a828b147dca750d02b515873cf08acba",
+    "spotifyUri": "spotify:track:0VgwIvS4QrT75GqKpIyoUz"
+  },
+  {
+    "index": 82,
+    "title": "Barsaat Ke Mausam Mein",
+    "artists": "Kumar Sanu, Roop Kumar Rathod",
+    "durationMs": 524506,
+    "durationText": "8:44",
+    "previewUrl": "https://p.scdn.co/mp3-preview/99f94e2fe594f4f2a8ed891445371c79452a7f80",
+    "spotifyUri": "spotify:track:1hGj2l3qGnv33MGXqse1hQ"
+  },
+  {
+    "index": 83,
+    "title": "Mujhe Peene Do",
+    "artists": "Darshan Raval",
+    "durationMs": 196071,
+    "durationText": "3:16",
+    "previewUrl": "https://p.scdn.co/mp3-preview/5462c0f09c325100f242b8280056cc97f47ee060",
+    "spotifyUri": "spotify:track:3FbZoPzEaUBOD84l1FwFEH"
+  },
+  {
+    "index": 84,
+    "title": "Mujhe Peene Do",
+    "artists": "Arshman Naeem",
+    "durationMs": 116197,
+    "durationText": "1:56",
+    "previewUrl": "https://p.scdn.co/mp3-preview/9077e33c9778867d3d44def847e9806efc397dad",
+    "spotifyUri": "spotify:track:3yjpjV7kO47ADdIx5HNcyv"
+  },
+  {
+    "index": 85,
+    "title": "Tere Ishq Mein Naachenge",
+    "artists": "Kumar Sanu, Alisha Chinai, Sapna Mukherjee",
+    "durationMs": 494360,
+    "durationText": "8:14",
+    "previewUrl": "https://p.scdn.co/mp3-preview/5cf0aa075a67cc5d0adbcabdf0fbe4bd506cc757",
+    "spotifyUri": "spotify:track:6WvdfYCOHdM5p72uYRh1ir"
+  },
+  {
+    "index": 86,
+    "title": "Ranjheya Ve",
+    "artists": "Zain Zohaib",
+    "durationMs": 278474,
+    "durationText": "4:38",
+    "previewUrl": "https://p.scdn.co/mp3-preview/402a373dc4c6b1bd8a1be0e3cb4b2a2378de72a7",
+    "spotifyUri": "spotify:track:5J9L7IbadCt0ivs9xmNrr0"
+  },
+  {
+    "index": 87,
+    "title": "Paro",
+    "artists": "Aditya Rikhari, UNPLG'd",
+    "durationMs": 70400,
+    "durationText": "1:10",
+    "previewUrl": "https://p.scdn.co/mp3-preview/457c2cea5306d422427e218ec9cdc7f66c8949f4",
+    "spotifyUri": "spotify:track:6nRGPf5tpeJtKpXZO5cgIT"
+  },
+  {
+    "index": 88,
+    "title": "Sahiba",
+    "artists": "Aditya Rikhari",
+    "durationMs": 190098,
+    "durationText": "3:10",
+    "previewUrl": "https://p.scdn.co/mp3-preview/1fb997be8ec3392d3cef404b7f64a4f5f1347db6",
+    "spotifyUri": "spotify:track:0eLtIxPRNJfsmehITZ1qaJ"
+  },
+  {
+    "index": 89,
+    "title": "Pal Pal ",
+    "artists": "Afusic, Talwiinder",
+    "durationMs": 15092,
+    "durationText": "0:15",
+    "previewUrl": "https://p.scdn.co/mp3-preview/5ed2296496f52c2c726f1a6c636c1dc86a4b9297.mp3",
+    "spotifyUri": "spotify:episode:3GBwhjvoetzYWrueA1It0t"
+  },
+  {
+    "index": 90,
+    "title": "Teri Yaad Yaad Yaad",
+    "artists": "Ghulam Ali",
+    "durationMs": 489000,
+    "durationText": "8:09",
+    "previewUrl": "https://p.scdn.co/mp3-preview/f3768f05eafc0a9cefaf2c3d85c1707a238cb33e",
+    "spotifyUri": "spotify:track:0fop0xkp8P9b7JTJSDdBB4"
+  },
+  {
+    "index": 91,
+    "title": "BAWAL",
+    "artists": "DhiruMonchik",
+    "durationMs": 148499,
+    "durationText": "2:28",
+    "previewUrl": "https://p.scdn.co/mp3-preview/3e4310f5a1d43baca991c972215680520ff55161",
+    "spotifyUri": "spotify:track:148gVN30DwI6zL5pgpYfSA"
+  },
+  {
+    "index": 92,
+    "title": "Thodi Jagah (From \"Marjaavaan\")",
+    "artists": "Arijit Singh, Tanishk Bagchi, Rashmi Virag",
+    "durationMs": 218048,
+    "durationText": "3:38",
+    "previewUrl": "https://p.scdn.co/mp3-preview/363e37282a3e6d4d27406c5ef8b1a3b6b27ee17a",
+    "spotifyUri": "spotify:track:3f0wz6zcA7XkQiGm0qNF5r"
+  },
+  {
+    "index": 93,
+    "title": "Dua Kijiye",
+    "artists": "Sameer Khan, Kunaal Vermaa, Jagdiip Sinngh",
+    "durationMs": 268000,
+    "durationText": "4:28",
+    "previewUrl": "https://p.scdn.co/mp3-preview/f1142438641a6fc8cc4bec34692a83eb328b21d6",
+    "spotifyUri": "spotify:track:1wiN20nbVrsOepCSBgFjDy"
+  },
+  {
+    "index": 94,
+    "title": "Deewaniyat (From \"Ek Deewane Ki Deewaniyat\") (Original Motion Picture Soundtrack)",
+    "artists": "Vishal Mishra, Kaushik-Guddu, Kunaal Vermaa",
+    "durationMs": 257826,
+    "durationText": "4:17",
+    "previewUrl": "https://p.scdn.co/mp3-preview/61c54712223cae3e7e9004500c985705442536b8",
+    "spotifyUri": "spotify:track:3EKHZNd0qflQK8UImpUu3k"
+  },
+  {
+    "index": 95,
+    "title": "Gal Sun",
+    "artists": "Sabat Batin, Rackstar",
+    "durationMs": 178826,
+    "durationText": "2:58",
+    "previewUrl": "https://p.scdn.co/mp3-preview/06aad11c227c733709ce65e6c05d942f30794df8",
+    "spotifyUri": "spotify:track:0DCmf7066T5DAjiF8uahv1"
+  },
+  {
+    "index": 96,
+    "title": "Yaad Na Aaye",
+    "artists": "Akull",
+    "durationMs": 195294,
+    "durationText": "3:15",
+    "previewUrl": "https://p.scdn.co/mp3-preview/d321bc162c0b2d4010b5d22e210c1ff0b8b192ec",
+    "spotifyUri": "spotify:track:6cNosdXGIRwFb2jtBay1mu"
+  },
+  {
+    "index": 97,
+    "title": "Pal Pal Dil Ke Paas - Title Track - From \"Pal Pal Dil Ke Paas\"",
+    "artists": "Arijit Singh, Parampara Thakur, Sachet-Parampara, Siddharth - Garima",
+    "durationMs": 254516,
+    "durationText": "4:14",
+    "previewUrl": "https://p.scdn.co/mp3-preview/206b8baf0f72dff21e7ee89c660982c8f976ce57",
+    "spotifyUri": "spotify:track:3xeqwaUWpJI8j5gmCaHxt8"
+  },
+  {
+    "index": 98,
+    "title": "Teri Yaadon Mein",
+    "artists": "KK, Shreya Ghoshal",
+    "durationMs": 287213,
+    "durationText": "4:47",
+    "previewUrl": "https://p.scdn.co/mp3-preview/ae31aaf07135d6d16cd756d58e4a041a42c29a74",
+    "spotifyUri": "spotify:track:4ZVfIGaZP93t0stmBj4FqA"
+  },
+  {
+    "index": 99,
+    "title": "Mann Mera",
+    "artists": "Gajendra Verma",
+    "durationMs": 200120,
+    "durationText": "3:20",
+    "previewUrl": "https://p.scdn.co/mp3-preview/f54ab9b3634a1f9ade3551c2c2c5e027bbf1a560",
+    "spotifyUri": "spotify:track:0mwAlZqPUWpZJIut93y40W"
+  },
+  {
+    "index": 100,
+    "title": "Saanson Ko (From \"Zid\")",
+    "artists": "Shaarib Toshi, Arijit Singh",
+    "durationMs": 288355,
+    "durationText": "4:48",
+    "previewUrl": "https://p.scdn.co/mp3-preview/19c5f97ee30469633876147e17c768d6e3fc4b28",
+    "spotifyUri": "spotify:track:1HzNbxPRn9onoxxeZByHYJ"
+  }
+]

@@ -19,7 +19,7 @@ export function Drawer({ isOpen, onClose, onSelectSong, trendingSongs, recentlyP
   const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const categories = ['Bollywood', 'Bhajan', 'Classical', 'Lo-fi'];
+  const categories = ['Trending 🚀', 'Party 🔥', 'Chill 🌙', 'Gaming 🎮', 'LoFi ☕'];
 
   // Handle live search
   useEffect(() => {
@@ -69,8 +69,8 @@ export function Drawer({ isOpen, onClose, onSelectSong, trendingSongs, recentlyP
             {/* Header */}
             <div className="p-6 flex items-center justify-between border-b border-white/5">
               <h2 className="text-xl font-bold flex items-center gap-3 lowercase tracking-tighter">
-                <Music className="text-harmonium-accent w-6 h-6" />
-                web <span className="text-harmonium-accent">catalog</span>
+                <Music className="text-masti-pink w-6 h-6" />
+                masti <span className="text-masti-cyan">library</span>
               </h2>
               <button
                 onClick={onClose}
@@ -143,8 +143,8 @@ export function Drawer({ isOpen, onClose, onSelectSong, trendingSongs, recentlyP
                         {categories.map((cat) => (
                           <button
                             key={cat}
-                            onClick={() => setSearchQuery(cat)}
-                            className="glass p-4 rounded-3xl text-sm font-bold hover:text-harmonium-accent text-left hover:scale-[1.02] active:scale-98 transition-all"
+                            onClick={() => setSearchQuery(cat.replace(/ .*/, ''))}
+                            className="glass p-4 rounded-3xl text-sm font-bold hover:bg-masti-pink/20 hover:text-white text-left hover:scale-[1.02] active:scale-98 transition-all"
                           >
                             {cat}
                           </button>

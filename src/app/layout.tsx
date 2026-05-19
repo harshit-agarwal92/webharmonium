@@ -16,8 +16,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Web Harmonium | Premium Music Experience",
-  description: "A professional, modern web harmonium and music streaming application.",
+  title: "Masti Music | Nonstop Vibe",
+  description: "A fun, modern web harmonium and music streaming application.",
 };
 
 export default function RootLayout({
@@ -30,7 +30,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${poppins.variable} h-full antialiased dark`}
     >
-      <body className="min-h-full font-sans bg-black text-white selection:bg-harmonium-accent/20 overflow-x-hidden">
+      <body className="min-h-full font-sans bg-black text-white selection:bg-masti-pink/20 overflow-x-hidden">
         <AudioProvider>
           <MainLayout>
             {children}

@@ -9,6 +9,27 @@ export async function GET(request: Request) {
   
   const query = isTrending ? 'Latest Bollywood Hits 2024' : rawQuery;
 
+  // Load Spotify playlist songs if available
+  let spotifyPlaylistResults: any[] = [];
+  try {
+    const playlistPath = path.join(process.cwd(), 'public', 'spotify_playlist.json');
+    if (fs.existsSync(playlistPath)) {
+      const playlistSongs = JSON.parse(fs.readFileSync(playlistPath, 'utf-8'));
+      if (isTrending) {
+        // Prepend some of the playlist songs to trending
+        spotifyPlaylistResults = playlistSongs.slice(0, 10);
+      } else {
+        // Search matches inside playlist
+        spotifyPlaylistResults = playlistSongs.filter((s: any) =>
+          s.name.toLowerCase().includes(rawQuery.toLowerCase()) ||
+          s.artist.toLowerCase().includes(rawQuery.toLowerCase())
+        );
+      }
+    }
+  } catch (e) {
+    console.error("Failed to load spotify playlist songs in API:", e);
+  }
+
   // 1. LOCAL PUBLIC FILES SEARCH
   let localResults: any[] = [];
   try {
@@ -54,99 +75,127 @@ export async function GET(request: Request) {
     console.error("Local file scan failed:", e);
   }
 
-  // 2. JIOSAAVN SEARCH & TRENDING
-  const saavnEndpoints = isTrending ? [
-    `https://saavn.dev/api/search/songs?query=Trending&limit=20`,
-    `https://saavn.sumit.co/api/search/songs?query=Latest&limit=20`,
-    `https://saavn.dev/api/search/songs?query=Bollywood%20Hits&limit=20`
-  ] : [
-    `https://saavn.sumit.co/api/search/songs?query=${encodeURIComponent(query)}`,
-    `https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}`,
-    `https://jio-saavn-api.vercel.app/api/search/songs?query=${encodeURIComponent(query)}`
-  ];
-
-  const fetchWithTimeout = async (url: string, timeout = 6000) => {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-    try {
-      const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
-      clearTimeout(id);
-      return await res.json();
-    } catch (e) {
-      clearTimeout(id);
-      throw e;
-    }
-  };
-
-  const parseSaavnResults = (json: any) => {
-    const rawResults = json.data?.results || json.results || json.data || (Array.isArray(json) ? json : []);
-    if (!rawResults || !Array.isArray(rawResults)) return [];
-    
-    return rawResults.map((s: any) => {
-      const bestAudio = s.downloadUrl?.find((d: any) => d.quality === '320kbps') || 
-                        s.downloadUrl?.reverse()[0] || 
-                        s.url;
-      const bestImage = s.image?.find((i: any) => i.quality === '500x500') || 
-                        s.image?.reverse()[0]?.url || 
-                        s.image;
-
-      return {
-        id: s.id,
-        name: s.name || s.title,
-        artist: s.primaryArtists || s.artist || 'JioSaavn Artist',
-        album: s.album?.name || s.album || 'Single',
-        image: typeof bestImage === 'string' ? bestImage : bestImage?.url,
-        url: typeof bestAudio === 'string' ? bestAudio : bestAudio?.url,
-        source: 'saavn'
-      };
-    });
-  };
-
+  // 2. DIRECT JIOSAAVN SEARCH & SECURE CDN RESOLVER
   let saavnResults: any[] = [];
   try {
-    const allData = await Promise.allSettled(saavnEndpoints.map(url => fetchWithTimeout(url)));
-    allData.forEach(res => {
-        if (res.status === 'fulfilled') {
-            const parsed = parseSaavnResults(res.value);
-            saavnResults = [...saavnResults, ...parsed];
-        }
+    const searchUrl = `https://www.jiosaavn.com/api.php?__call=autocomplete.get&_format=json&_marker=0&cc=in&includeMetaTags=1&query=${encodeURIComponent(query)}`;
+    const searchRes = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json'
+      }
     });
-    // deduplicate by ID
-    const seen = new Set();
-    saavnResults = saavnResults.filter(s => {
-        const isDuplicate = seen.has(s.id);
-        seen.add(s.id);
-        return !isDuplicate;
-    }).slice(0, isTrending ? 30 : 15);
+
+    if (searchRes.ok) {
+      const searchData = await searchRes.json();
+      const songsList = searchData?.songs?.data || [];
+
+      const parsedTracks = await Promise.all(
+        songsList.map(async (item: any) => {
+          try {
+            // Get exact song details to retrieve encrypted CDN keys
+            const detailUrl = `https://www.jiosaavn.com/api.php?__call=song.getDetails&cc=in&_marker=0%3F_marker%3D0&_format=json&pids=${item.id}`;
+            const detailRes = await fetch(detailUrl, {
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+            });
+
+            if (!detailRes.ok) return null;
+            const detailData = await detailRes.json();
+            const songDetail = Object.values(detailData)[0] as any;
+
+            if (!songDetail) return null;
+
+            const encUrl = songDetail.encrypted_media_url || songDetail.encrypted_drm_media_url;
+            if (!encUrl) return null;
+
+            // Generate direct secure CDN audio link (320kbps)
+            const tokenUrl = `https://www.jiosaavn.com/api.php?__call=song.generateAuthToken&_format=json&_marker=0&cc=in&bitrate=320&url=${encodeURIComponent(encUrl)}`;
+            const tokenRes = await fetch(tokenUrl, {
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+            });
+
+            if (!tokenRes.ok) return null;
+            const tokenData = await tokenRes.json();
+
+            if (tokenData.status === 'success' && tokenData.auth_url) {
+              // Upscale image resolution to 500x500 for modern premium display
+              let hiresImage = songDetail.image || item.image;
+              if (hiresImage) {
+                hiresImage = hiresImage.replace('150x150', '500x500').replace('50x50', '500x500');
+              }
+
+              const cleanName = (songDetail.song || item.title || 'Unknown Track')
+                .replace(/&quot;/g, '"')
+                .replace(/&amp;/g, '&')
+                .replace(/&#039;/g, "'");
+
+              return {
+                id: item.id,
+                name: cleanName,
+                artist: songDetail.singers || songDetail.primary_artists || item.more_info?.primary_artists || 'JioSaavn Artist',
+                album: songDetail.album || item.album || 'Single',
+                image: hiresImage,
+                url: tokenData.auth_url,
+                source: 'saavn'
+              };
+            }
+          } catch (err) {
+            // Silently skip individual track failures
+          }
+          return null;
+        })
+      );
+
+      saavnResults = parsedTracks.filter(Boolean);
+    }
   } catch (e) {
-    console.warn("[JioSaavn] Failed sources.");
+    console.error("Direct JioSaavn API retrieval failed:", e);
   }
 
-  // 3. YOUTUBE FALLBACK
+  // 3. YOUTUBE FALLBACK (IF SAAVN RETURNED INSUFFICIENT DATA)
   let youtubeResults: any[] = [];
-  if (saavnResults.length < 5 && rawQuery) {
-      const invInstances = ['https://yewtu.be', 'https://iv.ggtyler.dev'];
+  if (saavnResults.length < 3 && rawQuery) {
+    const invInstances = ['https://yewtu.be', 'https://iv.ggtyler.dev'];
+    for (const inst of invInstances) {
       try {
-        const invData = await Promise.any(invInstances.map(inst => fetchWithTimeout(`${inst}/api/v1/search?q=${encodeURIComponent(query + ' audio')}&type=video`)));
-        const items = Array.isArray(invData) ? invData : (invData.items || []);
-        youtubeResults = items.map((item: any) => ({
-          id: item.videoId || item.id?.videoId,
-          name: item.title || item.snippet?.title,
-          artist: item.author || item.snippet?.channelTitle,
-          album: 'YouTube Music',
-          image: item.videoThumbnails?.[0]?.url || item.snippet?.thumbnails?.high?.url || `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`,
-          url: `/api/stream?id=${item.videoId || item.id?.videoId}`,
-          source: 'youtube'
-        })).slice(0, 10);
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 6000);
+        const yRes = await fetch(`${inst}/api/v1/search?q=${encodeURIComponent(query + ' audio')}&type=video`, {
+          signal: controller.signal
+        });
+        clearTimeout(tid);
+        if (yRes.ok) {
+          const yData = await yRes.json();
+          const items = Array.isArray(yData) ? yData : (yData.items || []);
+          youtubeResults = items.map((item: any) => ({
+            id: item.videoId || item.id?.videoId,
+            name: item.title || item.snippet?.title,
+            artist: item.author || item.snippet?.channelTitle,
+            album: 'YouTube Music',
+            image: item.videoThumbnails?.[0]?.url || item.snippet?.thumbnails?.high?.url || `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`,
+            url: `/api/stream?id=${item.videoId || item.id?.videoId}`,
+            source: 'youtube'
+          })).slice(0, 10);
+          break; // Stop querying once a fallback responds
+        }
       } catch (e) {}
+    }
   }
 
-  const combined = [...localResults, ...saavnResults, ...youtubeResults];
-  
+  const combined = [...spotifyPlaylistResults, ...localResults, ...saavnResults, ...youtubeResults];
+
+  // Deduplicate final combined tracks catalog
+  const seenIds = new Set();
+  const finalResults = combined.filter(song => {
+    if (seenIds.has(song.id)) return false;
+    seenIds.add(song.id);
+    return true;
+  });
+
   return NextResponse.json({ 
     success: true, 
-    results: combined.length > 0 ? combined : [
-        { id: 'saavn-1', name: 'Zaalima', artist: 'Arijit Singh', album: 'Raees', image: 'https://c.saavncdn.com/123/Raees-Hindi-2016-500x500.jpg', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', source: 'saavn' }
+    results: finalResults.length > 0 ? finalResults : [
+      { id: 'saavn-1', name: 'Zaalima', artist: 'Arijit Singh', album: 'Raees', image: 'https://c.saavncdn.com/123/Raees-Hindi-2016-500x500.jpg', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', source: 'saavn' }
     ]
   });
 }

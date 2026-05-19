@@ -33,6 +33,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   
   const [trending, setTrending] = useState<any[]>([]);
   const pathname = usePathname();
+  const isMusicPath = pathname.startsWith('/music');
 
   useEffect(() => {
     async function fetchTrending() {
@@ -68,46 +69,48 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen w-full bg-black text-white font-sans overflow-hidden flex flex-col">
       {/* BACKGROUND GRADIENTS */}
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_right,_var(--color-harmonium-deep-purple),_transparent_60%)] pointer-events-none opacity-50 z-0" />
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_bottom_left,_#1a0b2e,_transparent_70%)] pointer-events-none opacity-30 z-0" />
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_right,_var(--color-masti-pink),_transparent_40%)] pointer-events-none opacity-20 z-0" />
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--color-masti-cyan),_transparent_40%)] pointer-events-none opacity-20 z-0" />
 
       {/* GLOBAL HEADER */}
-      <header className="relative z-50 flex items-center justify-between p-4 md:p-8 shrink-0">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => setDrawerOpen(true)}
-            className="p-3 glass rounded-2xl hover:bg-white/10 transition-all group active:scale-90"
-          >
-            <Menu className="w-6 h-6 group-hover:text-harmonium-accent transition-colors" />
-          </button>
-          <Link href="/" className="flex items-center gap-3 active:scale-95 transition-transform">
-            <div className="w-10 h-10 bg-harmonium-accent rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.4)]">
-              <PianoIcon className="w-6 h-6 text-black" />
-            </div>
-            <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase hidden sm:block">
-              Web <span className="text-harmonium-accent">Harmonium</span>
-            </h1>
-          </Link>
-        </div>
+      {!isMusicPath && (
+        <header className="relative z-50 flex items-center justify-between p-4 md:p-8 shrink-0">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setDrawerOpen(true)}
+              className="p-3 glass rounded-2xl hover:bg-masti-pink/20 transition-all group active:scale-90"
+            >
+              <Menu className="w-6 h-6 group-hover:text-masti-pink transition-colors" />
+            </button>
+            <Link href="/" className="flex items-center gap-3 active:scale-95 transition-transform">
+              <div className="w-10 h-10 bg-gradient-to-r from-masti-pink to-masti-cyan rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(255,0,127,0.4)]">
+                <PianoIcon className="w-6 h-6 text-black" />
+              </div>
+              <h1 className="text-xl md:text-2xl font-black tracking-tighter uppercase hidden sm:block">
+                Masti <span className="text-transparent bg-clip-text bg-gradient-to-r from-masti-pink to-masti-cyan">Music</span>
+              </h1>
+            </Link>
+          </div>
 
-        <div className="flex items-center gap-3">
-          <nav className="hidden md:flex items-center glass rounded-2xl px-2 py-1 mr-4">
-             <NavLink href="/" active={pathname === "/"}>Home</NavLink>
-             <NavLink href="/harmonium" active={pathname === "/harmonium"}>Harmonium</NavLink>
-             <NavLink href="/music" active={pathname === "/music"}>Music</NavLink>
-          </nav>
-          
-          <button 
-            onClick={() => setIsMuted(!isMuted)}
-            className={cn(
-              "p-3 glass rounded-2xl transition-all",
-              isMuted ? "text-red-500" : "text-white/60 hover:text-white"
-            )}
-          >
-            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-          </button>
-        </div>
-      </header>
+          <div className="flex items-center gap-3">
+            <nav className="hidden md:flex items-center glass rounded-2xl px-2 py-1 mr-4">
+               <NavLink href="/" active={pathname === "/"}>Home</NavLink>
+               <NavLink href="/harmonium" active={pathname === "/harmonium"}>Harmonium</NavLink>
+               <NavLink href="/music" active={pathname === "/music"}>Music</NavLink>
+            </nav>
+            
+            <button 
+              onClick={() => setIsMuted(!isMuted)}
+              className={cn(
+                "p-3 glass rounded-2xl transition-all",
+                isMuted ? "text-red-500" : "text-white/60 hover:text-white"
+              )}
+            >
+              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            </button>
+          </div>
+        </header>
+      )}
 
       {/* PAGE CONTENT */}
       <main className="flex-1 relative z-10 overflow-y-auto custom-scrollbar">
@@ -115,15 +118,17 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* DRAWERS & PLAYERS */}
-      <Drawer 
-        isOpen={drawerOpen} 
-        onClose={() => setDrawerOpen(false)} 
-        onSelectSong={handleSelectSong}
-        trendingSongs={trending}
-        recentlyPlayed={recentlyPlayed}
-      />
+      {!isMusicPath && (
+        <Drawer 
+          isOpen={drawerOpen} 
+          onClose={() => setDrawerOpen(false)} 
+          onSelectSong={handleSelectSong}
+          trendingSongs={trending}
+          recentlyPlayed={recentlyPlayed}
+        />
+      )}
 
-      {currentTrack && (
+      {currentTrack && !isMusicPath && (
         <MiniPlayer 
           currentTrack={currentTrack}
           isPlaying={isBGActive}
