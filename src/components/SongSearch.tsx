@@ -92,7 +92,7 @@ export const SongSearch = ({ query = '', onResultsUpdate, onSelectSong, isBGActi
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 <AnimatePresence>
                   {results.map((song, i) => (
-                    <SongCard key={song.id + i} song={song} onClick={() => onSelectSong(song.url, song.name, song.artist, song.image)} />
+                    <SongCard key={`search-${song.id}-${i}`} song={song} onClick={() => onSelectSong(song.url, song.name, song.artist, song.image)} />
                   ))}
                 </AnimatePresence>
               </div>
@@ -114,7 +114,7 @@ export const SongSearch = ({ query = '', onResultsUpdate, onSelectSong, isBGActi
 
               <div className="flex gap-6 overflow-x-auto pb-6 custom-scrollbar no-scrollbar-on-mobile snap-x h-[280px] items-start">
                 {trending.map((song, i) => (
-                  <SongCard key={'trend' + song.id + i} song={song} onClick={() => onSelectSong(song.url, song.name, song.artist, song.image)} large />
+                  <SongCard key={`trend-${song.id}-${i}`} song={song} onClick={() => onSelectSong(song.url, song.name, song.artist, song.image)} large />
                 ))}
               </div>
             </section>
@@ -126,7 +126,7 @@ export const SongSearch = ({ query = '', onResultsUpdate, onSelectSong, isBGActi
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
                 {trending.slice(0, 5).map((song, i) => (
-                  <SongCard key={'recent' + song.id + i} song={song} onClick={() => onSelectSong(song.url, song.name, song.artist, song.image)} />
+                  <SongCard key={`recent-${song.id}-${i}`} song={song} onClick={() => onSelectSong(song.url, song.name, song.artist, song.image)} />
                 ))}
               </div>
             </section>

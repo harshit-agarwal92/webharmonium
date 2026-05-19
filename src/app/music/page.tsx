@@ -97,6 +97,8 @@ export default function FuturisticMusicPage() {
 
   // CLIENT MOUNT STATE FOR HYDRATION GUARD
   const [mounted, setMounted] = useState(false);
+  const [isDraggingSeek, setIsDraggingSeek] = useState(false);
+  const [dragTime, setDragTime] = useState(0);
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -360,7 +362,16 @@ export default function FuturisticMusicPage() {
     let playUrl = song.url;
     
     // If it's a saavn song and the URL might be expired (or we want to ensure it's fresh)
-    if (song.source === 'saavn' && (!song.url || song.url.includes('Expires='))) {
+    const expiresMatch = song.url?.match(/[eE]xpires=(\d+)/);
+    let isExpired = false;
+    if (expiresMatch) {
+      const expiresTime = parseInt(expiresMatch[1], 10);
+      if (Date.now() / 1000 >= expiresTime - 30) {
+        isExpired = true;
+      }
+    }
+
+    if (song.source === 'saavn' && (!song.url || isExpired)) {
       try {
         notify(`Resolving fresh audio stream... ⚡`);
         const res = await fetch(`/api/songs?query=${encodeURIComponent(song.name + ' ' + song.artist)}`);
@@ -376,7 +387,7 @@ export default function FuturisticMusicPage() {
       }
     }
     
-    playBackgroundTrack(playUrl, song.name, song.artist, setIsBGActive);
+    playBackgroundTrack(playUrl, song.name, song.artist);
     notify(`Playing "${song.name}" ⚡`);
   };
 
@@ -399,7 +410,7 @@ export default function FuturisticMusicPage() {
     }
   };
 
-  // SEEK BACKGROUND TRACK
+  // SEEK BACKGROUND TRACK & DRAGGABLE HANDLERS
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!bgDuration) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -407,6 +418,65 @@ export default function FuturisticMusicPage() {
     const width = rect.width;
     const seekTime = (clickX / width) * bgDuration;
     setAudioParam('seek', seekTime);
+  };
+
+  const handleSeekMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!bgDuration) return;
+    setIsDraggingSeek(true);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    const pct = Math.max(0, Math.min(clickX / width, 1));
+    setDragTime(pct * bgDuration);
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const clickXMove = moveEvent.clientX - rect.left;
+      const pctMove = Math.max(0, Math.min(clickXMove / width, 1));
+      setDragTime(pctMove * bgDuration);
+    };
+
+    const handleMouseUp = (upEvent: MouseEvent) => {
+      const clickXUp = upEvent.clientX - rect.left;
+      const pctUp = Math.max(0, Math.min(clickXUp / width, 1));
+      setAudioParam('seek', pctUp * bgDuration);
+      setIsDraggingSeek(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleSeekTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!bgDuration) return;
+    setIsDraggingSeek(true);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const touch = e.touches[0];
+    const clickX = touch.clientX - rect.left;
+    const width = rect.width;
+    const pct = Math.max(0, Math.min(clickX / width, 1));
+    setDragTime(pct * bgDuration);
+
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      const touchMove = moveEvent.touches[0];
+      const clickXMove = touchMove.clientX - rect.left;
+      const pctMove = Math.max(0, Math.min(clickXMove / width, 1));
+      setDragTime(pctMove * bgDuration);
+    };
+
+    const handleTouchEnd = (endEvent: TouchEvent) => {
+      const touchEnd = endEvent.changedTouches[0];
+      const clickXEnd = touchEnd.clientX - rect.left;
+      const pctEnd = Math.max(0, Math.min(clickXEnd / width, 1));
+      setAudioParam('seek', pctEnd * bgDuration);
+      setIsDraggingSeek(false);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd);
   };
 
   // LIKE / FAVORITE TOGGLE
@@ -659,7 +729,10 @@ export default function FuturisticMusicPage() {
               top: `${p.top}%`,
               width: `${p.size}px`,
               height: `${p.size}px`,
-              animation: `drift ${p.duration}s linear infinite`,
+              animationName: 'drift',
+              animationDuration: `${p.duration}s`,
+              animationTimingFunction: 'linear',
+              animationIterationCount: 'infinite',
               animationDelay: `${p.delay}s`,
               boxShadow: '0 0 6px rgba(255, 255, 255, 0.3)'
             }}
@@ -1005,9 +1078,11 @@ export default function FuturisticMusicPage() {
                             className="flex-1 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full shadow-[0_0_10px_rgba(255,0,127,0.3)]"
                             style={{ 
                               height: isBGActive ? `${h}%` : '10px',
-                              animation: isBGActive 
-                                ? `bounce-eq 0.8s ease-in-out infinite alternate` 
-                                : `breath-eq 1.8s ease-in-out infinite alternate`,
+                              animationName: isBGActive ? 'bounce-eq' : 'breath-eq',
+                              animationDuration: isBGActive ? '0.8s' : '1.8s',
+                              animationTimingFunction: 'ease-in-out',
+                              animationIterationCount: 'infinite',
+                              animationDirection: 'alternate',
                               animationDelay: `${i * 0.08}s`
                             }}
                           />
@@ -1055,6 +1130,8 @@ export default function FuturisticMusicPage() {
                           onFav={(e) => toggleFavorite(song, e)} 
                           onDl={(e) => startDownload(song, e)} 
                           isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
+                          isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
+                          isPlaying={isBGActive}
                         />
                       ))}
                     </div>
@@ -1082,7 +1159,16 @@ export default function FuturisticMusicPage() {
                       ))
                     ) : (
                       trendingSongs.map((song, i) => (
-                        <MusicCard key={`trending-${song.id || 'song'}-${i}`} song={song} onClick={() => handlePlaySong(song, trendingSongs)} onFav={(e) => toggleFavorite(song, e)} onDl={(e) => startDownload(song, e)} isFav={favorites.some(f => f.id === song.id || f.url === song.url)} />
+                        <MusicCard 
+                          key={`trending-${song.id || 'song'}-${i}`} 
+                          song={song} 
+                          onClick={() => handlePlaySong(song, trendingSongs)} 
+                          onFav={(e) => toggleFavorite(song, e)} 
+                          onDl={(e) => startDownload(song, e)} 
+                          isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
+                          isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
+                          isPlaying={isBGActive}
+                        />
                       ))
                     )}
                   </div>
@@ -1099,7 +1185,16 @@ export default function FuturisticMusicPage() {
 
                   <div className="flex gap-6 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory">
                     {featuredCharts.map((song, i) => (
-                      <MusicCard key={`featured-${song.id || 'song'}-${i}`} song={song} onClick={() => handlePlaySong(song, featuredCharts)} onFav={(e) => toggleFavorite(song, e)} onDl={(e) => startDownload(song, e)} isFav={favorites.some(f => f.id === song.id || f.url === song.url)} />
+                      <MusicCard 
+                        key={`featured-${song.id || 'song'}-${i}`} 
+                        song={song} 
+                        onClick={() => handlePlaySong(song, featuredCharts)} 
+                        onFav={(e) => toggleFavorite(song, e)} 
+                        onDl={(e) => startDownload(song, e)} 
+                        isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
+                        isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
+                        isPlaying={isBGActive}
+                      />
                     ))}
                   </div>
                 </section>
@@ -1116,7 +1211,16 @@ export default function FuturisticMusicPage() {
 
                     <div className="flex gap-6 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory">
                       {recentlyPlayed.map((song, i) => (
-                        <MusicCard key={`recent-${song.id || 'song'}-${i}`} song={song} onClick={() => handlePlaySong(song, recentlyPlayed)} onFav={(e) => toggleFavorite(song, e)} onDl={(e) => startDownload(song, e)} isFav={favorites.some(f => f.id === song.id || f.url === song.url)} />
+                        <MusicCard 
+                          key={`recent-${song.id || 'song'}-${i}`} 
+                          song={song} 
+                          onClick={() => handlePlaySong(song, recentlyPlayed)} 
+                          onFav={(e) => toggleFavorite(song, e)} 
+                          onDl={(e) => startDownload(song, e)} 
+                          isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
+                          isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
+                          isPlaying={isBGActive}
+                        />
                       ))}
                     </div>
                   </section>
@@ -1334,7 +1438,16 @@ export default function FuturisticMusicPage() {
                     ) : searchResults.length > 0 ? (
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                         {searchResults.map((song, i) => (
-                          <MusicCard key={`search-${song.id || 'song'}-${i}`} song={song} onClick={() => handlePlaySong(song, searchResults)} onFav={(e) => toggleFavorite(song, e)} onDl={(e) => startDownload(song, e)} isFav={favorites.some(f => f.id === song.id || f.url === song.url)} />
+                          <MusicCard 
+                            key={`search-${song.id || 'song'}-${i}`} 
+                            song={song} 
+                            onClick={() => handlePlaySong(song, searchResults)} 
+                            onFav={(e) => toggleFavorite(song, e)} 
+                            onDl={(e) => startDownload(song, e)} 
+                            isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
+                            isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
+                            isPlaying={isBGActive}
+                          />
                         ))}
                       </div>
                     ) : (
@@ -1366,7 +1479,16 @@ export default function FuturisticMusicPage() {
                 {favorites.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                     {favorites.map((song, i) => (
-                      <MusicCard key={`fav-${song.id || 'song'}-${i}`} song={song} onClick={() => handlePlaySong(song, favorites)} onFav={(e) => toggleFavorite(song, e)} onDl={(e) => startDownload(song, e)} isFav={true} />
+                      <MusicCard 
+                        key={`fav-${song.id || 'song'}-${i}`} 
+                        song={song} 
+                        onClick={() => handlePlaySong(song, favorites)} 
+                        onFav={(e) => toggleFavorite(song, e)} 
+                        onDl={(e) => startDownload(song, e)} 
+                        isFav={true} 
+                        isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
+                        isPlaying={isBGActive}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -1413,7 +1535,16 @@ export default function FuturisticMusicPage() {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                   {LOCAL_SONGS.map((song, i) => (
-                    <MusicCard key={`local-${song.id || 'song'}-${i}`} song={song} onClick={() => handlePlaySong(song, LOCAL_SONGS)} onFav={(e) => toggleFavorite(song, e)} onDl={(e) => startDownload(song, e)} isFav={favorites.some(f => f.id === song.id || f.url === song.url)} />
+                    <MusicCard 
+                      key={`local-${song.id || 'song'}-${i}`} 
+                      song={song} 
+                      onClick={() => handlePlaySong(song, LOCAL_SONGS)} 
+                      onFav={(e) => toggleFavorite(song, e)} 
+                      onDl={(e) => startDownload(song, e)} 
+                      isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
+                      isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
+                      isPlaying={isBGActive}
+                    />
                   ))}
                 </div>
               </motion.div>
@@ -1554,6 +1685,8 @@ export default function FuturisticMusicPage() {
                       onFav={(e) => toggleFavorite(song, e)} 
                       onDl={(e) => startDownload(song, e)} 
                       isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
+                      isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
+                      isPlaying={isBGActive}
                     />
                   ))}
                 </div>
@@ -1652,20 +1785,23 @@ export default function FuturisticMusicPage() {
 
         {/* PROGRESS SEEKABLE BAR */}
         <div className="w-full flex items-center gap-3 mb-2 group px-1">
-          <span className="text-[9px] font-bold tracking-widest text-white/30 w-10 text-right">{formatTime(bgTime)}</span>
+          <span className="text-[9px] font-bold tracking-widest text-white/30 w-10 text-right">
+            {formatTime(isDraggingSeek ? dragTime : bgTime)}
+          </span>
           <div 
-            onClick={handleSeek}
+            onMouseDown={handleSeekMouseDown}
+            onTouchStart={handleSeekTouchStart}
             className="flex-1 h-1.5 bg-white/5 hover:h-2 rounded-full relative cursor-pointer border border-white/[0.02] transition-all duration-300"
           >
             {/* Pulsing neon seeker bar with animated flowing shimmer */}
             <div 
               className="absolute top-0 left-0 h-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-full shadow-[0_0_12px_rgba(255,0,127,0.8)] animate-shimmer-flow"
-              style={{ width: `${bgDuration ? (bgTime / bgDuration) * 100 : 0}%` }}
+              style={{ width: `${bgDuration ? ((isDraggingSeek ? dragTime : bgTime) / bgDuration) * 100 : 0}%` }}
             />
             {/* Glowing seeker thumb */}
             <div 
               className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full opacity-0 group-hover:opacity-100 shadow-[0_0_10px_rgba(255,255,255,0.8)] transition-opacity"
-              style={{ left: `calc(${bgDuration ? (bgTime / bgDuration) * 100 : 0}% - 7px)` }}
+              style={{ left: `calc(${bgDuration ? ((isDraggingSeek ? dragTime : bgTime) / bgDuration) * 100 : 0}% - 7px)` }}
             />
           </div>
           <span className="text-[9px] font-bold tracking-widest text-white/30 w-10">{formatTime(bgDuration)}</span>
@@ -1706,7 +1842,11 @@ export default function FuturisticMusicPage() {
                         className="w-[2px] bg-gradient-to-t from-purple-500 to-pink-500 rounded-full shadow-[0_0_5px_rgba(255,0,127,0.5)]"
                         style={{ 
                           height: `${h}px`,
-                          animation: `bounce-eq 0.6s ease-in-out infinite alternate`,
+                          animationName: 'bounce-eq',
+                          animationDuration: '0.6s',
+                          animationTimingFunction: 'ease-in-out',
+                          animationIterationCount: 'infinite',
+                          animationDirection: 'alternate',
                           animationDelay: `${i * 0.08}s`
                         }}
                       />
@@ -2042,9 +2182,9 @@ function ExploreTile({
 
 // SUBCOMPONENT: PREMIUM MUSIC CARD WITH HOVER LAYOUT
 function MusicCard({ 
-  song, onClick, onFav, onDl, isFav 
+  song, onClick, onFav, onDl, isFav, isActive = false, isPlaying = false
 }: { 
-  song: any; onClick: () => void; onFav: (e: React.MouseEvent) => void; onDl: (e: React.MouseEvent) => void; isFav: boolean 
+  song: any; onClick: () => void; onFav: (e: React.MouseEvent) => void; onDl: (e: React.MouseEvent) => void; isFav: boolean; isActive?: boolean; isPlaying?: boolean;
 }) {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -2067,11 +2207,18 @@ function MusicCard({
       whileHover={{ 
         y: -10, 
         scale: 1.025,
-        boxShadow: '0 25px 50px -12px rgba(255, 0, 127, 0.38), 0 0 20px rgba(157, 0, 255, 0.12)',
-        borderColor: 'rgba(255, 0, 127, 0.55)'
+        boxShadow: isActive 
+          ? '0 25px 50px -12px rgba(255, 0, 127, 0.45), 0 0 25px rgba(157, 0, 255, 0.25)'
+          : '0 25px 50px -12px rgba(255, 0, 127, 0.38), 0 0 20px rgba(157, 0, 255, 0.12)',
+        borderColor: isActive ? 'rgba(255, 0, 127, 0.8)' : 'rgba(255, 0, 127, 0.55)'
       }}
       transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-      className="w-48 p-4 rounded-[32px] glass-card border border-white/5 cursor-pointer relative shrink-0 group active:scale-98 select-none overflow-hidden transition-all duration-300"
+      className={cn(
+        "w-48 p-4 rounded-[32px] glass-card border cursor-pointer relative shrink-0 group active:scale-98 select-none overflow-hidden transition-all duration-300",
+        isActive 
+          ? "border-pink-500 bg-pink-500/[0.04] shadow-[0_20px_45px_-8px_rgba(255,0,127,0.3),0_0_20px_rgba(157,0,255,0.2)]" 
+          : "border-white/5"
+      )}
       onClick={onClick}
     >
       {/* Premium Glass Reflection Sweep */}
@@ -2084,7 +2231,10 @@ function MusicCard({
         <img 
           src={song.image} 
           alt={song.name} 
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+          className={cn(
+            "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
+            isActive && isPlaying ? "scale-105" : ""
+          )} 
         />
         
         {/* Glassmorphism Dark Hover Overlay */}
@@ -2092,7 +2242,11 @@ function MusicCard({
 
         {/* Play Button glows neon and triggers on hover */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white text-black p-4.5 rounded-[20px] shadow-[0_0_25px_rgba(255,255,255,0.75),0_0_10px_rgba(255,0,127,0.35)] opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 hover:scale-105 active:scale-90 duration-200">
-          <Play className="w-5 h-5 fill-current ml-0.5" />
+          {isActive && isPlaying ? (
+            <Pause className="w-5 h-5 fill-current" />
+          ) : (
+            <Play className="w-5 h-5 fill-current ml-0.5" />
+          )}
         </div>
 
         {/* Like indicator badge */}
@@ -2101,11 +2255,27 @@ function MusicCard({
             <Heart className="w-2.5 h-2.5 fill-current text-pink-500" /> Fav
           </div>
         )}
+
+        {/* Active live equalizer playing badge */}
+        {isActive && (
+          <div className={cn(
+            "absolute bottom-3 left-3 px-2.5 py-1 rounded-full border text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg backdrop-blur-md",
+            isPlaying 
+              ? "bg-pink-500 text-black border-pink-400 shadow-pink-500/40" 
+              : "bg-purple-900/80 text-purple-200 border-purple-500/30"
+          )}>
+            <span className={cn("w-1.5 h-1.5 rounded-full", isPlaying ? "bg-black animate-ping" : "bg-purple-400")} />
+            {isPlaying ? "Live" : "Paused"}
+          </div>
+        )}
       </div>
 
       {/* Track info details */}
       <div className="px-1 min-w-0">
-        <h4 className="text-xs font-black tracking-tight uppercase leading-snug truncate text-white group-hover:text-pink-400 transition-colors">
+        <h4 className={cn(
+          "text-xs font-black tracking-tight uppercase leading-snug truncate group-hover:text-pink-400 transition-colors",
+          isActive ? "text-pink-400" : "text-white"
+        )}>
           {song.name}
         </h4>
         

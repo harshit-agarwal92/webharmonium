@@ -45,36 +45,76 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [recentlyPlayed, setRecentlyPlayed] = useState<any[]>([]);
   const [queue, setQueue] = useState<any[]>([]);
 
-  const addToRecentlyPlayed = (track: any) => {
+  // Refs to always track the absolute latest queue and currentTrack to prevent stale closure bugs in native onended callbacks
+  const queueRef = React.useRef(queue);
+  const currentTrackRef = React.useRef(currentTrack);
+
+  React.useEffect(() => {
+    queueRef.current = queue;
+  }, [queue]);
+
+  React.useEffect(() => {
+    currentTrackRef.current = currentTrack;
+  }, [currentTrack]);
+
+  const addToRecentlyPlayed = React.useCallback((track: any) => {
     setRecentlyPlayed(prev => {
       const filtered = prev.filter(t => t.url !== track.url);
       return [track, ...filtered].slice(0, 10);
     });
-  };
+  }, []);
 
-  const playNext = () => {
-    if (queue.length === 0 || !currentTrack) return;
-    const currentIndex = queue.findIndex(t => t.id === currentTrack.id || t.url === currentTrack.url);
-    const nextIndex = (currentIndex + 1) % queue.length;
-    const nextTrack = queue[nextIndex];
+  const playNext = React.useCallback(() => {
+    const latestQueue = queueRef.current;
+    const latestTrack = currentTrackRef.current;
+    if (latestQueue.length === 0) return;
+    
+    let nextTrack;
+    if (latestQueue.length === 1) {
+      nextTrack = latestQueue[0];
+    } else {
+      // Pick a random track from the queue that is NOT the current track (premium shuffle logic)
+      const otherTracks = latestQueue.filter(t => !latestTrack || (t.id !== latestTrack.id && t.url !== latestTrack.url));
+      const randomIndex = Math.floor(Math.random() * (otherTracks.length > 0 ? otherTracks.length : latestQueue.length));
+      nextTrack = otherTracks.length > 0 ? otherTracks[randomIndex] : latestQueue[randomIndex];
+    }
+
     if (nextTrack) {
         setCurrentTrack(nextTrack);
-        engine.playBackgroundTrack(nextTrack.url, nextTrack.name, nextTrack.artist, setIsBGActive);
+        engine.playBackgroundTrack(nextTrack.url, nextTrack.name, nextTrack.artist, setIsBGActive, playNext);
         addToRecentlyPlayed(nextTrack);
     }
-  };
+  }, [engine, addToRecentlyPlayed]);
 
-  const playPrevious = () => {
-    if (queue.length === 0 || !currentTrack) return;
-    const currentIndex = queue.findIndex(t => t.id === currentTrack.id || t.url === currentTrack.url);
-    const prevIndex = (currentIndex - 1 + queue.length) % queue.length;
-    const prevTrack = queue[prevIndex];
+  const playPrevious = React.useCallback(() => {
+    const latestQueue = queueRef.current;
+    const latestTrack = currentTrackRef.current;
+    if (latestQueue.length === 0) return;
+    
+    // Check if we have history in recentlyPlayed, otherwise fall back sequentially
+    let prevTrack = null;
+    if (recentlyPlayed.length > 1) {
+      // recentlyPlayed[0] is the current track, recentlyPlayed[1] is the one played before
+      prevTrack = recentlyPlayed[1];
+    } else if (latestTrack) {
+      const currentIndex = latestQueue.findIndex(t => t.id === latestTrack.id || t.url === latestTrack.url);
+      const prevIndex = (currentIndex - 1 + latestQueue.length) % latestQueue.length;
+      prevTrack = latestQueue[prevIndex];
+    } else {
+      prevTrack = latestQueue[0];
+    }
+
     if (prevTrack) {
         setCurrentTrack(prevTrack);
-        engine.playBackgroundTrack(prevTrack.url, prevTrack.name, prevTrack.artist, setIsBGActive);
-        addToRecentlyPlayed(prevTrack);
+        engine.playBackgroundTrack(prevTrack.url, prevTrack.name, prevTrack.artist, setIsBGActive, playNext);
+        
+        // Push to top of recently played
+        setRecentlyPlayed(prev => {
+          const filtered = prev.filter(t => t.url !== prevTrack.url);
+          return [prevTrack, ...filtered];
+        });
     }
-  };
+  }, [engine, recentlyPlayed, playNext]);
 
   useEffect(() => {
     engine.setAudioParam('volume', isMuted ? 0 : volume);
@@ -82,6 +122,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   const value = {
     ...engine,
+    playBackgroundTrack: async (url: string, songName?: string, artist?: string, onStateChange?: (playing: boolean) => void) => {
+      const stateHandler = onStateChange || setIsBGActive;
+      return engine.playBackgroundTrack(url, songName, artist, stateHandler, playNext);
+    },
     setAudioParam: (param: string, val: any) => {
       if (param === 'volume') {
         const v = Number(val);

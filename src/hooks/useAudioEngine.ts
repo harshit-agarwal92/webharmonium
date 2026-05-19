@@ -260,8 +260,13 @@ export function useAudioEngine() {
   }, [sustain, octaveOffset, currentPreset]);
 
   // BACKGROUND TRACKS
-  const playBackgroundTrack = useCallback(async (url: string, songName?: string, artist?: string, onStateChange?: (playing: boolean) => void) => {
+  const playBackgroundTrack = useCallback(async (url: string, songName?: string, artist?: string, onStateChange?: (playing: boolean) => void, onEnded?: () => void) => {
     if (!bgGainRef.current || !url) return;
+    
+    // RESET PLAYBACK TIMELINE STATE IMMEDIATELY TO PREVENT STUCK UI
+    setBgTime(0);
+    setBgDuration(0.1);
+
     try {
       // FORCE AUDIO RESUME
       if (Tone.getContext().state !== 'running') {
@@ -271,10 +276,20 @@ export function useAudioEngine() {
 
       let finalUrl = url;
       
-      // AUTO-RESOLUTION for Spotify Metadata
-      // If result is from Spotify (metadata only), we search YouTube/Saavn for a playable alternative
-      if (url.startsWith('@spotify:')) {
-        console.log(`Resolving Spotify metadata: ${songName} - ${artist}`);
+      // Check if JioSaavn URL has expired
+      const expiresMatch = url.match(/[eE]xpires=(\d+)/);
+      let isExpired = false;
+      if (expiresMatch) {
+        const expiresTime = parseInt(expiresMatch[1], 10);
+        if (Date.now() / 1000 >= expiresTime - 30) {
+          isExpired = true;
+          console.log(`JioSaavn URL has expired (Expires: ${expiresTime}, Now: ${Math.floor(Date.now() / 1000)})`);
+        }
+      }
+
+      // AUTO-RESOLUTION for Spotify Metadata or Expired Saavn URLs
+      if (url.startsWith('@spotify:') || isExpired) {
+        console.log(`Resolving fresh audio stream for: ${songName} - ${artist}`);
         try {
           // Search for the track on our robust hybrid mirrors
           const res = await fetch(`/api/songs?query=${encodeURIComponent(`${songName} ${artist} audio`)}`);
@@ -282,17 +297,18 @@ export function useAudioEngine() {
             const data = await res.json();
             // Pick the first non-spotify result (prefer Saavn for direct cdn links)
             const alt = data.results?.find((s: any) => s.source === 'saavn') || 
-                        data.results?.find((s: any) => s.source === 'youtube');
+                        data.results?.find((s: any) => s.source === 'youtube') ||
+                        data.results?.[0];
             if (alt?.url) {
-              console.log("Found playable alternative for Spotify track:", alt.url);
+              console.log("Found fresh playable stream:", alt.url);
               finalUrl = alt.url;
             } else {
-              throw new Error('No playable stream found for this metadata');
+              throw new Error('No playable stream found');
             }
           }
         } catch (e) {
-          console.error("Spotify resolution failed:", e);
-          return; // Abort
+          console.error("Audio stream resolution failed:", e);
+          if (isExpired) return; // Abort if expired and we couldn't resolve a new one
         }
       }
 
@@ -314,15 +330,6 @@ export function useAudioEngine() {
         }
       }
 
-      if (bgAudioRef.current) {
-        bgAudioRef.current.pause();
-        bgAudioRef.current.src = "";
-        bgAudioRef.current.load();
-      }
-      if (bgNodeRef.current) {
-        bgNodeRef.current.disconnect();
-      }
-
       // Use Native Audio for streaming long tracks
       const isExternal = finalUrl.startsWith('http');
       const playerUrl = isExternal 
@@ -331,40 +338,54 @@ export function useAudioEngine() {
 
       console.log(`Starting background track: ${isExternal ? 'External (Proxied)' : 'Local'}`, playerUrl);
 
-      const audio = new Audio();
-      audio.src = playerUrl;
-      audio.crossOrigin = "anonymous";
-      audio.loop = true;
-      audio.volume = 1; // Controlled by bgGain node
+      let audio = bgAudioRef.current;
+      if (!audio) {
+        audio = new Audio();
+        audio.crossOrigin = "anonymous";
+        audio.volume = 1; // Controlled by bgGain node
+        bgAudioRef.current = audio;
 
-      // Use standard Web Audio API to create source and link to Tone.js
-      const ctx = Tone.getContext();
-      const source = ctx.createMediaElementSource(audio);
+        // Use standard Web Audio API to create source and link to Tone.js
+        const ctx = Tone.getContext();
+        const source = ctx.createMediaElementSource(audio);
+        
+        // Connect to Tone graph
+        // @ts-ignore
+        Tone.connect(source, bgGainRef.current);
+        bgNodeRef.current = source;
+      } else {
+        audio.pause();
+      }
       
-      // Connect to Tone graph
-      // @ts-ignore
-      Tone.connect(source, bgGainRef.current);
-      
-      bgAudioRef.current = audio;
-      bgNodeRef.current = source;
+      audio.src = playerUrl;
+      audio.load(); // Forces browser to load the fresh audio source
+      audio.loop = false;
 
       // Real-time metadata listeners
       audio.ontimeupdate = () => setBgTime(audio.currentTime);
       audio.onloadedmetadata = () => setBgDuration(audio.duration);
       audio.onplay = () => onStateChange?.(true);
       audio.onpause = () => onStateChange?.(false);
+      audio.onended = () => {
+        onStateChange?.(false);
+        onEnded?.();
+      };
 
       // Start playback
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise.catch(err => {
-          console.error("Audio playback interrupted/blocked:", err);
-          // Auto-retry once on interaction if blocked
-          const retry = () => {
-              audio.play();
-              window.removeEventListener('click', retry);
-          };
-          window.addEventListener('click', retry);
+          if (err.name === 'AbortError') {
+            console.log("Audio play request was safely interrupted by a call to pause() or a new track load. Safe to ignore.");
+          } else {
+            console.error("Audio playback interrupted/blocked:", err);
+            // Auto-retry once on interaction if blocked
+            const retry = () => {
+                audio.play().catch(() => {});
+                window.removeEventListener('click', retry);
+            };
+            window.addEventListener('click', retry);
+          }
         });
       }
       
