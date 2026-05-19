@@ -16,8 +16,12 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://masti.app"),
   title: "Masti Music | Nonstop Vibe",
   description: "A fun, modern web harmonium and music streaming application.",
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default function RootLayout({
