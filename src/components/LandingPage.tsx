@@ -12,9 +12,11 @@ interface LandingPageProps {
 
 export function LandingPage({ onStart, isInitializing }: LandingPageProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
+    setIsMobile(window.innerWidth < 768);
   }, []);
 
   return (
@@ -24,7 +26,7 @@ export function LandingPage({ onStart, isInitializing }: LandingPageProps) {
       {isMounted && (
         <div className="absolute inset-0 opacity-40 pointer-events-none">
           {/* LARGE DEPTH PARTICLES */}
-          {Array.from({ length: 45 }).map((_, i) => (
+          {Array.from({ length: isMobile ? 12 : 45 }).map((_, i) => (
             <motion.div
               key={i}
               className="absolute rounded-full bg-accent-gold/20"
@@ -97,7 +99,7 @@ export function LandingPage({ onStart, isInitializing }: LandingPageProps) {
             initial={{ letterSpacing: '0.1em', opacity: 0 }}
             animate={{ letterSpacing: '0.4em', opacity: 1 }}
             transition={{ duration: 2.5 }}
-            className="text-6xl sm:text-7xl md:text-9xl font-black tracking-widest text-[#f4ece1] italic leading-tight uppercase"
+            className="text-4xl sm:text-7xl md:text-9xl font-black tracking-widest text-[#f4ece1] italic leading-tight uppercase"
           >
             HARMONIUM <span className="text-accent-gold not-italic">PRO</span>
           </motion.h1>
@@ -120,7 +122,7 @@ export function LandingPage({ onStart, isInitializing }: LandingPageProps) {
           onClick={onStart}
           disabled={isInitializing}
           className={cn(
-            "group relative px-12 md:px-20 py-6 md:py-8 bg-accent-gold text-[#07080a] rounded-full font-black uppercase tracking-[0.2em] text-xl md:text-3xl transition-all duration-700",
+            "group relative px-8 sm:px-12 md:px-20 py-4 sm:py-6 md:py-8 bg-accent-gold text-[#07080a] rounded-full font-black uppercase tracking-[0.2em] text-lg sm:text-xl md:text-3xl transition-all duration-700",
             isInitializing ? "opacity-70 cursor-wait" : "shadow-[0_30px_60px_-15px_rgba(212,175,55,0.5)] hover:shadow-[0_0_120px_rgba(212,175,55,1)]"
           )}
         >

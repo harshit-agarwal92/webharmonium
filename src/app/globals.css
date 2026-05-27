@@ -18,6 +18,7 @@
   --color-masti-pink: #FF007F;
   --color-masti-cyan: #00F0FF;
   --color-masti-orange: #FF5E00;
+  --color-accent-gold: #D4AF37;
 }
 
 @layer base {
@@ -88,6 +89,14 @@
   }
   .no-scrollbar-on-mobile::-webkit-scrollbar {
     display: none;
+  }
+  
+  .touch-momentum {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .prevent-double-tap-zoom {
+    touch-action: manipulation;
   }
 }
 

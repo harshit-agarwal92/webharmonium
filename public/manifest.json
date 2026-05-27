@@ -1,0 +1,32 @@
+{
+  "name": "Masti Music",
+  "short_name": "Masti Music",
+  "description": "Nonstop Masti & Music - Immersive web harmonium and music streaming application",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#FF007F",
+  "orientation": "any",
+  "scope": "/",
+  "categories": ["music", "entertainment"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

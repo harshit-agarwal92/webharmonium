@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import { AudioProvider } from "@/context/AudioContext";
@@ -15,12 +15,26 @@ const poppins = Poppins({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#FF007F",
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://masti.app"),
   title: "Masti Music | Nonstop Vibe",
   description: "A fun, modern web harmonium and music streaming application.",
   alternates: {
     canonical: "/",
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Masti Music",
+    statusBarStyle: "black-translucent",
   },
 };
 

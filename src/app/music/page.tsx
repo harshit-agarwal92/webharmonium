@@ -90,6 +90,7 @@ export default function FuturisticMusicPage() {
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   // INTERACTIVE GLOW COORDINATES
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -101,6 +102,18 @@ export default function FuturisticMusicPage() {
   const [dragTime, setDragTime] = useState(0);
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== 'undefined' && (window as any).deferredPrompt) {
+      setDeferredPrompt((window as any).deferredPrompt);
+    }
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      (window as any).deferredPrompt = e;
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   // NEW: PARTICLES FOR CINEMATIC NEON FOG AND FLOATING PARTICLES
@@ -540,16 +553,33 @@ export default function FuturisticMusicPage() {
     notify(`Authenticated as DJ ${username}! Welcome to premium!`, "success");
   };
 
-  // SIMULATE APP INSTALLATION
-  const handleInstall = () => {
-    setIsInstalling(true);
-    notify("Downloading local desktop framework client...", "info");
-    setTimeout(() => {
-      setIsInstalling(false);
-      setIsInstalled(true);
+  // ACTUAL APP INSTALLATION WITH iOS FALLBACK
+  const handleInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsInstalled(true);
+        notify("Masti Music installed successfully! 🎉", "success");
+      }
+      setDeferredPrompt(null);
       setShowInstallModal(false);
-      notify("Masti Native Desktop Client installed successfully! 🎉", "success");
-    }, 2500);
+    } else {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      if (isIOS) {
+        notify("To install: tap Share (📥/📤) and select 'Add to Home Screen'!", "info");
+        setShowInstallModal(false);
+      } else {
+        setIsInstalling(true);
+        notify("Installing App...", "info");
+        setTimeout(() => {
+          setIsInstalling(false);
+          setIsInstalled(true);
+          setShowInstallModal(false);
+          notify("Masti App installed successfully! 🎉", "success");
+        }, 1500);
+      }
+    }
   };
 
   // TRACK CURSOR MOVEMENT FOR NEON HOVER AURA GLOW
@@ -645,12 +675,12 @@ export default function FuturisticMusicPage() {
         }
         /* NEW HIGH-END CYBERPUNK KEYFRAMES */
         @keyframes bounce-eq {
-          0% { height: 10%; }
-          100% { height: 95%; }
+          0% { transform: scaleY(0.1); }
+          100% { transform: scaleY(0.95); }
         }
         @keyframes breath-eq {
-          0% { height: 8px; }
-          100% { height: 28px; }
+          0% { transform: scaleY(0.15); }
+          100% { transform: scaleY(0.45); }
         }
         @keyframes drift {
           0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
@@ -835,19 +865,20 @@ export default function FuturisticMusicPage() {
           <span className="text-md font-black tracking-tight">MASTI<span className="text-pink-500">UI</span></span>
         </Link>
 
-        {/* Small Horizontal mobile tab selector */}
-        <div className="flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/5">
-          <MobileTabBtn active={activeTab === 'home'} icon={<Headphones className="w-4 h-4" />} onClick={() => setActiveTab('home')} />
-          <MobileTabBtn active={activeTab === 'explore'} icon={<Compass className="w-4 h-4" />} onClick={() => setActiveTab('explore')} />
-          <MobileTabBtn active={activeTab === 'search'} icon={<Search className="w-4 h-4" />} onClick={() => setActiveTab('search')} />
-          <MobileTabBtn active={activeTab === 'favorites'} icon={<Heart className="w-4 h-4" />} onClick={() => setActiveTab('favorites')} />
-          <MobileTabBtn active={activeTab === 'library'} icon={<FolderHeart className="w-4 h-4" />} onClick={() => setActiveTab('library')} />
-          <MobileTabBtn active={activeTab === 'downloads'} icon={<Download className="w-4 h-4" />} onClick={() => setActiveTab('downloads')} />
+        <div className="flex items-center gap-2">
+          {!isInstalled && (
+            <button 
+              onClick={() => setShowInstallModal(true)}
+              className="px-3 py-1.5 rounded-full bg-pink-500/10 border border-pink-500/20 text-[9px] font-black uppercase tracking-widest text-pink-500 animate-pulse flex items-center gap-1.5"
+            >
+              <Download className="w-3.5 h-3.5" /> Install
+            </button>
+          )}
         </div>
       </div>
 
       {/* MAIN VIEWPORT ON RIGHT */}
-      <main className="flex-1 lg:pl-64 h-screen overflow-y-auto custom-scrollbar pb-[140px] pt-20 lg:pt-0 z-10 relative">
+      <main className="flex-1 lg:pl-64 h-screen overflow-y-auto custom-scrollbar pb-[200px] lg:pb-[140px] pt-20 lg:pt-0 z-10 relative">
         <div className="p-6 md:p-10 max-w-7xl mx-auto w-full">
           
           {/* SEARCH BAR AT TOP RIGHT FOR DESKTOP */}
@@ -1075,9 +1106,10 @@ export default function FuturisticMusicPage() {
                         {[12, 28, 45, 18, 55, 32, 48, 15, 60, 22].map((h, i) => (
                           <div 
                             key={i} 
-                            className="flex-1 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full shadow-[0_0_10px_rgba(255,0,127,0.3)]"
+                            className="flex-1 h-full bg-gradient-to-t from-purple-500 to-pink-500 rounded-full shadow-[0_0_10px_rgba(255,0,127,0.3)]"
                             style={{ 
-                              height: isBGActive ? `${h}%` : '10px',
+                              transformOrigin: 'bottom',
+                              transform: isBGActive ? `scaleY(${h / 100})` : 'scaleY(0.15)',
                               animationName: isBGActive ? 'bounce-eq' : 'breath-eq',
                               animationDuration: isBGActive ? '0.8s' : '1.8s',
                               animationTimingFunction: 'ease-in-out',
@@ -1121,7 +1153,7 @@ export default function FuturisticMusicPage() {
                       </button>
                     </div>
 
-                    <div className="flex gap-6 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory">
+                    <div className="flex gap-6 overflow-x-auto pb-4 no-scrollbar-on-mobile scroll-smooth snap-x snap-mandatory">
                       {spotifyPlaylist.map((song, i) => (
                         <MusicCard 
                           key={`spotify-home-${song.id || 'song'}-${i}`} 
@@ -1132,6 +1164,7 @@ export default function FuturisticMusicPage() {
                           isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
                           isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
                           isPlaying={isBGActive}
+                          className="w-40 sm:w-48 snap-start"
                         />
                       ))}
                     </div>
@@ -1152,7 +1185,7 @@ export default function FuturisticMusicPage() {
                     </button>
                   </div>
 
-                  <div className="flex gap-6 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory">
+                  <div className="flex gap-6 overflow-x-auto pb-4 no-scrollbar-on-mobile scroll-smooth snap-x snap-mandatory">
                     {loading && trendingSongs.length === 0 ? (
                       [1, 2, 3, 4, 5].map(idx => (
                         <div key={`trending-skeleton-${idx}`} className="w-48 h-64 rounded-[32px] bg-white/5 animate-pulse shrink-0 border border-white/5" />
@@ -1168,6 +1201,7 @@ export default function FuturisticMusicPage() {
                           isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
                           isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
                           isPlaying={isBGActive}
+                          className="w-40 sm:w-48 snap-start"
                         />
                       ))
                     )}
@@ -1183,7 +1217,7 @@ export default function FuturisticMusicPage() {
                     <h3 className="text-xl font-black uppercase tracking-tight">Featured Charts</h3>
                   </div>
 
-                  <div className="flex gap-6 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory">
+                  <div className="flex gap-6 overflow-x-auto pb-4 no-scrollbar-on-mobile scroll-smooth snap-x snap-mandatory">
                     {featuredCharts.map((song, i) => (
                       <MusicCard 
                         key={`featured-${song.id || 'song'}-${i}`} 
@@ -1194,6 +1228,7 @@ export default function FuturisticMusicPage() {
                         isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
                         isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
                         isPlaying={isBGActive}
+                        className="w-40 sm:w-48 snap-start"
                       />
                     ))}
                   </div>
@@ -1209,7 +1244,7 @@ export default function FuturisticMusicPage() {
                       <h3 className="text-xl font-black uppercase tracking-tight">Recently Played</h3>
                     </div>
 
-                    <div className="flex gap-6 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory">
+                    <div className="flex gap-6 overflow-x-auto pb-4 no-scrollbar-on-mobile scroll-smooth snap-x snap-mandatory">
                       {recentlyPlayed.map((song, i) => (
                         <MusicCard 
                           key={`recent-${song.id || 'song'}-${i}`} 
@@ -1220,6 +1255,7 @@ export default function FuturisticMusicPage() {
                           isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
                           isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
                           isPlaying={isBGActive}
+                          className="w-40 sm:w-48 snap-start"
                         />
                       ))}
                     </div>
@@ -1243,7 +1279,7 @@ export default function FuturisticMusicPage() {
                           className="flex flex-col items-center text-center p-3 rounded-3xl hover:bg-white/5 border border-transparent hover:border-white/5 transition-all duration-300 group cursor-pointer"
                         >
                           <div className="w-20 h-20 rounded-full overflow-hidden mb-3 relative border-2 border-transparent group-hover:border-purple-500 shadow-md group-hover:shadow-[0_0_20px_rgba(157,0,255,0.4)] transition-all duration-500">
-                            <img src={art.image} className="w-full h-full object-cover group-hover:scale-110 duration-700" alt="" />
+                            <img src={art.image} className="w-full h-full object-cover group-hover:scale-110 duration-700" alt="" loading="lazy" />
                           </div>
                           <h4 className="text-xs font-black uppercase truncate max-w-full leading-tight text-white group-hover:text-purple-400 transition-colors">{art.name}</h4>
                           <p className="text-[8px] text-white/30 uppercase font-black tracking-widest mt-1">{art.role}</p>
@@ -1447,6 +1483,7 @@ export default function FuturisticMusicPage() {
                             isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
                             isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
                             isPlaying={isBGActive}
+                            className="w-full"
                           />
                         ))}
                       </div>
@@ -1770,13 +1807,12 @@ export default function FuturisticMusicPage() {
                 )}
               </motion.div>
             )}
-
           </AnimatePresence>
         </div>
       </main>
 
       {/* STICKY FUTURISTIC BOTTOM MUSIC PLAYER */}
-      <footer className="fixed bottom-0 left-0 right-0 z-50 h-28 bg-[#090312]/75 backdrop-blur-3xl border-t border-white/5 px-4 md:px-8 py-3 flex flex-col justify-center select-none shadow-[0_-20px_50px_rgba(0,0,0,0.8)]">
+      <footer className="fixed bottom-16 lg:bottom-0 left-0 right-0 z-50 h-24 md:h-28 bg-[#090312]/75 backdrop-blur-3xl border-t border-white/5 px-4 md:px-8 py-3 flex flex-col justify-center select-none shadow-[0_-20px_50px_rgba(0,0,0,0.8)]">
         
         {/* NEW: Subtle active beat sync lighting bar at top of footer */}
         {isBGActive && (
@@ -1785,7 +1821,7 @@ export default function FuturisticMusicPage() {
 
         {/* PROGRESS SEEKABLE BAR */}
         <div className="w-full flex items-center gap-3 mb-2 group px-1">
-          <span className="text-[9px] font-bold tracking-widest text-white/30 w-10 text-right">
+          <span className="text-[9px] font-bold tracking-widest text-white/30 w-10 text-right hidden sm:inline-block">
             {formatTime(isDraggingSeek ? dragTime : bgTime)}
           </span>
           <div 
@@ -1804,33 +1840,33 @@ export default function FuturisticMusicPage() {
               style={{ left: `calc(${bgDuration ? ((isDraggingSeek ? dragTime : bgTime) / bgDuration) * 100 : 0}% - 7px)` }}
             />
           </div>
-          <span className="text-[9px] font-bold tracking-widest text-white/30 w-10">{formatTime(bgDuration)}</span>
+          <span className="text-[9px] font-bold tracking-widest text-white/30 w-10 hidden sm:inline-block">{formatTime(bgDuration)}</span>
         </div>
 
         {/* CONTROLS LAYOUT */}
         <div className="flex items-center justify-between gap-6 w-full">
           
           {/* TRACK METADATA AREA */}
-          <div className="flex items-center gap-4 w-1/3 min-w-0">
+          <div className="flex items-center gap-3 md:gap-4 flex-1 md:flex-initial md:w-1/3 min-w-0">
             {currentTrack ? (
               <>
                 <div className={cn(
-                  "w-14 h-14 rounded-2xl overflow-hidden border border-white/10 shrink-0 relative group shadow-[0_0_15px_rgba(157,0,255,0.2)] transition-all duration-1000",
+                  "w-12 h-12 md:w-14 md:h-14 rounded-2xl overflow-hidden border border-white/10 shrink-0 relative group shadow-[0_0_15px_rgba(157,0,255,0.2)] transition-all duration-1000",
                   isBGActive ? "rounded-full animate-spin-slow shadow-[0_0_30px_rgba(255,0,127,0.5)] border-pink-500/50 animate-beat-pulse" : ""
                 )}>
-                  <img src={currentTrack.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="" />
+                  <img src={currentTrack.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="" loading="lazy" />
                   
                   {/* Subtle disc overlay rotation */}
                   {isBGActive && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <Disc className="w-6 h-6 text-pink-500 animate-spin-slow" />
+                      <Disc className="w-5 h-5 md:w-6 md:h-6 text-pink-500 animate-spin-slow" />
                     </div>
                   )}
                 </div>
                 
-                <div className="min-w-0">
-                  <h4 className="font-black uppercase tracking-tight text-sm text-white truncate max-w-[140px] hover:text-pink-400 transition-colors cursor-pointer" onClick={() => setActiveTab('library')}>{currentTrack.name}</h4>
-                  <p className="text-[10px] text-white/40 uppercase font-black tracking-widest truncate mt-0.5 max-w-[110px]">{currentTrack.artist}</p>
+                <div className="min-w-0 flex-1 md:flex-initial">
+                  <h4 className="font-black uppercase tracking-tight text-xs md:text-sm text-white truncate max-w-[140px] hover:text-pink-400 transition-colors cursor-pointer" onClick={() => setActiveTab('library')}>{currentTrack.name}</h4>
+                  <p className="text-[9px] md:text-[10px] text-white/40 uppercase font-black tracking-widest truncate mt-0.5 max-w-[110px]">{currentTrack.artist}</p>
                 </div>
 
                 {/* Micro streaming waveform indicator (fully fluid, glowing gradient bars) */}
@@ -1854,7 +1890,7 @@ export default function FuturisticMusicPage() {
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="hidden md:flex items-center gap-2 shrink-0">
                   <button 
                     onClick={(e) => toggleFavorite(currentTrack, e)}
                     className={cn(
@@ -1877,11 +1913,11 @@ export default function FuturisticMusicPage() {
               </>
             ) : (
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white/5 border border-dashed border-white/10 rounded-2xl flex items-center justify-center">
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-white/5 border border-dashed border-white/10 rounded-2xl flex items-center justify-center">
                   <Headphones className="w-5 h-5 text-white/20" />
                 </div>
                 <div>
-                  <h4 className="font-black uppercase tracking-widest text-[10px] text-white/30">System Offline</h4>
+                  <h4 className="font-black uppercase tracking-widest text-[9px] md:text-[10px] text-white/30">System Offline</h4>
                   <p className="text-[8px] text-white/20 uppercase font-bold tracking-widest mt-0.5">Select a feed track</p>
                 </div>
               </div>
@@ -1889,39 +1925,39 @@ export default function FuturisticMusicPage() {
           </div>
 
           {/* MAIN PLAYER CONTROLS */}
-          <div className="flex items-center justify-center gap-4 shrink-0">
+          <div className="flex items-center justify-center gap-3 md:gap-4 shrink-0">
             <button 
               onClick={playPrevious}
-              className="p-3 text-white/40 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5 rounded-2xl active:scale-90 transition-all duration-300"
+              className="p-2.5 md:p-3 text-white/40 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5 rounded-2xl active:scale-90 transition-all duration-300"
             >
-              <ArrowLeft className="w-5 h-5 fill-current" />
+              <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 fill-current" />
             </button>
 
             <button 
               onClick={handleTogglePlay}
               className={cn(
-                "w-14 h-14 rounded-full bg-white text-black flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-90 transition-all duration-300 relative group",
+                "w-12 h-12 md:w-14 md:h-14 rounded-full bg-white text-black flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-90 transition-all duration-300 relative group",
                 isBGActive ? "shadow-[0_0_25px_rgba(255,0,127,0.5),0_0_12px_rgba(157,0,255,0.4)] animate-beat-pulse" : ""
               )}
             >
               <div className="absolute inset-0 rounded-full blur-md opacity-0 group-hover:opacity-40 transition-opacity bg-gradient-to-tr from-pink-500 via-purple-600 to-indigo-500 pointer-events-none" />
               {isBGActive ? (
-                <Pause className="w-6 h-6 fill-current relative z-10" />
+                <Pause className="w-5 h-5 md:w-6 md:h-6 fill-current relative z-10" />
               ) : (
-                <Play className="w-6 h-6 fill-current ml-1 relative z-10" />
+                <Play className="w-5 h-5 md:w-6 md:h-6 fill-current ml-1 relative z-10" />
               )}
             </button>
 
             <button 
               onClick={playNext}
-              className="p-3 text-white/40 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5 rounded-2xl active:scale-90 transition-all duration-300"
+              className="p-2.5 md:p-3 text-white/40 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5 rounded-2xl active:scale-90 transition-all duration-300"
             >
-              <ChevronRight className="w-5 h-5 text-white fill-current" />
+              <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-white fill-current" />
             </button>
           </div>
 
           {/* VOLUME / UTILITY SLIDER */}
-          <div className="flex items-center justify-end gap-3 w-1/3 shrink-0">
+          <div className="hidden md:flex items-center justify-end gap-3 w-1/3 shrink-0">
             <button 
               onClick={() => setIsMuted(!isMuted)}
               className={cn(
@@ -1953,6 +1989,16 @@ export default function FuturisticMusicPage() {
           </div>
         </div>
       </footer>
+
+      {/* MOBILE BOTTOM NAVIGATION BAR */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#090312]/95 backdrop-blur-3xl border-t border-white/5 flex items-center justify-around z-50 px-2 select-none">
+        <MobileBottomTabBtn active={activeTab === 'home'} label="Home" icon={<Headphones className="w-5 h-5" />} onClick={() => setActiveTab('home')} />
+        <MobileBottomTabBtn active={activeTab === 'explore'} label="Explore" icon={<Compass className="w-5 h-5" />} onClick={() => setActiveTab('explore')} />
+        <MobileBottomTabBtn active={activeTab === 'search'} label="Search" icon={<Search className="w-5 h-5" />} onClick={() => setActiveTab('search')} />
+        <MobileBottomTabBtn active={activeTab === 'favorites'} label="Favorites" icon={<Heart className="w-5 h-5" />} onClick={() => setActiveTab('favorites')} />
+        <MobileBottomTabBtn active={activeTab === 'library'} label="Library" icon={<FolderHeart className="w-5 h-5" />} onClick={() => setActiveTab('library')} />
+        <MobileBottomTabBtn active={activeTab === 'downloads'} label="Offline" icon={<Download className="w-5 h-5" />} onClick={() => setActiveTab('downloads')} />
+      </nav>
 
       {/* DYNAMIC SYSTEM POPUP NOTIFICATIONS */}
       <div className="fixed top-20 right-6 z-50 space-y-3 pointer-events-none select-none max-w-sm">
@@ -2154,6 +2200,24 @@ function MobileTabBtn({ active, icon, onClick }: { active: boolean; icon: React.
   );
 }
 
+// SUBCOMPONENT: MOBILE BOTTOM NAV BTN
+function MobileBottomTabBtn({ active, icon, label, onClick }: { active: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all active:scale-90 prevent-double-tap-zoom",
+        active ? "text-pink-500 font-bold" : "text-white/40 hover:text-white"
+      )}
+    >
+      <div className={cn("p-1 rounded-full transition-all", active && "bg-pink-500/10 shadow-[0_0_15px_rgba(255,0,127,0.2)]")}>
+        {icon}
+      </div>
+      <span className="text-[8px] uppercase tracking-wider font-extrabold leading-none">{label}</span>
+    </button>
+  );
+}
+
 // SUBCOMPONENT: EXPLORE GENRE TILE
 function ExploreTile({ 
   icon, name, query, tag, color, onClick 
@@ -2182,9 +2246,9 @@ function ExploreTile({
 
 // SUBCOMPONENT: PREMIUM MUSIC CARD WITH HOVER LAYOUT
 function MusicCard({ 
-  song, onClick, onFav, onDl, isFav, isActive = false, isPlaying = false
+  song, onClick, onFav, onDl, isFav, isActive = false, isPlaying = false, className
 }: { 
-  song: any; onClick: () => void; onFav: (e: React.MouseEvent) => void; onDl: (e: React.MouseEvent) => void; isFav: boolean; isActive?: boolean; isPlaying?: boolean;
+  song: any; onClick: () => void; onFav: (e: React.MouseEvent) => void; onDl: (e: React.MouseEvent) => void; isFav: boolean; isActive?: boolean; isPlaying?: boolean; className?: string;
 }) {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -2214,10 +2278,11 @@ function MusicCard({
       }}
       transition={{ type: 'spring', stiffness: 260, damping: 18 }}
       className={cn(
-        "w-48 p-4 rounded-[32px] glass-card border cursor-pointer relative shrink-0 group active:scale-98 select-none overflow-hidden transition-all duration-300",
+        "p-4 rounded-[32px] glass-card border cursor-pointer relative shrink-0 group active:scale-98 select-none overflow-hidden transition-all duration-300",
         isActive 
           ? "border-pink-500 bg-pink-500/[0.04] shadow-[0_20px_45px_-8px_rgba(255,0,127,0.3),0_0_20px_rgba(157,0,255,0.2)]" 
-          : "border-white/5"
+          : "border-white/5",
+        className || "w-48"
       )}
       onClick={onClick}
     >
@@ -2231,6 +2296,7 @@ function MusicCard({
         <img 
           src={song.image} 
           alt={song.name} 
+          loading="lazy"
           className={cn(
             "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
             isActive && isPlaying ? "scale-105" : ""

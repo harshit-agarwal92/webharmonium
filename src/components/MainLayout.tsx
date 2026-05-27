@@ -51,6 +51,34 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     fetchTrending();
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      const registerSW = () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('Masti PWA Service Worker registered:', reg.scope))
+          .catch(err => console.error('Masti PWA Service Worker registration failed:', err));
+      };
+      
+      if (document.readyState === 'complete') {
+        registerSW();
+      } else {
+        window.addEventListener('load', registerSW);
+        return () => window.removeEventListener('load', registerSW);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      (window as any).deferredPrompt = e;
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as any);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt as any);
+    };
+  }, []);
+
   const handleSelectSong = (song: any, context?: any[]) => {
     setCurrentTrack(song);
     // If context is provided (from Drawer search etc), use it
