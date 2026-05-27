@@ -1134,8 +1134,8 @@ export default function FuturisticMusicPage() {
                       <div className="flex items-center gap-4 mt-8 flex-wrap">
                         <button 
                           onClick={() => {
-                            const list = trendingSongs.length > 0 ? trendingSongs : LOCAL_SONGS;
-                            handlePlaySong(list[0], list);
+                            const list = trendingSongs.length > 0 ? trendingSongs : featuredCharts;
+                            if (list.length > 0) handlePlaySong(list[0], list);
                           }}
                           className="px-8 py-4 bg-white text-black rounded-full font-black uppercase tracking-wider text-xs hover:scale-105 active:scale-95 transition-all shadow-[0_15px_30px_-5px_rgba(255,255,255,0.25)] hover:shadow-[0_0_35px_rgba(255,255,255,0.6),0_0_15px_rgba(255,0,127,0.3)] flex items-center gap-2 duration-300"
                         >
@@ -1629,24 +1629,24 @@ export default function FuturisticMusicPage() {
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                   <div>
                     <h2 className="text-3xl font-black uppercase tracking-tight mb-2">Studio Vault</h2>
-                    <p className="text-white/40 text-xs font-bold uppercase tracking-widest border-l-2 border-cyan-500 pl-2">High-fidelity public local music library</p>
+                    <p className="text-white/40 text-xs font-bold uppercase tracking-widest border-l-2 border-cyan-500 pl-2">Live streaming music library</p>
                   </div>
                   <div className="flex gap-4">
                     <div className="glass px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white/50 border border-white/5 flex items-center gap-2">
-                      Tracks: <span className="text-cyan-500">{LOCAL_SONGS.length}</span>
+                      Tracks: <span className="text-cyan-500">{trendingSongs.length}</span>
                     </div>
                     <div className="glass px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white/50 border border-white/5 flex items-center gap-2">
-                      Storage: <span className="text-pink-500">88.4 MB</span>
+                      Source: <span className="text-pink-500">Live API</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {LOCAL_SONGS.map((song, i) => (
+                  {trendingSongs.map((song, i) => (
                     <MusicCard 
-                      key={`local-${song.id || 'song'}-${i}`} 
+                      key={`library-${song.id || 'song'}-${i}`} 
                       song={song} 
-                      onClick={() => handlePlaySong(song, LOCAL_SONGS)} 
+                      onClick={() => handlePlaySong(song, trendingSongs)} 
                       onFav={(e) => toggleFavorite(song, e)} 
                       onDl={(e) => startDownload(song, e)} 
                       isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
