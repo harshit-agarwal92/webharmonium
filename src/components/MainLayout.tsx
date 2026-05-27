@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAudio } from '@/context/AudioContext';
 import { Drawer } from '@/components/Drawer';
 import { MiniPlayer } from '@/components/MiniPlayer';
+import { BottomNav } from '@/components/BottomNav';
+import { InstallPromptModal } from '@/components/InstallPromptModal';
 import { usePathname } from 'next/navigation';
 import { Menu, Piano as PianoIcon, Volume2, VolumeX, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -68,17 +70,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      (window as any).deferredPrompt = e;
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as any);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt as any);
-    };
-  }, []);
-
   const handleSelectSong = (song: any, context?: any[]) => {
     setCurrentTrack(song);
     // If context is provided (from Drawer search etc), use it
@@ -104,12 +95,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       {!isMusicPath && (
         <header className="relative z-50 flex items-center justify-between p-4 md:p-8 shrink-0">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setDrawerOpen(true)}
-              className="p-3 glass rounded-2xl hover:bg-masti-pink/20 transition-all group active:scale-90"
-            >
-              <Menu className="w-6 h-6 group-hover:text-masti-pink transition-colors" />
-            </button>
+
             <Link href="/" className="flex items-center gap-3 active:scale-95 transition-transform">
               <div className="w-10 h-10 bg-gradient-to-r from-masti-pink to-masti-cyan rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(255,0,127,0.4)]">
                 <PianoIcon className="w-6 h-6 text-black" />
@@ -141,7 +127,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* PAGE CONTENT */}
-      <main className="flex-1 relative z-10 overflow-y-auto custom-scrollbar">
+      <main className="flex-1 relative z-10 overflow-y-auto custom-scrollbar pb-24 md:pb-0">
         {children}
       </main>
 
@@ -156,7 +142,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {currentTrack && !isMusicPath && (
+      {currentTrack && (
         <MiniPlayer 
           currentTrack={currentTrack}
           isPlaying={isBGActive}
@@ -177,6 +163,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           progress={bgDuration ? bgTime / bgDuration : 0}
         />
       )}
+
+      {/* MOBILE BOTTOM NAVIGATION */}
+      <InstallPromptModal />
+      <BottomNav />
     </div>
   );
 }

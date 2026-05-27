@@ -59,7 +59,6 @@ export function useAudioEngine() {
     const fallbackSynth = new Tone.PolySynth(Tone.Synth, {
       oscillator: { 
         type: "fatcustom",
-        // @ts-ignore
         partials: [1, 0.5, 0.3], // Simulating reed harmonics
         spread: 15,
         count: 2
@@ -110,7 +109,7 @@ export function useAudioEngine() {
     samplerRef.current = sampler;
     pianoSamplerRef.current = pianoSampler;
     customSamplerRef.current = customSampler;
-    // @ts-ignore
+    // @ts-expect-error
     samplerRef.current.fallback = fallbackSynth;
     reverbRef.current = reverb;
     filterRef.current = filter;
@@ -169,7 +168,7 @@ export function useAudioEngine() {
   const stopAll = useCallback(() => {
     samplerRef.current?.releaseAll();
     pianoSamplerRef.current?.releaseAll();
-    // @ts-ignore
+    // @ts-expect-error
     samplerRef.current?.fallback?.releaseAll();
     
     beatPlayerRef.current?.stop();
@@ -212,19 +211,19 @@ export function useAudioEngine() {
     // PRESET-SPECIFIC EFFECTS (SIMULATING REEDS/STOPS)
     if (currentPreset === 'bass') {
       filterRef.current?.frequency.rampTo(800, 0.1); // Male Reed (Deep)
-      // @ts-ignore
+      // @ts-expect-error
       samplerRef.current.fallback?.set({ oscillator: { type: "sawtooth" } });
     } else if (currentPreset === 'bright' || currentPreset === 'stage') {
       filterRef.current?.frequency.rampTo(8000, 0.1); // Female Reed (Sharp)
-      // @ts-ignore
+      // @ts-expect-error
       samplerRef.current.fallback?.set({ oscillator: { type: "sawtooth" } });
     } else if (currentPreset === 'soft') {
       filterRef.current?.frequency.rampTo(600, 0.1); // Muffled Wood
-      // @ts-ignore
+      // @ts-expect-error
       samplerRef.current.fallback?.set({ oscillator: { type: "triangle" } });
     } else {
       filterRef.current?.frequency.rampTo(3200, 0.1); // Classic Balanced
-      // @ts-ignore
+      // @ts-expect-error
       samplerRef.current.fallback?.set({ oscillator: { type: "sawtooth" } });
     }
 
@@ -232,7 +231,7 @@ export function useAudioEngine() {
         activeSampler.triggerAttack(transposedNote, now, velocity);
     } else if (samplerRef.current) {
         // Fallback to synthesis if primary sampler not ready
-        // @ts-ignore
+        // @ts-expect-error
         samplerRef.current.fallback?.triggerAttack(transposedNote, now, velocity);
     }
     
@@ -251,7 +250,7 @@ export function useAudioEngine() {
     if (activeSampler && activeSampler.loaded) {
         if (!sustain) activeSampler.triggerRelease(transposedNote, now);
     } else if (samplerRef.current) {
-        // @ts-ignore
+        // @ts-expect-error
         if (!sustain) samplerRef.current.fallback?.triggerRelease(transposedNote, now);
     }
     
@@ -350,7 +349,6 @@ export function useAudioEngine() {
         const source = ctx.createMediaElementSource(audio);
         
         // Connect to Tone graph
-        // @ts-ignore
         Tone.connect(source, bgGainRef.current);
         bgNodeRef.current = source;
       } else {

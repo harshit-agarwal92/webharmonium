@@ -1,4 +1,4 @@
-const CACHE_NAME = 'masti-music-cache-v1';
+const CACHE_NAME = 'masti-music-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/music',
@@ -40,7 +40,7 @@ self.addEventListener('fetch', (event) => {
   if (
     url.pathname.startsWith('/api/') || 
     url.hostname.includes('saavn') || 
-    (url.hostname.includes('google') && !url.hostname.includes('fonts')) ||
+
     url.pathname.endsWith('.mp3')
   ) {
     return;
@@ -60,11 +60,7 @@ self.addEventListener('fetch', (event) => {
       }
 
       return fetch(event.request).then((networkResponse) => {
-        if (
-          !networkResponse || 
-          networkResponse.status !== 200 || 
-          (networkResponse.type !== 'basic' && networkResponse.type !== 'cors')
-        ) {
+        if (!networkResponse || networkResponse.status !== 200 || (networkResponse.type !== 'basic' && networkResponse.type !== 'cors')) {
           return networkResponse;
         }
 

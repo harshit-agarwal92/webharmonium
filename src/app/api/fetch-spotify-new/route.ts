@@ -183,7 +183,7 @@ export async function GET(request: Request) {
 
       const playlistId = '0Mm8BTdceIk3XJ1XlRisws';
       let offset = 0;
-      let limit = 100;
+      const limit = 100;
       let total = Infinity;
       let page = 1;
 

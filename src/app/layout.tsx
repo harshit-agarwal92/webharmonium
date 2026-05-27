@@ -38,6 +38,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { AuthProvider } from "@/context/AuthContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -49,11 +51,13 @@ export default function RootLayout({
       className={`${inter.variable} ${poppins.variable} h-full antialiased dark`}
     >
       <body className="min-h-full font-sans bg-black text-white selection:bg-masti-pink/20 overflow-x-hidden">
-        <AudioProvider>
-          <MainLayout>
-            {children}
-          </MainLayout>
-        </AudioProvider>
+        <AuthProvider>
+          <AudioProvider>
+            <MainLayout>
+              {children}
+            </MainLayout>
+          </AudioProvider>
+        </AuthProvider>
       </body>
     </html>
   );

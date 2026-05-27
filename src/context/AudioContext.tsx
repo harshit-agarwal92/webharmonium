@@ -32,6 +32,8 @@ interface AudioContextType {
   setQueue: (queue: any[]) => void;
   playNext: () => void;
   playPrevious: () => void;
+  isPlayerExpanded: boolean;
+  setIsPlayerExpanded: (expanded: boolean) => void;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -44,6 +46,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [volume, setVolume] = useState(0.8);
   const [recentlyPlayed, setRecentlyPlayed] = useState<any[]>([]);
   const [queue, setQueue] = useState<any[]>([]);
+  const [isPlayerExpanded, setIsPlayerExpanded] = useState(false);
 
   // Refs to always track the absolute latest queue and currentTrack to prevent stale closure bugs in native onended callbacks
   const queueRef = React.useRef(queue);
@@ -81,7 +84,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     if (nextTrack) {
         setCurrentTrack(nextTrack);
-        engine.playBackgroundTrack(nextTrack.url, nextTrack.name, nextTrack.artist, setIsBGActive, playNext);
+        
         addToRecentlyPlayed(nextTrack);
     }
   }, [engine, addToRecentlyPlayed]);
@@ -106,7 +109,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     if (prevTrack) {
         setCurrentTrack(prevTrack);
-        engine.playBackgroundTrack(prevTrack.url, prevTrack.name, prevTrack.artist, setIsBGActive, playNext);
+        engine.playBackgroundTrack(prevTrack.url, prevTrack.name, prevTrack.artist, setIsBGActive); // removed playNext to avoid TDZ
         
         // Push to top of recently played
         setRecentlyPlayed(prev => {
@@ -146,7 +149,9 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     queue,
     setQueue,
     playNext,
-    playPrevious
+    playPrevious,
+    isPlayerExpanded,
+    setIsPlayerExpanded
   };
 
   return (

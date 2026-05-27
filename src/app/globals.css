@@ -46,14 +46,19 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 40px;
+    will-change: transform;
+    contain: layout style paint;
   }
 
   .glass-card:hover {
     background: rgba(255, 0, 127, 0.1);
     transform: translateY(-4px) scale(1.02);
-    border: 1px solid rgba(255, 0, 127, 0.4);
+    border-color: rgba(255, 0, 127, 0.4);
     box-shadow: 0 10px 40px -10px rgba(255, 0, 127, 0.4), inset 0 0 20px rgba(0, 240, 255, 0.1);
   }
 
@@ -131,3 +136,49 @@
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
+
+/* Premium Login Cinematic Glowing Styles */
+@keyframes floating-blob {
+  0% { transform: translate(0px, 0px) scale(1) rotate(0deg); }
+  33% { transform: translate(30px, -50px) scale(1.15) rotate(120deg); }
+  66% { transform: translate(-20px, 20px) scale(0.9) rotate(240deg); }
+  100% { transform: translate(0px, 0px) scale(1) rotate(360deg); }
+}
+
+.animate-floating-blob {
+  animation: floating-blob 20s infinite alternate ease-in-out;
+}
+
+.animate-floating-blob-slow {
+  animation: floating-blob 28s infinite alternate-reverse ease-in-out;
+}
+
+.animate-floating-blob-fast {
+  animation: floating-blob 14s infinite alternate ease-in-out;
+}
+
+.glow-glow-pink {
+  box-shadow: 0 0 40px rgba(255, 0, 127, 0.3), inset 0 0 15px rgba(255, 0, 127, 0.15);
+}
+
+.glow-glow-purple {
+  box-shadow: 0 0 40px rgba(157, 0, 255, 0.3), inset 0 0 15px rgba(157, 0, 255, 0.15);
+}
+
+.glass-premium {
+  background: rgba(10, 2, 18, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glow-input:focus {
+  border-color: rgba(255, 0, 127, 0.5);
+  box-shadow: 0 0 20px rgba(255, 0, 127, 0.25), inset 0 0 10px rgba(255, 0, 127, 0.05);
+}
+
+.glow-input-cyan:focus {
+  border-color: rgba(0, 240, 255, 0.5);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.25), inset 0 0 10px rgba(0, 240, 255, 0.05);
+}
+

@@ -83,7 +83,7 @@ export async function GET(request: Request) {
 
     let allTracks: any[] = [];
     let offset = 0;
-    let limit = 100;
+    const limit = 100;
     let total = Infinity;
     let page = 1;
     let fetchErrors = 0;
@@ -94,7 +94,7 @@ export async function GET(request: Request) {
       const apiUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?offset=${offset}&limit=${limit}&additional_types=track`;
       let apiData = null;
       let success = false;
-      let retries = 3;
+      const retries = 3;
 
       for (let attempt = 1; attempt <= retries; attempt++) {
         try {
@@ -168,7 +168,7 @@ export async function GET(request: Request) {
 
     // 3. Load current playlist and database to preserve any high fidelity URLs already resolved
     const playlistPath = path.join(process.cwd(), 'public', 'spotify_playlist.json');
-    let existingSongsMap = new Map();
+    const existingSongsMap = new Map();
 
     if (fs.existsSync(playlistPath)) {
       try {

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAudio } from '@/context/AudioContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -11,24 +12,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import AuthModal from '@/components/AuthModal';
+import { useAuth, ADMIN_EMAIL } from '@/context/AuthContext';
+import { saveTrackToOffline, getOfflineTracks, removeOfflineTrack, getOfflineTrackBlobUrl } from '@/lib/offlineStorage';
 
-// LOCAL VAULT TRACKS MAP
-const LOCAL_SONGS = [
-  { id: 'local-kabhi-kabhi-aur', name: 'Kabhi Kabhi', artist: 'AUR', album: 'Midnight Memories', image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=500&auto=format&fit=crop', url: '/AUR - Kabhi Kabhi.mp3', source: 'local' },
-  { id: 'local-bairan', name: 'Sabat Batin', artist: 'Bairan', album: 'Public Vault', image: '/covers/sabat_batin.png', url: '/Bairan - NaaSongs.mp3', source: 'local' },
-  { id: 'local-bekhayali-acoustic', name: 'Bekhayali (Acoustic - Female Version)', artist: 'Sachet-Parampara', album: 'Kabir Singh', image: '/covers/bekhayali_acoustic.png', url: '/Bekhayali Acoustic(KoshalWorld.Com).mp3', source: 'local' },
-  { id: 'local-bekhayali-male', name: 'Bekhayali (Kabir Singh - Male Version)', artist: 'Sachet Tandon', album: 'Kabir Singh', image: '/covers/bekhayali_male.png', url: '/Bekhayali Kabir Singh 128 Kbps.mp3', source: 'local' },
-  { id: 'local-gal-sun', name: 'Gal Sun', artist: 'Pritam', album: 'Public Vault', image: '/covers/gal_sun.png', url: '/Gal Sun - Djjohal.fm.mp3', source: 'local' },
-  { id: 'local-ishqa-ve', name: 'Ishqa Ve', artist: 'Zeeshan Ali', album: 'Public Vault', image: '/covers/ishqa_ve.png', url: '/Ishqa-Ve-Mp3-Song-by-Zeeshan-Ali(PagalWorldi.com.co).mp3', source: 'local' },
-  { id: 'local-bieber', name: 'Love Yourself', artist: 'Justin Bieber', album: 'Naa Songs', image: '/covers/justin_bieber.png', url: '/Justin Bieber - NaaSongs.mp3', source: 'local' },
-  { id: 'local-khat', name: 'Khat', artist: 'Khat', album: 'Single', image: '/covers/khat.png', url: '/Khat - Khat (128 kbps).mp3', source: 'local' },
-  { id: 'local-kitab', name: 'Kitab', artist: 'Kitab', album: 'Single', image: '/covers/kitab.png', url: '/Kitab - NaaSongs.mp3', source: 'local' },
-  { id: 'local-not-guilty', name: 'Not Guilty', artist: 'Naa Songs', album: 'Single', image: '/covers/not_guilty.png', url: '/Not Guilty - NaaSongs.mp3', source: 'local' },
-  { id: 'local-number-plate', name: 'Number Plate (Beretta Refix)', artist: 'Refixed', album: 'Single', image: 'https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?q=80&w=600', url: '/Number Plate - Refixed Beretta - NaaSongs.mp3', source: 'local' },
-  { id: 'local-padhe', name: 'Padhe Padhe', artist: 'Rakasa Ost', album: 'Rakasa', image: 'https://images.unsplash.com/photo-1545128485-c400e7702796?q=80&w=600', url: '/Padhe Padhe (From "Rakasa") - NaaSongs.mp3', source: 'local' },
-  { id: 'local-sheesha', name: 'Sheesha', artist: 'Jo Bairan', album: 'Single', image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=600', url: '/Sheesha (Aakhya Mai Aakh Ghali Jo Bairan) - NaaSongs.mp3', source: 'local' },
-  { id: 'local-tere-liye', name: 'Tere Liye', artist: 'Koshal World', album: 'Single', image: '/covers/tere_liye.png', url: '/Tere Liye(KoshalWorld.Com).mp3', source: 'local' }
-];
+
+// LOCAL VAULT TRACKS MAP REMOVED FOR PURE STREAMING EXPERIENCE
 
 // PREDEFINED MOODS
 const MOOD_PLAYLISTS = [
@@ -54,8 +43,11 @@ export default function FuturisticMusicPage() {
     currentTrack, setCurrentTrack, isBGActive, setIsBGActive,
     volume, setAudioParam, isMuted, setIsMuted, recentlyPlayed,
     queue, setQueue, playNext, playPrevious, bgTime, bgDuration,
-    stopBackgroundTrack, playBackgroundTrack
+    stopBackgroundTrack, playBackgroundTrack, setIsPlayerExpanded
   } = useAudio();
+
+  const { user, isAdmin, logout } = useAuth();
+  const currentUser = user?.displayName || user?.email?.split('@')[0] || 'Guest';
 
   // DASHBOARD STATE
   const [activeTab, setActiveTab] = useState<'home' | 'explore' | 'search' | 'favorites' | 'library' | 'downloads' | 'spotify'>('home');
@@ -81,10 +73,11 @@ export default function FuturisticMusicPage() {
 
   // AUTH MODALS
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [currentUser, setCurrentUser] = useState<string>('Guest User');
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [authMessage, setAuthMessage] = useState('');
+
+  // USER DROPDOWN STATE
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
 
   // MOCK INSTALL MODAL
   const [showInstallModal, setShowInstallModal] = useState(false);
@@ -92,9 +85,9 @@ export default function FuturisticMusicPage() {
   const [isInstalled, setIsInstalled] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
-  // INTERACTIVE GLOW COORDINATES
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  // INTERACTIVE GLOW COORDINATES (using ref for zero re-renders)
   const dashboardRef = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
 
   // CLIENT MOUNT STATE FOR HYDRATION GUARD
   const [mounted, setMounted] = useState(false);
@@ -102,15 +95,17 @@ export default function FuturisticMusicPage() {
   const [dragTime, setDragTime] = useState(0);
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== 'undefined' && (window as any).deferredPrompt) {
-      setDeferredPrompt((window as any).deferredPrompt);
-    }
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      (window as any).deferredPrompt = e;
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // Load offline tracks
+    getOfflineTracks().then(tracks => {
+      setDownloadQueue(tracks.map(t => ({ ...t, status: 'completed' })));
+    });
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
@@ -123,7 +118,10 @@ export default function FuturisticMusicPage() {
   const [typingPlaceholder, setTypingPlaceholder] = useState('');
 
   // NEW: AUDIO STATS FOR LIVE FEED ENGINE
-  const [audioStats, setAudioStats] = useState({ latency: '1.2ms', kbps: '320kbps', db: '-14.2dB' });
+  // Audio stats rendered via direct DOM refs to avoid re-renders
+  const statsLatencyRef = useRef<HTMLSpanElement>(null);
+  const statsDbRef = useRef<HTMLSpanElement>(null);
+  const statsKbpsRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (!mounted) return;
@@ -139,7 +137,23 @@ export default function FuturisticMusicPage() {
     }));
     setParticles(list);
 
-    // AI typing loop for search placeholder
+    // Audio Engine stats ticketing — direct DOM writes (no re-render)
+    const statsInterval = setInterval(() => {
+      const lat = (Math.random() * 0.3 + 1.1).toFixed(2);
+      const db = (Math.random() * -2.4 - 13.8).toFixed(1);
+      if (statsLatencyRef.current) statsLatencyRef.current.textContent = `LATENCY: ${lat}ms`;
+      if (statsDbRef.current) statsDbRef.current.textContent = `DB: ${isBGActive ? `${db}dB` : '-inf dB'}`;
+      if (statsKbpsRef.current) statsKbpsRef.current.textContent = `NET: ${isBGActive ? '320kbps' : '0kbps'}`;
+    }, 1200);
+
+    return () => {
+      clearInterval(statsInterval);
+    };
+  }, [mounted, isBGActive]);
+
+  // AI typing placeholder — only runs when search-like tab is visible
+  useEffect(() => {
+    if (!mounted) return;
     const placeholderPhrases = [
       "Search 'Midnight Memories 🌙'...",
       "Search 'Late Night Drive'...",
@@ -160,7 +174,7 @@ export default function FuturisticMusicPage() {
         charIdx++;
         if (charIdx === currentPhrase.length) {
           isDeleting = true;
-          timer = setTimeout(tick, 2500); // Pause on complete word
+          timer = setTimeout(tick, 2500);
         } else {
           timer = setTimeout(tick, 80);
         }
@@ -170,7 +184,7 @@ export default function FuturisticMusicPage() {
         if (charIdx === 0) {
           isDeleting = false;
           phraseIdx = (phraseIdx + 1) % placeholderPhrases.length;
-          timer = setTimeout(tick, 400); // Pause before starting next word
+          timer = setTimeout(tick, 400);
         } else {
           timer = setTimeout(tick, 45);
         }
@@ -178,23 +192,8 @@ export default function FuturisticMusicPage() {
     };
 
     timer = setTimeout(tick, 1000);
-
-    // Audio Engine stats ticketing
-    const statsInterval = setInterval(() => {
-      const lat = (Math.random() * 0.3 + 1.1).toFixed(2);
-      const db = (Math.random() * -2.4 - 13.8).toFixed(1);
-      setAudioStats({
-        latency: `${lat}ms`,
-        kbps: isBGActive ? '320kbps' : '0kbps',
-        db: isBGActive ? `${db}dB` : '-inf dB'
-      });
-    }, 1200);
-
-    return () => {
-      clearTimeout(timer);
-      clearInterval(statsInterval);
-    };
-  }, [mounted, isBGActive]);
+    return () => clearTimeout(timer);
+  }, [mounted]);
 
   // LOAD INITAL SECTIONS
   useEffect(() => {
@@ -322,13 +321,12 @@ export default function FuturisticMusicPage() {
       const res = await fetch('/api/songs?query=@trending');
       const data = await res.json();
       const results = data.results || [];
-      // Combine saavn results with local songs to feel rich
-      const merged = [...LOCAL_SONGS.slice(0, 4), ...results].filter((v, i, a) => a.findIndex(t => t.name === v.name) === i);
+      // Strictly use real API results for streaming feel
+      const merged = [...results].filter((v, i, a) => a.findIndex(t => t.name === v.name) === i);
       setTrendingSongs(merged);
       if (queue.length === 0) setQueue(merged);
     } catch (e) {
-      setTrendingSongs(LOCAL_SONGS.slice(0, 8));
-      if (queue.length === 0) setQueue(LOCAL_SONGS);
+      console.error("Failed to fetch trending:", e);
     } finally {
       setLoading(false);
     }
@@ -340,10 +338,10 @@ export default function FuturisticMusicPage() {
       const res = await fetch('/api/songs?query=latest%202026');
       const data = await res.json();
       const results = data.results || [];
-      const merged = [...results, ...LOCAL_SONGS.slice(4, 9)].filter((v, i, a) => a.findIndex(t => t.name === v.name) === i);
+      const merged = [...results].filter((v, i, a) => a.findIndex(t => t.name === v.name) === i);
       setFeaturedCharts(merged.slice(0, 10));
     } catch (e) {
-      setFeaturedCharts(LOCAL_SONGS.slice(3, 11));
+      console.error("Failed to fetch featured:", e);
     }
   };
 
@@ -356,12 +354,8 @@ export default function FuturisticMusicPage() {
       const data = await res.json();
       setSearchResults(data.results || []);
     } catch (e) {
-      // Local fallback search
-      const localFiltered = LOCAL_SONGS.filter(s => 
-        s.name.toLowerCase().includes(query.toLowerCase()) || 
-        s.artist.toLowerCase().includes(query.toLowerCase())
-      );
-      setSearchResults(localFiltered);
+      console.error("Search failed:", e);
+      setSearchResults([]);
     } finally {
       setLoading(false);
     }
@@ -369,6 +363,12 @@ export default function FuturisticMusicPage() {
 
   // PLAY AUDIO
   const handlePlaySong = async (song: any, songListContext: any[]) => {
+    if (!user) {
+      setAuthMessage("Login required to play songs");
+      setShowAuthModal(true);
+      return;
+    }
+
     setCurrentTrack(song);
     setQueue(songListContext);
     
@@ -384,7 +384,15 @@ export default function FuturisticMusicPage() {
       }
     }
 
-    if (song.source === 'saavn' && (!song.url || isExpired)) {
+    if (song.source === 'local_offline') {
+      const blobUrl = await getOfflineTrackBlobUrl(song.id);
+      if (blobUrl) {
+        playUrl = blobUrl;
+      } else {
+        notify("Failed to load offline track data", "error");
+        return;
+      }
+    } else if (song.source === 'saavn' && (!song.url || isExpired)) {
       try {
         notify(`Resolving fresh audio stream... ⚡`);
         const res = await fetch(`/api/songs?query=${encodeURIComponent(song.name + ' ' + song.artist)}`);
@@ -399,17 +407,27 @@ export default function FuturisticMusicPage() {
         console.error("Failed to dynamically resolve fresh audio URL:", err);
       }
     }
-    
-    playBackgroundTrack(playUrl, song.name, song.artist);
+    setIsPlayerExpanded(true);
+    setTimeout(() => {
+      playBackgroundTrack(playUrl, song.name, song.artist);
+    }, 150); // Small delay to let the animation start smoothly
     notify(`Playing "${song.name}" ⚡`);
   };
 
   // TOGGLE PLAY/PAUSE
   const handleTogglePlay = () => {
+    if (!user) {
+      setAuthMessage("Login required to play songs");
+      setShowAuthModal(true);
+      return;
+    }
+
     if (!currentTrack) {
       // Play first song in list
-      const fallbackList = trendingSongs.length > 0 ? trendingSongs : LOCAL_SONGS;
-      handlePlaySong(fallbackList[0], fallbackList);
+      const fallbackList = trendingSongs.length > 0 ? trendingSongs : (featuredCharts.length > 0 ? featuredCharts : []);
+      if (fallbackList.length > 0) {
+         handlePlaySong(fallbackList[0], fallbackList);
+      }
       return;
     }
     if (isBGActive) {
@@ -508,50 +526,33 @@ export default function FuturisticMusicPage() {
     localStorage.setItem('masti_favorites', JSON.stringify(updated));
   };
 
-  // MOCK DOWNLOAD SYSTEM WITH INTERACTIVE NEON NOTIFICATION
-  const startDownload = (song: any, e: React.MouseEvent) => {
+  // REAL DOWNLOAD SYSTEM WITH INTERACTIVE NEON NOTIFICATION
+  const startDownload = async (song: any, e: React.MouseEvent) => {
     e.stopPropagation();
     const isDownloading = downloadQueue.find(d => d.id === song.id);
     if (isDownloading) {
-      notify("Already in Download Queue", "info");
+      if (isDownloading.status === 'downloading') notify("Already downloading", "info");
+      else notify("Already downloaded", "info");
       return;
     }
 
     notify(`Downloading "${song.name}" offline... 📥`, "info");
-    const newDownload = { ...song, progress: 0, status: 'downloading' };
+    const newDownload = { ...song, progress: 50, status: 'downloading' };
     setDownloadQueue(prev => [newDownload, ...prev]);
 
-    // Animate download progression
-    let currentProg = 0;
-    const interval = setInterval(() => {
-      currentProg += Math.floor(Math.random() * 15) + 5;
-      if (currentProg >= 100) {
-        currentProg = 100;
-        clearInterval(interval);
-        setDownloadQueue(prev => 
-          prev.map(d => d.id === song.id ? { ...d, progress: 100, status: 'completed' } : d)
-        );
-        notify(`"${song.name}" saved offline! ⚡ Check Downloads!`, "success");
-      } else {
-        setDownloadQueue(prev => 
-          prev.map(d => d.id === song.id ? { ...d, progress: currentProg } : d)
-        );
-      }
-    }, 400);
+    const success = await saveTrackToOffline(song);
+    
+    if (success) {
+      const tracks = await getOfflineTracks();
+      setDownloadQueue(tracks.map(t => ({ ...t, status: 'completed' })));
+      notify(`"${song.name}" saved offline! ⚡`, "success");
+    } else {
+      setDownloadQueue(prev => prev.filter(d => d.id !== song.id));
+      notify(`Failed to download "${song.name}"`, "error");
+    }
   };
 
-  // AUTHENTICATE DJ SYSTEM
-  const handleAuth = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!username.trim()) {
-      notify("Please enter a username", "error");
-      return;
-    }
-    setCurrentUser(`DJ ${username.trim()} ⚡`);
-    setIsAuthorized(true);
-    setShowAuthModal(false);
-    notify(`Authenticated as DJ ${username}! Welcome to premium!`, "success");
-  };
+  // AUTHENTICATE DJ SYSTEM (Legacy mock handler, now removed as AuthModal handles real auth)
 
   // ACTUAL APP INSTALLATION WITH iOS FALLBACK
   const handleInstall = async () => {
@@ -582,15 +583,15 @@ export default function FuturisticMusicPage() {
     }
   };
 
-  // TRACK CURSOR MOVEMENT FOR NEON HOVER AURA GLOW
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!dashboardRef.current) return;
+  // TRACK CURSOR MOVEMENT FOR NEON HOVER AURA GLOW — direct DOM, no re-render
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!glowRef.current || !dashboardRef.current) return;
     const rect = dashboardRef.current.getBoundingClientRect();
-    setMousePos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    });
-  };
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    glowRef.current.style.left = `${x - 300}px`;
+    glowRef.current.style.top = `${y - 300}px`;
+  }, []);
 
   // GENRE CHILL CLICKS
   const handleGenreClick = (genre: string) => {
@@ -673,14 +674,14 @@ export default function FuturisticMusicPage() {
         .animate-pulse-glow {
           animation: pulse-glow 3s ease-in-out infinite;
         }
-        /* NEW HIGH-END CYBERPUNK KEYFRAMES */
+        /* GPU-ACCELERATED CYBERPUNK EQ KEYFRAMES — uses scaleY instead of height */
         @keyframes bounce-eq {
           0% { transform: scaleY(0.1); }
-          100% { transform: scaleY(0.95); }
+          100% { transform: scaleY(1); }
         }
         @keyframes breath-eq {
-          0% { transform: scaleY(0.15); }
-          100% { transform: scaleY(0.45); }
+          0% { transform: scaleY(0.3); }
+          100% { transform: scaleY(1); }
         }
         @keyframes drift {
           0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
@@ -770,13 +771,11 @@ export default function FuturisticMusicPage() {
         ))}
       </div>
 
-      {/* INTERACTIVE NEON RADIAL MOUSE GLOW */}
+      {/* INTERACTIVE NEON RADIAL MOUSE GLOW — positioned via ref, no re-render */}
       <div 
-        className="absolute pointer-events-none w-[600px] h-[600px] rounded-full blur-[140px] opacity-[0.09] transition-all duration-300 z-0 bg-[radial-gradient(circle,_#FF007F_0%,_#9D00FF_50%,_transparent_100%)]"
-        style={{
-          left: `${mousePos.x - 300}px`,
-          top: `${mousePos.y - 300}px`
-        }}
+        ref={glowRef}
+        className="absolute pointer-events-none w-[600px] h-[600px] rounded-full blur-[140px] opacity-[0.09] z-0 bg-[radial-gradient(circle,_#FF007F_0%,_#9D00FF_50%,_transparent_100%)] will-change-transform"
+        style={{ left: '-300px', top: '-300px' }}
       />
 
       {/* FLOATING NOTES / AMBIANCE */}
@@ -797,8 +796,10 @@ export default function FuturisticMusicPage() {
         ))}
       </div>
 
-      {/* FIXED SIDEBAR ON LEFT */}
-      <aside className="w-64 shrink-0 bg-[#07020d]/80 backdrop-blur-3xl border-r border-white/5 p-6 flex flex-col justify-between h-screen fixed left-0 top-0 z-30 hidden lg:flex select-none">
+      {/* WRAPPER TO CONDITIONAL BLUR WHEN MODAL OPEN */}
+      <div className={cn("flex-1 flex flex-col lg:flex-row w-full min-h-screen", showAuthModal && "blur-lg pointer-events-none opacity-50 duration-500 transition-all")}>
+        {/* FIXED SIDEBAR ON LEFT */}
+        <aside className="w-64 shrink-0 bg-[#07020d]/80 backdrop-blur-3xl border-r border-white/5 p-6 flex flex-col justify-between h-screen fixed left-0 top-0 z-30 hidden lg:flex select-none">
         <div>
           {/* Logo / Header Brand */}
           <Link href="/" className="flex items-center gap-3 mb-10 group active:scale-95 transition-all">
@@ -828,9 +829,54 @@ export default function FuturisticMusicPage() {
               <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/20 mb-4 px-3">Personal Vault</p>
               <nav className="space-y-1">
                 <SidebarBtn icon={<Heart className="w-5 h-5" />} label="Favorites" active={activeTab === 'favorites'} count={favorites.length} onClick={() => setActiveTab('favorites')} />
-                <SidebarBtn icon={<FolderHeart className="w-5 h-5" />} label="Studio Library" active={activeTab === 'library'} count={LOCAL_SONGS.length} onClick={() => setActiveTab('library')} />
+                <SidebarBtn icon={<FolderHeart className="w-5 h-5" />} label="Studio Library" active={activeTab === 'library'} count={trendingSongs.length || 0} onClick={() => setActiveTab('library')} />
                 <SidebarBtn icon={<Music className="w-5 h-5 text-pink-500 animate-pulse" />} label="Midnight Memories 🌙" active={activeTab === 'spotify'} count={spotifyPlaylist.length} onClick={() => setActiveTab('spotify')} />
                 <SidebarBtn icon={<Download className="w-5 h-5" />} label="Downloads" active={activeTab === 'downloads'} count={downloadQueue.length} onClick={() => setActiveTab('downloads')} />
+                
+                <div className="pt-2">
+                  {!user ? (
+                    <button 
+                      onClick={() => setShowAuthModal(true)}
+                      className="w-full py-3 px-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-2xl text-[10px] font-black uppercase tracking-widest text-black flex items-center justify-center gap-3 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(255,0,127,0.5)] active:scale-98 transition-all duration-300"
+                    >
+                      <LogIn className="w-4 h-4" /> Sign In
+                    </button>
+                  ) : (
+                    <div className="relative">
+                      <button 
+                        onClick={() => setShowUserDropdown(!showUserDropdown)} 
+                        className="w-full py-2.5 px-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white flex items-center justify-between gap-3 hover:bg-white/10 transition-all shadow-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center">
+                            <User className="w-3.5 h-3.5 text-white" />
+                          </div>
+                          <span className="truncate max-w-[100px]">{user.displayName || user.email?.split('@')[0]}</span>
+                        </div>
+                        <ChevronRight className={cn("w-4 h-4 transition-transform text-white/50", showUserDropdown && "rotate-90")} />
+                      </button>
+                      <AnimatePresence>
+                        {showUserDropdown && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }} 
+                            animate={{ opacity: 1, y: 0, scale: 1 }} 
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }} 
+                            className="absolute top-full left-0 right-0 mt-2 p-2 bg-[#090212]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl z-50"
+                          >
+                            <Link href="/profile" className="w-full text-left px-3 py-2 text-xs font-bold text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all flex items-center gap-2"><User className="w-3 h-3"/> Profile</Link>
+                            <button onClick={() => { setActiveTab('favorites'); setShowUserDropdown(false); }} className="w-full text-left px-3 py-2 text-xs font-bold text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all flex items-center gap-2"><Heart className="w-3 h-3"/> Liked Songs</button>
+                            <button onClick={() => { setActiveTab('downloads'); setShowUserDropdown(false); }} className="w-full text-left px-3 py-2 text-xs font-bold text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all flex items-center gap-2"><Download className="w-3 h-3"/> Downloads</button>
+                            {isAdmin && (
+                              <Link href="/admin" className="block w-full text-left px-3 py-2 text-xs font-bold text-pink-400 hover:text-pink-300 hover:bg-pink-500/10 rounded-xl transition-all flex items-center gap-2"><Monitor className="w-3 h-3"/> Admin Dashboard</Link>
+                            )}
+                            <div className="h-[1px] bg-white/10 my-1"></div>
+                            <button onClick={() => { logout(); setShowUserDropdown(false); }} className="w-full text-left px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-white/5 rounded-xl transition-all flex items-center gap-2">Logout</button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                </div>
               </nav>
             </div>
           </div>
@@ -844,14 +890,6 @@ export default function FuturisticMusicPage() {
           >
             <Monitor className="w-4 h-4 text-pink-500 animate-pulse" />
             Install App
-          </button>
-          
-          <button 
-            onClick={() => setShowAuthModal(true)}
-            className="w-full py-3 px-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-2xl text-xs font-black uppercase tracking-widest text-black flex items-center justify-center gap-3 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(255,0,127,0.5)] active:scale-98 transition-all duration-300"
-          >
-            <LogIn className="w-4 h-4" />
-            {isAuthorized ? 'Authenticated' : 'Sign In'}
           </button>
         </div>
       </aside>
@@ -873,6 +911,43 @@ export default function FuturisticMusicPage() {
             >
               <Download className="w-3.5 h-3.5" /> Install
             </button>
+          )}
+          
+          {!user ? (
+            <button 
+              onClick={() => setShowAuthModal(true)}
+              className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+            >
+              <LogIn className="w-3.5 h-3.5 text-white" />
+            </button>
+          ) : (
+            <div className="relative">
+              <button 
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center shadow-lg border border-white/20"
+              >
+                <User className="w-4 h-4 text-white" />
+              </button>
+              <AnimatePresence>
+                {showUserDropdown && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }} 
+                    animate={{ opacity: 1, y: 0, scale: 1 }} 
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }} 
+                    className="absolute top-full right-0 mt-2 w-48 p-2 bg-[#090212]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl z-50"
+                  >
+                    <Link href="/profile" className="w-full text-left px-3 py-2 text-xs font-bold text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all flex items-center gap-2"><User className="w-3 h-3"/> Profile</Link>
+                    <button onClick={() => { setActiveTab('favorites'); setShowUserDropdown(false); }} className="w-full text-left px-3 py-2 text-xs font-bold text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all flex items-center gap-2"><Heart className="w-3 h-3"/> Liked Songs</button>
+                    <button onClick={() => { setActiveTab('downloads'); setShowUserDropdown(false); }} className="w-full text-left px-3 py-2 text-xs font-bold text-white/60 hover:text-white hover:bg-white/5 rounded-xl transition-all flex items-center gap-2"><Download className="w-3 h-3"/> Downloads</button>
+                    {isAdmin && (
+                      <Link href="/admin" className="block w-full text-left px-3 py-2 text-xs font-bold text-pink-400 hover:text-pink-300 hover:bg-pink-500/10 rounded-xl transition-all flex items-center gap-2"><Monitor className="w-3 h-3"/> Admin</Link>
+                    )}
+                    <div className="h-[1px] bg-white/10 my-1"></div>
+                    <button onClick={() => { logout(); setShowUserDropdown(false); }} className="w-full text-left px-3 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-white/5 rounded-xl transition-all flex items-center gap-2">Logout</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           )}
         </div>
       </div>
@@ -1101,15 +1176,16 @@ export default function FuturisticMusicPage() {
                         <h4 className="text-sm font-black uppercase tracking-tight text-white/70">Audio Feed Engine</h4>
                       </div>
 
-                      {/* Moving equalizer bars (highly fluid dancing or breathing waves) */}
+                      {/* Moving equalizer bars — GPU-accelerated via scaleY */}
                       <div className="flex items-end gap-2.5 h-16 w-full px-2 relative z-10">
                         {[12, 28, 45, 18, 55, 32, 48, 15, 60, 22].map((h, i) => (
                           <div 
                             key={i} 
-                            className="flex-1 h-full bg-gradient-to-t from-purple-500 to-pink-500 rounded-full shadow-[0_0_10px_rgba(255,0,127,0.3)]"
+                            className="flex-1 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full shadow-[0_0_10px_rgba(255,0,127,0.3)]"
                             style={{ 
+                              height: '100%',
                               transformOrigin: 'bottom',
-                              transform: isBGActive ? `scaleY(${h / 100})` : 'scaleY(0.15)',
+                              willChange: 'transform',
                               animationName: isBGActive ? 'bounce-eq' : 'breath-eq',
                               animationDuration: isBGActive ? '0.8s' : '1.8s',
                               animationTimingFunction: 'ease-in-out',
@@ -1123,9 +1199,9 @@ export default function FuturisticMusicPage() {
 
                       {/* Micro flickering terminal statuses (real-time ticketing statistics) */}
                       <div className="flex items-center justify-between text-[7px] font-bold text-white/30 uppercase tracking-widest mt-1 relative z-10 border-t border-white/5 pt-1.5">
-                        <span className="animate-pulse">LATENCY: {audioStats.latency}</span>
-                        <span>DB: {audioStats.db}</span>
-                        <span>NET: {audioStats.kbps}</span>
+                        <span ref={statsLatencyRef} className="animate-pulse">LATENCY: 1.2ms</span>
+                        <span ref={statsDbRef}>DB: -14.2dB</span>
+                        <span ref={statsKbpsRef}>NET: 320kbps</span>
                       </div>
                     </div>
                   </div>
@@ -1164,7 +1240,6 @@ export default function FuturisticMusicPage() {
                           isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
                           isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
                           isPlaying={isBGActive}
-                          className="w-40 sm:w-48 snap-start"
                         />
                       ))}
                     </div>
@@ -1201,7 +1276,6 @@ export default function FuturisticMusicPage() {
                           isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
                           isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
                           isPlaying={isBGActive}
-                          className="w-40 sm:w-48 snap-start"
                         />
                       ))
                     )}
@@ -1228,7 +1302,6 @@ export default function FuturisticMusicPage() {
                         isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
                         isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
                         isPlaying={isBGActive}
-                        className="w-40 sm:w-48 snap-start"
                       />
                     ))}
                   </div>
@@ -1255,7 +1328,6 @@ export default function FuturisticMusicPage() {
                           isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
                           isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
                           isPlaying={isBGActive}
-                          className="w-40 sm:w-48 snap-start"
                         />
                       ))}
                     </div>
@@ -1483,7 +1555,6 @@ export default function FuturisticMusicPage() {
                             isFav={favorites.some(f => f.id === song.id || f.url === song.url)} 
                             isActive={currentTrack && (currentTrack.id === song.id || currentTrack.url === song.url)}
                             isPlaying={isBGActive}
-                            className="w-full"
                           />
                         ))}
                       </div>
@@ -1746,7 +1817,13 @@ export default function FuturisticMusicPage() {
                     <p className="text-white/40 text-xs font-bold uppercase tracking-widest border-l-2 border-pink-500 pl-2">High-speed simulated caching queue</p>
                   </div>
                   {downloadQueue.length > 0 && (
-                    <button onClick={() => { setDownloadQueue([]); notify("Cleared offline cache", "info"); }} className="text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-300 flex items-center gap-1.5 transition-colors">
+                    <button onClick={async () => { 
+                      for (const d of downloadQueue) {
+                        await removeOfflineTrack(d.id);
+                      }
+                      setDownloadQueue([]); 
+                      notify("Cleared offline cache", "info"); 
+                    }} className="text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-300 flex items-center gap-1.5 transition-colors">
                       <Trash2 className="w-3 h-3" /> Clear Cached
                     </button>
                   )}
@@ -1999,6 +2076,7 @@ export default function FuturisticMusicPage() {
         <MobileBottomTabBtn active={activeTab === 'library'} label="Library" icon={<FolderHeart className="w-5 h-5" />} onClick={() => setActiveTab('library')} />
         <MobileBottomTabBtn active={activeTab === 'downloads'} label="Offline" icon={<Download className="w-5 h-5" />} onClick={() => setActiveTab('downloads')} />
       </nav>
+      </div>
 
       {/* DYNAMIC SYSTEM POPUP NOTIFICATIONS */}
       <div className="fixed top-20 right-6 z-50 space-y-3 pointer-events-none select-none max-w-sm">
@@ -2018,77 +2096,20 @@ export default function FuturisticMusicPage() {
         </AnimatePresence>
       </div>
 
-      {/* SIGN IN / AUTHENTICATION MODAL */}
+      {/* PREMIUM MODERN AUTHENTICATION MODAL */}
       <AnimatePresence>
         {showAuthModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 select-none">
-            {/* Backdrop blur */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowAuthModal(false)}
-              className="absolute inset-0 bg-black/85 backdrop-blur-md"
-            />
-            
-            {/* Dialog container */}
-            <motion.div 
-              initial={{ scale: 0.9, y: 20, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.9, y: 20, opacity: 0 }}
-              className="w-full max-w-md bg-[#0a0212]/90 border border-white/10 p-8 rounded-[40px] shadow-2xl relative z-10 overflow-hidden"
-              style={{
-                boxShadow: '0 0 50px rgba(157,0,255,0.2)'
-              }}
-            >
-              <div className="absolute -top-20 -right-20 w-44 h-44 rounded-full blur-[80px] bg-purple-600/30 pointer-events-none" />
-              
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h3 className="text-2xl font-black uppercase tracking-tight text-white">Sign In</h3>
-                  <p className="text-[10px] text-pink-500 font-extrabold uppercase tracking-widest mt-1">Unlock Gen-Z Dashboard Perks</p>
-                </div>
-                <button onClick={() => setShowAuthModal(false)} className="p-2 hover:bg-white/5 rounded-2xl text-white/50 hover:text-white">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <form onSubmit={handleAuth} className="space-y-5">
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Username / DJ Handle</label>
-                  <input 
-                    type="text" 
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter moniker (e.g. NeonBeat)"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-sm font-bold text-white outline-none focus:border-pink-500/40 duration-300"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Atmospheric Key / Password</label>
-                  <input 
-                    type="password" 
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter security key"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 text-sm font-bold text-white outline-none focus:border-pink-500/40 duration-300"
-                  />
-                </div>
-
-                <div className="pt-2">
-                  <button 
-                    type="submit" 
-                    className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-2xl text-xs font-black uppercase tracking-widest text-black shadow-lg hover:shadow-[0_0_20px_rgba(255,0,127,0.4)] active:scale-98 duration-300"
-                  >
-                    Authenticate Frequencies
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
+          <AuthModal
+            isOpen={showAuthModal}
+            onClose={() => {
+              setShowAuthModal(false);
+              setAuthMessage('');
+            }}
+            initialMessage={authMessage}
+            onSuccess={(name) => {
+              notify(`Authenticated as ${name}! Welcome to premium!`, "success");
+            }}
+          />
         )}
       </AnimatePresence>
 
@@ -2140,7 +2161,7 @@ export default function FuturisticMusicPage() {
 }
 
 // SUBCOMPONENT: SIDEBAR BTN
-function SidebarBtn({ 
+const SidebarBtn = React.memo(function SidebarBtn({ 
   icon, label, active, count, onClick 
 }: { 
   icon: React.ReactNode; label: string; active: boolean; count?: number; onClick: () => void 
@@ -2183,10 +2204,10 @@ function SidebarBtn({
       )}
     </button>
   );
-}
+});
 
 // SUBCOMPONENT: MOBILE TOP BAR BTN
-function MobileTabBtn({ active, icon, onClick }: { active: boolean; icon: React.ReactNode; onClick: () => void }) {
+const MobileTabBtn = React.memo(function MobileTabBtn({ active, icon, onClick }: { active: boolean; icon: React.ReactNode; onClick: () => void }) {
   return (
     <button 
       onClick={onClick}
@@ -2198,10 +2219,10 @@ function MobileTabBtn({ active, icon, onClick }: { active: boolean; icon: React.
       {icon}
     </button>
   );
-}
+});
 
 // SUBCOMPONENT: MOBILE BOTTOM NAV BTN
-function MobileBottomTabBtn({ active, icon, label, onClick }: { active: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
+const MobileBottomTabBtn = React.memo(function MobileBottomTabBtn({ active, icon, label, onClick }: { active: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
   return (
     <button 
       onClick={onClick}
@@ -2216,10 +2237,10 @@ function MobileBottomTabBtn({ active, icon, label, onClick }: { active: boolean;
       <span className="text-[8px] uppercase tracking-wider font-extrabold leading-none">{label}</span>
     </button>
   );
-}
+});
 
 // SUBCOMPONENT: EXPLORE GENRE TILE
-function ExploreTile({ 
+const ExploreTile = React.memo(function ExploreTile({ 
   icon, name, query, tag, color, onClick 
 }: { 
   icon: string; name: string; query: string; tag: string; color: string; onClick: (q: string) => void 
@@ -2242,13 +2263,13 @@ function ExploreTile({
       </div>
     </div>
   );
-}
+});
 
 // SUBCOMPONENT: PREMIUM MUSIC CARD WITH HOVER LAYOUT
-function MusicCard({ 
-  song, onClick, onFav, onDl, isFav, isActive = false, isPlaying = false, className
+const MusicCard = React.memo(function MusicCard({ 
+  song, onClick, onFav, onDl, isFav, isActive = false, isPlaying = false
 }: { 
-  song: any; onClick: () => void; onFav: (e: React.MouseEvent) => void; onDl: (e: React.MouseEvent) => void; isFav: boolean; isActive?: boolean; isPlaying?: boolean; className?: string;
+  song: any; onClick: () => void; onFav: (e: React.MouseEvent) => void; onDl: (e: React.MouseEvent) => void; isFav: boolean; isActive?: boolean; isPlaying?: boolean;
 }) {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -2278,11 +2299,10 @@ function MusicCard({
       }}
       transition={{ type: 'spring', stiffness: 260, damping: 18 }}
       className={cn(
-        "p-4 rounded-[32px] glass-card border cursor-pointer relative shrink-0 group active:scale-98 select-none overflow-hidden transition-all duration-300",
+        "w-48 p-4 rounded-[32px] glass-card border cursor-pointer relative shrink-0 group active:scale-98 select-none overflow-hidden transition-all duration-300",
         isActive 
           ? "border-pink-500 bg-pink-500/[0.04] shadow-[0_20px_45px_-8px_rgba(255,0,127,0.3),0_0_20px_rgba(157,0,255,0.2)]" 
-          : "border-white/5",
-        className || "w-48"
+          : "border-white/5"
       )}
       onClick={onClick}
     >
@@ -2389,4 +2409,4 @@ function MusicCard({
       </div>
     </motion.div>
   );
-}
+});
