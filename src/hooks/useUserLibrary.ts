@@ -19,7 +19,7 @@ export function useUserLibrary() {
 
     const fetchLibrary = async () => {
       try {
-        const userRef = doc(db, 'users', user.uid);
+        const userRef = doc(db!, 'users', user.uid);
         const userSnap = await getDoc(userRef);
 
         if (userSnap.exists()) {
@@ -43,7 +43,7 @@ export function useUserLibrary() {
     if (!user || !isRealFirebase || !db) return false;
 
     const isLiked = likedSongs.some((s) => s.id === song.id);
-    const userRef = doc(db, 'users', user.uid);
+    const userRef = doc(db!, 'users', user.uid);
 
     try {
       if (isLiked) {

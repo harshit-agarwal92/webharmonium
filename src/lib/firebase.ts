@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { 
   getAuth,
   type Auth,
@@ -24,7 +24,7 @@ const firebaseConfig = {
 };
 
 
-let app;
+let app: FirebaseApp | undefined;
 let auth: Auth | undefined;
 let db: Firestore | undefined;
 let storage: FirebaseStorage | undefined;
@@ -39,7 +39,7 @@ try {
   storage = getStorage(app);
   if (typeof window !== 'undefined') {
     import('firebase/analytics').then(({ getAnalytics }) => {
-      analytics = getAnalytics(app);
+      analytics = getAnalytics(app!);
     }).catch(console.error);
   }
   isRealFirebase = true;
