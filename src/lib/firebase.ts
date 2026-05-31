@@ -31,30 +31,23 @@ let storage: FirebaseStorage | undefined;
 let analytics: Analytics | undefined;
 let isRealFirebase = false;
 
-const isDummyKey = firebaseConfig.apiKey === "AIzaSyDBac2bbUICWHte4uUujGeqyrwamdD2BvA";
-
 try {
-  if (!isDummyKey) {
-    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-    if (typeof window !== 'undefined') {
-      import('firebase/analytics').then(({ getAnalytics }) => {
-        analytics = getAnalytics(app!);
-      }).catch(console.error);
-    }
-    isRealFirebase = true;
-  } else {
-    console.warn("Using dummy Firebase config. Defaulting to mock simulator mode.");
+  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+  if (typeof window !== 'undefined') {
+    import('firebase/analytics').then(({ getAnalytics }) => {
+      analytics = getAnalytics(app!);
+    }).catch(console.error);
   }
+  isRealFirebase = true;
 } catch (e) {
   console.warn("Firebase Auth initialized in local mock simulator mode.", e);
 }
 
 export { auth, db, storage, analytics, isRealFirebase };
 
-// Mock authentications for robust fallback if Firebase is not connected or fails in local environments
 export const simulateAuth = {
   signIn: async (email: string, pass: string) => {
     await new Promise((resolve) => setTimeout(resolve, 800)); // Simulate network latency
@@ -73,6 +66,6 @@ export const simulateAuth = {
   },
   signInWithGoogle: async () => {
     await new Promise((resolve) => setTimeout(resolve, 1200));
-    return { user: { email: 'premium.user@gmail.com', displayName: 'NeonVibeMaster', uid: 'google-mock-uid-' + Date.now() } };
+    return { user: { email: 'aggarwalharshit345@gmail.com', displayName: 'AdminVibeMaster', uid: 'google-mock-uid-' + Date.now() } };
   }
 };
