@@ -16,8 +16,8 @@ export async function GET(request: Request) {
     if (fs.existsSync(playlistPath)) {
       const playlistSongs = JSON.parse(fs.readFileSync(playlistPath, 'utf-8'));
       if (isTrending) {
-        // Prepend some of the playlist songs to trending
-        spotifyPlaylistResults = playlistSongs.slice(0, 10);
+        // Prepend all the playlist songs to trending
+        spotifyPlaylistResults = playlistSongs;
       } else {
         // Search matches inside playlist
         spotifyPlaylistResults = playlistSongs.filter((s: any) =>

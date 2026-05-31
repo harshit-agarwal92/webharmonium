@@ -110,7 +110,7 @@ export default function HarmoniumPage() {
   return (
     <div className="h-full flex flex-col bg-black overflow-hidden relative">
       {/* TOP NAVIGATION */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-black/40 backdrop-blur-xl z-50">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-black/40 backdrop-blur-md z-50">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2 text-white/40 hover:text-white transition-colors group">
             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />

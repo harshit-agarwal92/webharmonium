@@ -1,100 +1,692 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Piano as PianoIcon, Music, Zap, Play, Sparkles } from 'lucide-react';
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
+import { useAudio } from '@/context/AudioContext';
+import { useAuth } from '@/context/AuthContext';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Flame, Star, Compass, Play, Pause, ArrowLeft, ChevronRight, VolumeX, Volume2, Search, Heart, FolderHeart, Download, Laptop, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getOfflineTracks, getOfflineTrackBlobUrl } from '@/lib/offlineStorage';
+import dynamic from 'next/dynamic';
+const AuthModal = dynamic(() => import('@/components/AuthModal'), { ssr: false });
+import Image from 'next/image';
 
-export default function Home() {
+// MUSE COMPONENTS
+import { Sidebar } from '@/components/muse/Sidebar';
+import { TopHeader } from '@/components/muse/TopHeader';
+import { MusicCarousel } from '@/components/muse/MusicCarousel';
+import { PremiumMusicCard } from '@/components/muse/PremiumMusicCard';
+import { FeaturedPlaylistCard } from '@/components/muse/FeaturedPlaylistCard';
+const VirtualHarmonium = dynamic(() => import('@/components/muse/VirtualHarmonium').then(mod => mod.VirtualHarmonium), { ssr: false });
+
+const FEATURED_PLAYLISTS = [
+  { id: 'f-1', title: 'Top 50 Global', query: 'Global Hits', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=600&fit=crop' },
+  { id: 'f-2', title: 'Chill Vibes', query: 'Lofi Chill', image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=600&fit=crop' },
+  { id: 'f-3', title: 'New in Bollywood', query: 'Latest Bollywood', image: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?q=80&w=600&fit=crop' }
+];
+
+export default function FuturisticMusicPage() {
+  const { 
+    currentTrack, setCurrentTrack, isBGActive, setIsBGActive,
+    volume, setAudioParam, isMuted, setIsMuted, recentlyPlayed,
+    queue, setQueue, playNext, playPrevious, playBackgroundTrack, setIsPlayerExpanded
+  } = useAudio();
+  const { user } = useAuth();
+
+  const [activeTab, setActiveTab] = useState('home');
+  const [mainTab, setMainTab] = useState<'home'|'harmonium'|'music'>('home');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
+  const [authMessage, setAuthMessage] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  // DATA STATES
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [memories, setMemories] = useState<any[]>([]);
+  const [memoriesLimit, setMemoriesLimit] = useState(50);
+  const [downloadQueue, setDownloadQueue] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchLimit, setSearchLimit] = useState(24);
+
+  // Dynamic Discovery States
+  const [trendingSongs, setTrendingSongs] = useState<any[]>([]);
+  const [trendingOffset, setTrendingOffset] = useState(0);
+
+  const [topCharts, setTopCharts] = useState<any[]>([]);
+  const [chartsOffset, setChartsOffset] = useState(0);
+
+  const [newReleases, setNewReleases] = useState<any[]>([]);
+  const [newReleasesOffset, setNewReleasesOffset] = useState(0);
+
+  const [popularArtists, setPopularArtists] = useState<any[]>([]);
+  const [artistsOffset, setArtistsOffset] = useState(0);
+
+  const [recentlyAdded, setRecentlyAdded] = useState<any[]>([]);
+  const [recentlyAddedOffset, setRecentlyAddedOffset] = useState(0);
+
+  const [recommended, setRecommended] = useState<any[]>([]);
+  const [recommendedOffset, setRecommendedOffset] = useState(0);
+
+  const [azSongs, setAzSongs] = useState<any[]>([]);
+  const [azOffset, setAzOffset] = useState(0);
+  const [activeLetter, setActiveLetter] = useState('');
+
+  const [loadingFeeds, setLoadingFeeds] = useState(true);
+
+  const fetchCategory = async (category: string, offset: number, letter: string = ''): Promise<any[]> => {
+    try {
+      const res = await fetch(`/api/database?category=${category}&offset=${offset}&limit=8&letter=${letter}`);
+      const json = await res.json();
+      return json.data || [];
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+  };
+
+  const handleLoadMore = async (category: string) => {
+    if (category === 'trending') {
+      const more = await fetchCategory('trending', trendingOffset + 8);
+      setTrendingSongs(prev => [...prev, ...more]);
+      setTrendingOffset(prev => prev + 8);
+    } else if (category === 'charts') {
+      const more = await fetchCategory('charts', chartsOffset + 8);
+      setTopCharts(prev => [...prev, ...more]);
+      setChartsOffset(prev => prev + 8);
+    } else if (category === 'new') {
+      const more = await fetchCategory('new', newReleasesOffset + 8);
+      setNewReleases(prev => [...prev, ...more]);
+      setNewReleasesOffset(prev => prev + 8);
+    } else if (category === 'artists') {
+      const more = await fetchCategory('artists', artistsOffset + 8);
+      setPopularArtists(prev => [...prev, ...more]);
+      setArtistsOffset(prev => prev + 8);
+    } else if (category === 'recently_added') {
+      const more = await fetchCategory('recently_added', recentlyAddedOffset + 8);
+      setRecentlyAdded(prev => [...prev, ...more]);
+      setRecentlyAddedOffset(prev => prev + 8);
+    } else if (category === 'recommended') {
+      const more = await fetchCategory('recommended', recommendedOffset + 8);
+      setRecommended(prev => [...prev, ...more]);
+      setRecommendedOffset(prev => prev + 8);
+    } else if (category === 'az') {
+      const more = await fetchCategory('az', azOffset + 8, activeLetter);
+      setAzSongs(prev => [...prev, ...more]);
+      setAzOffset(prev => prev + 8);
+    }
+  };
+
+  useEffect(() => {
+    setMounted(true);
+    getOfflineTracks().then(tracks => setDownloadQueue(tracks));
+    const savedFavs = localStorage.getItem('masti_favorites');
+    if (savedFavs) {
+      try { setFavorites(JSON.parse(savedFavs)); } catch (e) {}
+    }
+    fetch('/extracted_songs.json').then(r => r.json()).then(data => setMemories(data)).catch(() => {});
+    fetchAllFeeds();
+  }, []);
+
+  const fetchAllFeeds = async () => {
+    setLoadingFeeds(true);
+    try {
+      const [trend, charts, newR, artists, recent, rec] = await Promise.all([
+        fetchCategory('trending', 0),
+        fetchCategory('charts', 0),
+        fetchCategory('new', 0),
+        fetchCategory('artists', 0),
+        fetchCategory('recently_added', 0),
+        fetchCategory('recommended', 0)
+      ]);
+      setTrendingSongs(trend);
+      setTopCharts(charts);
+      setNewReleases(newR);
+      setPopularArtists(artists);
+      setRecentlyAdded(recent);
+      setRecommended(rec);
+      if (queue.length === 0 && trend.length > 0) setQueue(trend);
+    } catch (e) {
+      console.error("Failed to fetch feeds:", e);
+    } finally {
+      setLoadingFeeds(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeLetter) {
+      setAzOffset(0);
+      fetchCategory('az', 0, activeLetter).then(res => setAzSongs(res));
+    }
+  }, [activeLetter]);
+
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    setSearchLimit(24);
+    try {
+      const res = await fetch(`/api/songs?query=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      setSearchResults(data.results || []);
+    } catch (e) {
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const toggleFavorite = React.useCallback((song: any, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setFavorites(prev => {
+      const isFav = prev.some(f => f.id === song.id || f.url === song.url);
+      let newFavs;
+      if (isFav) {
+        newFavs = prev.filter(f => f.id !== song.id && f.url !== song.url);
+      } else {
+        newFavs = [song, ...prev];
+      }
+      localStorage.setItem('masti_favorites', JSON.stringify(newFavs));
+      return newFavs;
+    });
+  }, []);
+
+  const handleDownload = React.useCallback((song: any, e: React.MouseEvent) => {}, []);
+  const handlePlaySong = React.useCallback(async (song: any, contextQueue?: any[]) => {
+    if (!user) {
+      setAuthMessage("Sign in required to play premium streams.");
+      setShowAuthModal(true);
+      return;
+    }
+    setCurrentTrack(song);
+    if (contextQueue) setQueue(contextQueue);
+    let playUrl = song.url;
+
+    if (song.source === 'local_offline') {
+      const blobUrl = await getOfflineTrackBlobUrl(song.id);
+      if (blobUrl) playUrl = blobUrl;
+    } else if (song.source === 'saavn' && !song.url) {
+      try {
+        const res = await fetch(`/api/songs?query=${encodeURIComponent(song.name + ' ' + song.artist)}`);
+        const data = await res.json();
+        if (data.success && data.results?.length > 0) {
+          playUrl = data.results[0].url;
+          setCurrentTrack({ ...song, url: playUrl });
+        }
+      } catch (err) {}
+    }
+    setIsPlayerExpanded(true);
+    setTimeout(() => playBackgroundTrack(playUrl, song.name, song.artist), 150);
+  }, [user, playBackgroundTrack, setIsPlayerExpanded, setQueue, setCurrentTrack]);
+
+  if (!mounted) return <div className="min-h-screen w-full bg-[#050505]" />;
+
   return (
-    <div className="h-full flex flex-col items-center justify-center p-6 md:p-12 text-center overflow-hidden relative">
-      {/* Floating Background Elements */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-         <Music className="w-16 h-16 text-masti-pink/20 absolute top-[20%] left-[10%] animate-float rotate-12" />
-         <Music className="w-12 h-12 text-masti-cyan/20 absolute bottom-[30%] right-[15%] animate-float -rotate-12" style={{ animationDelay: '2s' }} />
-         <Sparkles className="w-8 h-8 text-masti-orange/20 absolute top-[40%] right-[25%] animate-float" style={{ animationDelay: '1s' }} />
-      </div>
+    <div className="min-h-screen w-full bg-[#050505] text-white flex overflow-hidden font-sans">
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        menuOpen={menuOpen} 
+        setMenuOpen={setMenuOpen}
+        setShowAuthModal={setShowAuthModal}
+        setShowInstallModal={setShowInstallModal}
+        favoritesCount={favorites.length}
+        downloadsCount={downloadQueue.length}
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="max-w-4xl w-full relative z-10"
-      >
-        <div className="mb-16">
-          <motion.div 
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            className="w-24 h-24 bg-gradient-to-tr from-masti-pink to-masti-cyan rounded-[32px] flex items-center justify-center mx-auto mb-8 shadow-[0_0_50px_rgba(255,0,127,0.5)] animate-pulse-slow"
-          >
-            <Zap className="w-12 h-12 text-white fill-current" />
-          </motion.div>
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-none mb-6">
-            Masti <span className="text-transparent bg-clip-text bg-gradient-to-r from-masti-pink to-masti-cyan animate-pulse">Music</span>
-          </h1>
-          <p className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70 text-lg md:text-2xl font-black max-w-2xl mx-auto uppercase tracking-[0.2em] mb-8">
-            Nonstop Masti & Music
-          </p>
-          <p className="text-white/40 font-bold uppercase tracking-widest text-sm mb-10">Feel the Beat 🎵 Vibe Unlimited</p>
+      <main className="flex-1 h-screen overflow-y-auto custom-scrollbar relative z-10">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle_at_center,_rgba(139,92,246,0.15)_0%,_transparent_70%)] pointer-events-none rounded-full" />
+        <div className="absolute top-[40%] left-0 w-[400px] h-[400px] bg-[radial-gradient(circle_at_center,_rgba(236,72,153,0.15)_0%,_transparent_70%)] pointer-events-none rounded-full" />
+        
+        <div className="p-4 md:p-10 max-w-7xl mx-auto w-full pb-[180px]">
+          <TopHeader 
+            setMenuOpen={setMenuOpen} 
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            handleSearch={handleSearch}
+            setActiveTab={setActiveTab}
+          />
+
+          <AnimatePresence mode="wait">
+            {activeTab === 'home' && (
+              <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} className="space-y-4">
+                
+                {/* Main Navigation Tabs */}
+                <div className="flex items-center justify-center mb-8">
+                  <div className="bg-white/5 backdrop-blur-md border border-white/10 p-1.5 rounded-full flex gap-2 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+                    {['home', 'harmonium', 'music'].map(tab => (
+                      <button 
+                        key={tab}
+                        onClick={() => setMainTab(tab as any)}
+                        className={cn(
+                          "px-8 py-2.5 rounded-full text-sm font-bold capitalize transition-all duration-300",
+                          mainTab === tab 
+                            ? "bg-gradient-to-r from-[#EC4899] to-[#8B5CF6] text-white shadow-[0_0_20px_rgba(139,92,246,0.3)]" 
+                            : "text-white/50 hover:text-white hover:bg-white/10"
+                        )}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <AnimatePresence mode="wait">
+                  {mainTab === 'home' && (
+                    <motion.div key="main-home" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
+                      <MusicCarousel 
+                        title="Trending Hits" 
+                        subtitle="Ranked by community vibes"
+                        badge="TOP CHART"
+                        icon={<Flame className="w-4 h-4 text-[#8B5CF6]" />}
+                        loading={loadingFeeds}
+                        items={trendingSongs}
+                        onReload={fetchAllFeeds}
+                        renderItem={(song) => (
+                          <PremiumMusicCard 
+                            song={song} 
+                            contextQueue={trendingSongs}
+                            onClick={handlePlaySong} 
+                            onFav={toggleFavorite} 
+                            onDl={handleDownload} 
+                            isFav={favorites.some(f => f.id === song.id)} 
+                            isActive={currentTrack?.id === song.id}
+                            isPlaying={isBGActive}
+                          />
+                        )}
+                        onLoadMore={() => handleLoadMore('trending')}
+                      />
+
+                      <MusicCarousel 
+                        title="Top Charts" 
+                        badge="JIOSAAVN"
+                        icon={<Star className="w-4 h-4 text-[#EC4899]" />}
+                        loading={loadingFeeds}
+                        items={topCharts}
+                        renderItem={(song) => (
+                          <PremiumMusicCard 
+                            song={song} 
+                            contextQueue={topCharts}
+                            onClick={handlePlaySong} 
+                            onFav={toggleFavorite} 
+                            onDl={handleDownload} 
+                            isFav={favorites.some(f => f.id === song.id)} 
+                            isActive={currentTrack?.id === song.id}
+                            isPlaying={isBGActive}
+                          />
+                        )}
+                        onLoadMore={() => handleLoadMore('charts')}
+                      />
+                      
+                      <MusicCarousel 
+                        title="Popular Artists" 
+                        badge="MASTI"
+                        loading={loadingFeeds}
+                        items={popularArtists}
+                        renderItem={(song) => (
+                          <PremiumMusicCard 
+                            song={song} 
+                            contextQueue={popularArtists}
+                            onClick={handlePlaySong} 
+                            onFav={toggleFavorite} 
+                            onDl={handleDownload} 
+                            isFav={favorites.some(f => f.id === song.id)} 
+                            isActive={currentTrack?.id === song.id}
+                            isPlaying={isBGActive}
+                          />
+                        )}
+                        onLoadMore={() => handleLoadMore('artists')}
+                      />
+
+                      <MusicCarousel 
+                        title="Recommended For You" 
+                        badge="AI PICK"
+                        loading={loadingFeeds}
+                        items={recommended}
+                        renderItem={(song) => (
+                          <PremiumMusicCard 
+                            song={song} 
+                            contextQueue={recommended}
+                            onClick={handlePlaySong} 
+                            onFav={toggleFavorite} 
+                            onDl={handleDownload} 
+                            isFav={favorites.some(f => f.id === song.id)} 
+                            isActive={currentTrack?.id === song.id}
+                            isPlaying={isBGActive}
+                          />
+                        )}
+                        onLoadMore={() => handleLoadMore('recommended')}
+                      />
+                    </motion.div>
+                  )}
+
+                  {mainTab === 'music' && (
+                    <motion.div key="main-music" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
+                      {recentlyPlayed.length > 0 && (
+                        <MusicCarousel 
+                          title="Continue Listening" 
+                          badge="MASTI"
+                          loading={false}
+                          items={recentlyPlayed.slice(0, 8)}
+                          renderItem={(song) => (
+                            <PremiumMusicCard 
+                              song={song} 
+                              contextQueue={recentlyPlayed}
+                            onClick={handlePlaySong} 
+                              onFav={toggleFavorite} 
+                              onDl={handleDownload} 
+                              isFav={favorites.some(f => f.id === song.id)} 
+                              isActive={currentTrack?.id === song.id}
+                              isPlaying={isBGActive}
+                            />
+                          )}
+                        />
+                      )}
+
+                      <MusicCarousel 
+                        title="New Releases" 
+                        badge="NEW"
+                        loading={loadingFeeds}
+                        items={newReleases}
+                        renderItem={(song) => (
+                          <PremiumMusicCard 
+                            song={song} 
+                            contextQueue={newReleases}
+                            onClick={handlePlaySong} 
+                            onFav={toggleFavorite} 
+                            onDl={handleDownload} 
+                            isFav={favorites.some(f => f.id === song.id)} 
+                            isActive={currentTrack?.id === song.id}
+                            isPlaying={isBGActive}
+                          />
+                        )}
+                        onLoadMore={() => handleLoadMore('new')}
+                      />
+                      
+                      <MusicCarousel 
+                        title="Recently Added" 
+                        badge="NEW"
+                        loading={loadingFeeds}
+                        items={recentlyAdded}
+                        renderItem={(song) => (
+                          <PremiumMusicCard 
+                            song={song} 
+                            contextQueue={recentlyAdded}
+                            onClick={handlePlaySong} 
+                            onFav={toggleFavorite} 
+                            onDl={handleDownload} 
+                            isFav={favorites.some(f => f.id === song.id)} 
+                            isActive={currentTrack?.id === song.id}
+                            isPlaying={isBGActive}
+                          />
+                        )}
+                        onLoadMore={() => handleLoadMore('recently_added')}
+                      />
+
+                      {/* A-Z Browse Section */}
+                      <section className="mb-14">
+                        <div className="flex flex-col gap-1 mb-6">
+                          <h3 className="text-xl font-bold tracking-tight text-white">A-Z Browse</h3>
+                          <p className="text-sm text-white/40 font-medium">Filter songs alphabetically</p>
+                        </div>
+                        <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar-on-mobile snap-x snap-mandatory px-1">
+                          {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => (
+                            <button
+                              key={letter}
+                              onClick={() => setActiveLetter(letter)}
+                              className={cn(
+                                "shrink-0 w-10 h-10 rounded-full font-bold transition-all border snap-center",
+                                activeLetter === letter 
+                                  ? "bg-[#8B5CF6] text-white border-[#8B5CF6] shadow-[0_0_15px_rgba(139,92,246,0.5)] scale-110"
+                                  : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white"
+                              )}
+                            >
+                              {letter}
+                            </button>
+                          ))}
+                        </div>
+                        
+                        {activeLetter && (
+                          <div className="mt-4">
+                            <MusicCarousel 
+                              title={`Songs starting with ${activeLetter}`}
+                              badge="MASTI"
+                              loading={false}
+                              items={azSongs}
+                              renderItem={(song) => (
+                                <PremiumMusicCard 
+                                  song={song} 
+                                  contextQueue={azSongs}
+                            onClick={handlePlaySong} 
+                                  onFav={toggleFavorite} 
+                                  onDl={handleDownload} 
+                                  isFav={favorites.some(f => f.id === song.id)} 
+                                  isActive={currentTrack?.id === song.id}
+                                  isPlaying={isBGActive}
+                                />
+                              )}
+                              onLoadMore={() => handleLoadMore('az')}
+                            />
+                          </div>
+                        )}
+                      </section>
+                    </motion.div>
+                  )}
+
+                  {mainTab === 'harmonium' && (
+                    <motion.div key="main-harmonium" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}>
+                      <VirtualHarmonium />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
+
+            {activeTab === 'search' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8">
+                <h3 className="text-2xl font-bold mb-6">Search Results</h3>
+                {isSearching ? (
+                  <div className="flex flex-wrap gap-6">
+                    {[1, 2, 3, 4].map(idx => (
+                      <div key={idx} className="w-48 h-64 rounded-2xl bg-[#111] animate-pulse border border-white/5" />
+                    ))}
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <>
+                    <div className="flex flex-wrap gap-6">
+                      {searchResults.slice(0, searchLimit).map((song, i) => (
+                        <PremiumMusicCard 
+                          key={i}
+                          song={song} 
+                          contextQueue={searchResults}
+                              onClick={handlePlaySong} 
+                          onFav={toggleFavorite} 
+                          onDl={handleDownload} 
+                          isFav={favorites.some(f => f.id === song.id)} 
+                          isActive={currentTrack?.id === song.id}
+                          isPlaying={isBGActive}
+                        />
+                      ))}
+                    </div>
+                    {searchResults.length > searchLimit && (
+                      <div className="flex justify-center mt-10">
+                        <button 
+                          onClick={() => setSearchLimit(prev => prev + 24)}
+                          className="px-8 py-3 rounded-full bg-white/5 border border-white/10 text-white font-medium hover:bg-white/10 hover:border-white/20 transition-all"
+                        >
+                          Load More Results
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-white/40">Enter a term to search across streams.</p>
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === 'explore' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-32 text-center max-w-lg mx-auto">
+                <Compass className="w-20 h-20 text-masti-pink mb-6 animate-pulse" />
+                <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-widest">Explore Mode</h2>
+                <div className="bg-white/10 text-white/80 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-[0.2em] mb-6 inline-block">
+                  Under Development
+                </div>
+                <p className="text-white/60 mb-10 text-lg leading-relaxed">
+                  We are actively building a completely new and immersive discovery experience. Stay tuned!
+                </p>
+                <button 
+                  onClick={() => setActiveTab('home')}
+                  className="px-8 py-3.5 bg-gradient-to-r from-masti-pink to-masti-cyan rounded-full text-sm font-black uppercase tracking-wider text-white shadow-[0_0_30px_rgba(255,0,127,0.4)] hover:shadow-[0_0_40px_rgba(255,0,127,0.6)] hover:scale-105 active:scale-95 transition-all"
+                >
+                  Go Back to Home
+                </button>
+              </motion.div>
+            )}
+
+            {activeTab === 'library' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8">
+                <h3 className="text-2xl font-bold mb-6">Memories</h3>
+                {memories.length > 0 ? (
+                  <>
+                    <div className="flex flex-wrap gap-6">
+                      {memories.slice(0, memoriesLimit).map((song, i) => (
+                        <PremiumMusicCard 
+                          key={i}
+                          song={song} 
+                          contextQueue={memories}
+                          onClick={handlePlaySong} 
+                          onFav={toggleFavorite} 
+                          onDl={handleDownload} 
+                          isFav={favorites.some(f => f.id === song.id)} 
+                          isActive={currentTrack?.id === song.id}
+                          isPlaying={isBGActive}
+                        />
+                      ))}
+                    </div>
+                    {memories.length > memoriesLimit && (
+                      <div className="w-full flex justify-center mt-10">
+                        <button 
+                          onClick={() => setMemoriesLimit(prev => prev + 50)}
+                          className="px-8 py-3 bg-white/5 border border-white/10 hover:bg-white/10 rounded-full font-bold text-sm transition-colors"
+                        >
+                          Load More Memories
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <div className="w-8 h-8 border-4 border-masti-pink border-t-transparent rounded-full animate-spin mb-4" />
+                    <p className="text-white/40">Loading Memories...</p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Other tabs fallback view */}
+            {['favorites', 'downloads'].includes(activeTab) && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-20 text-center">
+                <Compass className="w-16 h-16 text-white/10 mb-4" />
+                <p className="text-white/40">Switch back to Home to browse the Masti feeds.</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </main>
+
+      {/* GLOBAL BOTTOM PLAYER */}
+      {currentTrack && (
+        <footer className="fixed bottom-0 left-0 lg:left-[260px] right-0 h-[100px] bg-[#050505]/95 backdrop-blur-md border-t border-white/5 z-[60] px-4 md:px-8 flex items-center justify-between">
           
-          <Link href="/music" className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-masti-pink to-masti-cyan text-black rounded-full font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(0,240,255,0.4)] hover:shadow-[0_0_50px_rgba(255,0,127,0.6)]">
-            <Play className="w-5 h-5 fill-current" />
-            Start Listening
-          </Link>
-        </div>
+          <div className="flex items-center gap-4 w-1/3 min-w-0">
+            <div className="w-16 h-16 relative shrink-0">
+              <Image src={currentTrack.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=200'} alt="Art" fill sizes="64px" className="rounded-xl object-cover shadow-lg border border-white/10" />
+            </div>
+            <div className="min-w-0">
+              <h4 className="text-sm font-bold text-white truncate">{currentTrack.name}</h4>
+              <p className="text-xs text-white/50 truncate">{currentTrack.artist}</p>
+            </div>
+            <button 
+              onClick={(e) => toggleFavorite(currentTrack, e)}
+              className="hidden md:block p-2 ml-2 hover:bg-white/5 rounded-full transition-colors"
+            >
+              <Heart className={cn("w-4 h-4", favorites.some(f => f.id === currentTrack.id) ? "fill-[#EC4899] text-[#EC4899]" : "text-white/50")} />
+            </button>
+          </div>
 
-        <div className="grid md:grid-cols-2 gap-8 w-full mt-16">
-          <MainCard 
-            href="/harmonium"
-            title="Harmonium"
-            description="Play with friends 🎵"
-            icon={<PianoIcon className="w-10 h-10" />}
-            color="bg-masti-pink"
-            glowColor="rgba(255,0,127,0.5)"
-          />
-          <MainCard 
-            href="/music"
-            title="Masti Vault"
-            description="Trending Hits 🔥"
-            icon={<Music className="w-10 h-10" />}
-            color="bg-masti-cyan"
-            glowColor="rgba(0,240,255,0.5)"
-          />
-        </div>
-      </motion.div>
+          <div className="flex flex-col items-center gap-2 w-1/3">
+            <div className="flex items-center justify-center gap-6">
+              <button onClick={playPrevious} className="text-white/50 hover:text-white transition-colors">
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => setIsBGActive(!isBGActive)}
+                className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-transform"
+              >
+                {isBGActive ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-1" />}
+              </button>
+              <button onClick={playNext} className="text-white/50 hover:text-white transition-colors">
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
 
-      {/* Decorative Blur */}
-      <div className="fixed -bottom-32 -left-32 w-[30rem] h-[30rem] bg-masti-pink/20 blur-[140px] pointer-events-none rounded-full" />
-      <div className="fixed -top-32 -right-32 w-[30rem] h-[30rem] bg-masti-cyan/20 blur-[140px] pointer-events-none rounded-full" />
+          <div className="hidden md:flex items-center justify-end gap-3 w-1/3">
+            <button onClick={() => setIsMuted(!isMuted)} className="text-white/50 hover:text-white">
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
+            <input 
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={isMuted ? 0 : volume}
+              onChange={(e) => setAudioParam('volume', Number(e.target.value))}
+              className="w-24 h-1 bg-white/20 rounded-full appearance-none outline-none accent-[#8B5CF6] cursor-pointer"
+            />
+            <button className="text-[#8B5CF6] ml-4"><Laptop className="w-4 h-4" /></button>
+          </div>
+        </footer>
+      )}
+
+      {/* MOBILE BOTTOM NAVIGATION - Replaces Top Nav for Tabs */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#050505]/95 backdrop-blur-md border-t border-white/5 flex items-center justify-around z-[70] pb-safe">
+        {[
+          { id: 'home', icon: Home, label: 'Home' },
+          { id: 'search', icon: Search, label: 'Search' },
+          { id: 'explore', icon: Compass, label: 'Explore' },
+          { id: 'library', icon: FolderHeart, label: 'Memories' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "flex flex-col items-center justify-center w-full h-full gap-1 transition-colors",
+              activeTab === tab.id ? "text-[#8B5CF6]" : "text-white/40 hover:text-white/80"
+            )}
+          >
+            <tab.icon className="w-5 h-5" />
+            <span className="text-[10px] font-medium">{tab.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <AnimatePresence>
+        {showAuthModal && (
+          <AuthModal
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+            initialMessage={authMessage}
+            onSuccess={() => setShowAuthModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
-  );
-}
-
-function MainCard({ href, title, description, icon, color, glowColor }: { href: string, title: string, description: string, icon: React.ReactNode, color: string, glowColor: string }) {
-  return (
-    <Link href={href} className="group relative block w-full">
-      <motion.div
-        whileHover={{ scale: 1.02, y: -5 }}
-        whileTap={{ scale: 0.98 }}
-        className="glass-card p-10 rounded-[40px] text-left border border-white/5 relative overflow-hidden"
-      >
-        <div className={cn("w-20 h-20 rounded-3xl flex items-center justify-center mb-8 shadow-2xl transition-all duration-500 group-hover:scale-110", color)} style={{ boxShadow: `0 0 40px ${glowColor}` }}>
-          <div className="text-black">{icon}</div>
-        </div>
-        <div>
-          <h3 className="text-3xl font-black tracking-tight mb-2 uppercase group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-white/50 transition-colors">{title}</h3>
-          <p className="text-white/60 font-bold text-sm uppercase tracking-widest leading-relaxed flex items-center gap-2">
-            {description}
-          </p>
-        </div>
-        
-        {/* Glow Effect */}
-        <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Play className="w-8 h-8 text-white/40 fill-current group-hover:text-white transition-colors" />
-        </div>
-        
-        <div className={cn("absolute -bottom-10 -right-10 w-40 h-40 blur-3xl opacity-0 group-hover:opacity-20 transition-opacity rounded-full", color)} />
-      </motion.div>
-    </Link>
   );
 }

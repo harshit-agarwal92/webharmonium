@@ -7,12 +7,14 @@ import { MainLayout } from "@/components/MainLayout";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  display: 'swap',
 });
 
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
+  display: 'swap',
 });
 
 export const viewport: Viewport = {
@@ -21,6 +23,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   themeColor: "#FF007F",
+  interactiveWidget: "resizes-content",
 };
 
 export const metadata: Metadata = {
@@ -29,6 +32,28 @@ export const metadata: Metadata = {
   description: "A fun, modern web harmonium and music streaming application.",
   alternates: {
     canonical: "/",
+  },
+  openGraph: {
+    title: "Masti Music | Nonstop Vibe",
+    description: "A fun, modern web harmonium and music streaming application.",
+    url: "https://masti.app",
+    siteName: "Masti Music",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Masti Music App",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Masti Music | Nonstop Vibe",
+    description: "A fun, modern web harmonium and music streaming application.",
+    creator: "@mastimusic",
   },
   manifest: "/manifest.json",
   appleWebApp: {
@@ -50,7 +75,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${poppins.variable} h-full antialiased dark`}
     >
-      <body className="min-h-full font-sans bg-black text-white selection:bg-masti-pink/20 overflow-x-hidden">
+      <body className="min-h-[100dvh] font-sans bg-black text-white selection:bg-masti-pink/20 overflow-x-hidden">
         <AuthProvider>
           <AudioProvider>
             <MainLayout>

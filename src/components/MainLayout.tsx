@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAudio } from '@/context/AudioContext';
-import { Drawer } from '@/components/Drawer';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { BottomNav } from '@/components/BottomNav';
-import { InstallPromptModal } from '@/components/InstallPromptModal';
 import { usePathname } from 'next/navigation';
 import { Menu, Piano as PianoIcon, Volume2, VolumeX, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import dynamic from 'next/dynamic';
+
+const Drawer = dynamic(() => import('@/components/Drawer').then(mod => mod.Drawer), { ssr: false });
+const InstallPromptModal = dynamic(() => import('@/components/InstallPromptModal').then(mod => mod.InstallPromptModal), { ssr: false });
 import Link from 'next/link';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
@@ -19,8 +21,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     setIsBGActive, 
     stopBackgroundTrack, 
     playBackgroundTrack, 
-    bgTime, 
-    bgDuration,
     isMuted,
     setIsMuted,
     volume,
@@ -35,7 +35,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   
   const [trending, setTrending] = useState<any[]>([]);
   const pathname = usePathname();
-  const isMusicPath = pathname.startsWith('/music');
+  const isMusicPath = pathname === '/' || pathname.startsWith('/music');
 
   useEffect(() => {
     async function fetchTrending() {
@@ -70,23 +70,34 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const handleSelectSong = (song: any, context?: any[]) => {
+  const handleSelectSong = useCallback((song: any, context?: any[]) => {
     setCurrentTrack(song);
-    // If context is provided (from Drawer search etc), use it
     if (context) {
         setQueue(context);
     } else {
-        // Fallback detection
         if (trending.find(t => t.id === song.id)) setQueue(trending);
         else if (recentlyPlayed.find(t => t.id === song.id)) setQueue(recentlyPlayed);
     }
-    
     playBackgroundTrack(song.url, song.name, song.artist, setIsBGActive);
     setDrawerOpen(false);
-  };
+  }, [trending, recentlyPlayed, setCurrentTrack, setQueue, playBackgroundTrack, setIsBGActive]);
+
+  const handleTogglePlay = useCallback(() => {
+    if (isBGActive) {
+      stopBackgroundTrack();
+      setIsBGActive(false);
+    } else if (currentTrack) {
+      playBackgroundTrack(currentTrack.url, currentTrack.name, currentTrack.artist, setIsBGActive);
+    }
+  }, [isBGActive, currentTrack, stopBackgroundTrack, playBackgroundTrack, setIsBGActive]);
+
+  const handleVolumeChange = useCallback((v: number) => setAudioParam('volume', v), [setAudioParam]);
+  const handleToggleMute = useCallback(() => setIsMuted(!isMuted), [isMuted, setIsMuted]);
+  const handleNext = useCallback(() => playNext(), [playNext]);
+  const handlePrev = useCallback(() => playPrevious(), [playPrevious]);
 
   return (
-    <div className="relative min-h-screen w-full bg-black text-white font-sans overflow-hidden flex flex-col">
+    <div className="relative min-h-[100dvh] w-full bg-black text-white font-sans overflow-hidden flex flex-col">
       {/* BACKGROUND GRADIENTS */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_right,_var(--color-masti-pink),_transparent_40%)] pointer-events-none opacity-20 z-0" />
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--color-masti-cyan),_transparent_40%)] pointer-events-none opacity-20 z-0" />
@@ -127,7 +138,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       )}
 
       {/* PAGE CONTENT */}
-      <main className="flex-1 relative z-10 overflow-y-auto custom-scrollbar pb-24 md:pb-0">
+      <main className="flex-1 relative z-10 overflow-y-auto custom-scrollbar pb-[180px] md:pb-24">
         {children}
       </main>
 
@@ -148,25 +159,17 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           isPlaying={isBGActive}
           volume={volume}
           isMuted={isMuted}
-          onTogglePlay={() => {
-            if (isBGActive) {
-                stopBackgroundTrack();
-                setIsBGActive(false);
-            } else {
-                playBackgroundTrack(currentTrack.url, currentTrack.name, currentTrack.artist, setIsBGActive);
-            }
-          }}
-          onVolumeChange={(v: number) => setAudioParam('volume', v)}
-          onToggleMute={() => setIsMuted(!isMuted)}
-          onNext={() => playNext()}
-          onPrev={() => playPrevious()}
-          progress={bgDuration ? bgTime / bgDuration : 0}
+          onTogglePlay={handleTogglePlay}
+          onVolumeChange={handleVolumeChange}
+          onToggleMute={handleToggleMute}
+          onNext={handleNext}
+          onPrev={handlePrev}
         />
       )}
 
       {/* MOBILE BOTTOM NAVIGATION */}
       <InstallPromptModal />
-      <BottomNav />
+      {!isMusicPath && <BottomNav />}
     </div>
   );
 }

@@ -2,9 +2,9 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, TrendingUp, Grid, History, Music } from 'lucide-react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
-
 interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -182,11 +182,14 @@ function SongItem({ song, onClick }: { song: any; onClick: () => void }) {
       onClick={onClick}
       className="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 transition-all group text-left"
     >
-      <div className="w-12 h-12 rounded-xl overflow-hidden shadow-lg flex-shrink-0">
-        <img
+      <div className="relative w-12 h-12 rounded-xl overflow-hidden shadow-lg flex-shrink-0">
+        <Image
           src={song.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=200'}
           alt={song.name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          fill
+          sizes="48px"
+          quality={100}
+          className="object-cover group-hover:scale-110 transition-transform duration-500"
         />
       </div>
       <div className="flex-1 min-w-0">

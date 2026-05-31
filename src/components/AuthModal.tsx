@@ -84,7 +84,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMessage }
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
           onClick={onClose}
-          className="absolute inset-0 bg-black/90 backdrop-blur-2xl z-0"
+          className="absolute inset-0 bg-black/90 backdrop-blur-md z-0"
         />
 
         {/* Floating Animated Gradient Neon Blobs (GPU Accelerated) */}

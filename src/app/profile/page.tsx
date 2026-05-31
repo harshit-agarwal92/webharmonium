@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { HorizontalScrollSection } from '@/components/profile/HorizontalScrollSection';
 import { getOfflineTracks } from '@/lib/offlineStorage';
 import { EditProfileModal } from '@/components/profile/EditProfileModal';
+import Image from 'next/image';
 
 export default function ProfilePage() {
   const { user, isAdmin, logout, loading } = useAuth();
@@ -84,7 +85,7 @@ export default function ProfilePage() {
             <div className="absolute inset-0 bg-gradient-to-tr from-masti-pink to-masti-cyan rounded-full blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="relative w-40 h-40 rounded-full overflow-hidden border-[6px] border-black bg-white/10 z-10 flex items-center justify-center shadow-2xl">
               {user.photoURL ? (
-                <img src={user.photoURL} alt={user.displayName || "User"} className="w-full h-full object-cover" />
+                <Image src={user.photoURL} alt={user.displayName || "User"} fill sizes="160px" className="object-cover" />
               ) : (
                 <UserIcon className="w-16 h-16 text-white/50" />
               )}

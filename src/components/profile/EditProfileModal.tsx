@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, User as UserIcon, Camera } from 'lucide-react';
 import { updateProfile } from 'firebase/auth';
 import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -61,7 +62,7 @@ export function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
                 <div className="relative group cursor-pointer">
                   <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/10 bg-white/5 flex items-center justify-center relative z-10">
                     {user.photoURL ? (
-                      <img src={user.photoURL} alt={user.displayName || "User"} className="w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" />
+                      <Image src={user.photoURL} alt={user.displayName || "User"} fill sizes="96px" quality={100} className="object-cover opacity-50 group-hover:opacity-30 transition-opacity" />
                     ) : (
                       <UserIcon className="w-10 h-10 text-white/30" />
                     )}

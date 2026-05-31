@@ -37,8 +37,6 @@ export function useAudioEngine() {
   const [sustain, setSustain] = useState(false);
   const [currentPreset, setCurrentPreset] = useState('classic');
   const [isSynthBeat, setIsSynthBeat] = useState(false);
-  const [bgTime, setBgTime] = useState(0);
-  const [bgDuration, setBgDuration] = useState(0);
 
   useEffect(() => {
     // AUDIO GRAPH - 3 Distinct Mixing Channels
@@ -262,9 +260,7 @@ export function useAudioEngine() {
   const playBackgroundTrack = useCallback(async (url: string, songName?: string, artist?: string, onStateChange?: (playing: boolean) => void, onEnded?: () => void) => {
     if (!bgGainRef.current || !url) return;
     
-    // RESET PLAYBACK TIMELINE STATE IMMEDIATELY TO PREVENT STUCK UI
-    setBgTime(0);
-    setBgDuration(0.1);
+    // Audio timeline state is now decoupled from global context
 
     try {
       // FORCE AUDIO RESUME
@@ -360,8 +356,7 @@ export function useAudioEngine() {
       audio.loop = false;
 
       // Real-time metadata listeners
-      audio.ontimeupdate = () => setBgTime(audio.currentTime);
-      audio.onloadedmetadata = () => setBgDuration(audio.duration);
+      // Real-time metadata handled locally by MiniPlayer via getBgAudio()
       audio.onplay = () => onStateChange?.(true);
       audio.onpause = () => onStateChange?.(false);
       audio.onended = () => {
@@ -427,6 +422,8 @@ export function useAudioEngine() {
     }
   }, [isLoaded]);
 
+  const getBgAudio = useCallback(() => bgAudioRef.current, []);
+
   return { 
     isLoaded, 
     isReady, 
@@ -442,8 +439,7 @@ export function useAudioEngine() {
     stopAll,
     playBackgroundTrack,
     stopBackgroundTrack,
-    bgTime,
-    bgDuration
+    getBgAudio
   };
 }
 

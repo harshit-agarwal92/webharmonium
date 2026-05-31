@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Play } from 'lucide-react';
+import Image from 'next/image';
 
 interface HorizontalScrollSectionProps {
   title: string;
@@ -39,10 +40,13 @@ export function HorizontalScrollSection({ title, items, onPlay, emptyMessage = "
             onClick={() => onPlay(item)}
           >
             <div className="w-32 h-32 rounded-2xl overflow-hidden relative shadow-lg mb-3">
-              <img 
+              <Image 
                 src={item.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=200'} 
                 alt={item.name} 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                fill
+                sizes="128px"
+                quality={100}
+                className="object-cover group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                  <div className="w-10 h-10 rounded-full bg-masti-pink text-white flex items-center justify-center shadow-[0_0_20px_rgba(255,0,127,0.5)]">

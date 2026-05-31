@@ -21,12 +21,12 @@ export function InstallPromptModal() {
       if (timeSinceDismiss < 60 * 60 * 1000) return;
     }
 
-    // Trigger after 15 seconds of engagement to ensure they see the value first
+    // Trigger shortly after engagement to ensure prompt install flow
     const timer = setTimeout(() => {
       if (deferredPrompt || /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase())) {
          setShowPrompt(true);
       }
-    }, 15000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [deferredPrompt, isAppInstalled]);

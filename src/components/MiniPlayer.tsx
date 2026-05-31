@@ -11,18 +11,38 @@ interface MiniPlayerProps {
   onTogglePlay: () => void;
   onNext: () => void;
   onPrev: () => void;
-  progress: number;
   volume: number;
   onVolumeChange: (volume: number) => void;
   isMuted: boolean;
   onToggleMute: () => void;
 }
 
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+
 export function MiniPlayer({ 
   currentTrack, isPlaying, onTogglePlay, onNext, onPrev, 
-  progress, volume, onVolumeChange, isMuted, onToggleMute 
+  volume, onVolumeChange, isMuted, onToggleMute 
 }: MiniPlayerProps) {
-  const { isPlayerExpanded, setIsPlayerExpanded, bgTime, bgDuration } = useAudio();
+  const { isPlayerExpanded, setIsPlayerExpanded, getBgAudio } = useAudio();
+  const [localTime, setLocalTime] = useState(0);
+  const [localDuration, setLocalDuration] = useState(0.1);
+
+  useEffect(() => {
+    let frameId: number;
+    const updateProgress = () => {
+      const audio = getBgAudio();
+      if (audio) {
+        setLocalTime(audio.currentTime);
+        setLocalDuration(audio.duration || 0.1);
+      }
+      frameId = requestAnimationFrame(updateProgress);
+    };
+    frameId = requestAnimationFrame(updateProgress);
+    return () => cancelAnimationFrame(frameId);
+  }, [getBgAudio]);
+
+  const progress = localDuration > 0 ? localTime / localDuration : 0;
 
   const formatTime = (secs: number) => {
     if (isNaN(secs) || secs < 0) return '0:00';
@@ -43,7 +63,7 @@ export function MiniPlayer({
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             onClick={() => setIsPlayerExpanded(true)}
-            className="fixed bottom-[90px] md:bottom-4 left-4 right-4 md:left-[10%] md:right-[10%] h-[70px] glass rounded-2xl z-[90] flex items-center px-4 border border-white/20 shadow-2xl overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
+            className="fixed bottom-[84px] md:bottom-4 left-4 right-4 md:left-[10%] md:right-[10%] h-[70px] glass rounded-2xl z-[90] flex items-center px-4 border border-white/20 shadow-2xl overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
           >
             {/* Progress Bar overlay */}
             <div className="absolute top-0 left-0 w-full h-[2px] bg-white/5 overflow-hidden">
@@ -56,11 +76,12 @@ export function MiniPlayer({
             <div className="flex items-center gap-3 flex-1 min-w-0 pr-4">
               {currentTrack && (
                 <>
-                  <motion.div layoutId="player-artwork" className="w-12 h-12 rounded-lg overflow-hidden shadow-lg shrink-0">
-                    <img
+                  <motion.div layoutId="player-artwork" className="w-12 h-12 rounded-lg overflow-hidden shadow-lg shrink-0 relative">
+                    <Image
                       src={currentTrack.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=200'}
                       alt={currentTrack.name}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   </motion.div>
                   <div className="flex flex-col min-w-0">
@@ -98,7 +119,7 @@ export function MiniPlayer({
             {/* Blurred Background from Artwork */}
             <div className="absolute inset-0 z-0 overflow-hidden">
               <div 
-                className="absolute inset-0 bg-cover bg-center opacity-40 blur-[80px] scale-110"
+                className="absolute inset-0 bg-cover bg-center opacity-20 blur-[20px] scale-110"
                 style={{ backgroundImage: `url(${currentTrack?.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=200'})` }}
               />
               <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/60 to-black" />
@@ -118,10 +139,12 @@ export function MiniPlayer({
               
               {/* Massive Artwork */}
               <motion.div layoutId="player-artwork" className="w-full aspect-square rounded-[32px] overflow-hidden shadow-[0_0_80px_rgba(255,0,127,0.2)] mb-10 relative group">
-                <img
+                <Image
                   src={currentTrack?.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=200'}
-                  alt={currentTrack?.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  alt={currentTrack?.name || 'Artwork'}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 400px"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
               </motion.div>
 
@@ -147,8 +170,8 @@ export function MiniPlayer({
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-[10px] font-bold text-white/40 tracking-widest">
-                  <span>{formatTime(bgTime)}</span>
-                  <span>{formatTime(bgDuration)}</span>
+                  <span>{formatTime(localTime)}</span>
+                  <span>{formatTime(localDuration)}</span>
                 </div>
               </div>
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Play, Loader2, Flame, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 interface Song {
@@ -150,7 +151,7 @@ function SongCard({ song, onClick, large = false }: { song: Song, onClick: () =>
       )}
     >
       <div className="relative aspect-square w-full rounded-lg overflow-hidden shadow-2xl">
-        <img src={song.image} alt={song.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+        <Image src={song.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=200'} alt={song.name || 'Artwork'} fill sizes="(max-width: 768px) 50vw, 208px" loading="lazy" className="object-cover transition-transform duration-700 group-hover:scale-110" />
         <div className="absolute right-2 bottom-2 bg-spotify-green p-3 rounded-full shadow-2xl opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
           <Play className="w-6 h-6 fill-current text-black" />
         </div>

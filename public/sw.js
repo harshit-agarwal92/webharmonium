@@ -1,10 +1,11 @@
-const CACHE_NAME = 'masti-music-cache-v2';
+const CACHE_NAME = 'masti-music-cache-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/music',
   '/harmonium',
   '/manifest.json',
-  '/favicon.ico'
+  '/favicon.ico',
+  '/extracted_songs.json'
 ];
 
 self.addEventListener('install', (event) => {
@@ -36,12 +37,11 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
   
-  // Skip caching APIs, external audio streams, and search lookups to save browser storage
+  // Skip caching external audio streams to save browser storage, but ALLOW /api/ caches for offline metadata
   if (
-    url.pathname.startsWith('/api/') || 
     url.hostname.includes('saavn') || 
-
-    url.pathname.endsWith('.mp3')
+    url.pathname.endsWith('.mp3') ||
+    url.pathname.startsWith('/api/stream')
   ) {
     return;
   }
