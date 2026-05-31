@@ -31,18 +31,23 @@ let storage: FirebaseStorage | undefined;
 let analytics: Analytics | undefined;
 let isRealFirebase = false;
 
+const isDummyKey = firebaseConfig.apiKey === "AIzaSyDBac2bbUICWHte4uUujGeqyrwamdD2BvA";
+
 try {
-  // If the config is valid and not using the absolute dummy key, or we just want to attempt to initialize
-  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-  if (typeof window !== 'undefined') {
-    import('firebase/analytics').then(({ getAnalytics }) => {
-      analytics = getAnalytics(app!);
-    }).catch(console.error);
+  if (!isDummyKey) {
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+    if (typeof window !== 'undefined') {
+      import('firebase/analytics').then(({ getAnalytics }) => {
+        analytics = getAnalytics(app!);
+      }).catch(console.error);
+    }
+    isRealFirebase = true;
+  } else {
+    console.warn("Using dummy Firebase config. Defaulting to mock simulator mode.");
   }
-  isRealFirebase = true;
 } catch (e) {
   console.warn("Firebase Auth initialized in local mock simulator mode.", e);
 }

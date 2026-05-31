@@ -600,60 +600,7 @@ export default function FuturisticMusicPage() {
         </div>
       </main>
 
-      {/* GLOBAL BOTTOM PLAYER */}
-      {currentTrack && (
-        <footer className="fixed bottom-0 left-0 lg:left-[260px] right-0 h-[100px] bg-[#050505]/95 backdrop-blur-md border-t border-white/5 z-[60] px-4 md:px-8 flex items-center justify-between">
-          
-          <div className="flex items-center gap-4 w-1/3 min-w-0">
-            <div className="w-16 h-16 relative shrink-0">
-              <Image src={currentTrack.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=200'} alt="Art" fill sizes="64px" className="rounded-xl object-cover shadow-lg border border-white/10" />
-            </div>
-            <div className="min-w-0">
-              <h4 className="text-sm font-bold text-white truncate">{currentTrack.name}</h4>
-              <p className="text-xs text-white/50 truncate">{currentTrack.artist}</p>
-            </div>
-            <button 
-              onClick={(e) => toggleFavorite(currentTrack, e)}
-              className="hidden md:block p-2 ml-2 hover:bg-white/5 rounded-full transition-colors"
-            >
-              <Heart className={cn("w-4 h-4", favorites.some(f => f.id === currentTrack.id) ? "fill-[#EC4899] text-[#EC4899]" : "text-white/50")} />
-            </button>
-          </div>
 
-          <div className="flex flex-col items-center gap-2 w-1/3">
-            <div className="flex items-center justify-center gap-6">
-              <button onClick={playPrevious} className="text-white/50 hover:text-white transition-colors">
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <button 
-                onClick={() => setIsBGActive(!isBGActive)}
-                className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-transform"
-              >
-                {isBGActive ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-1" />}
-              </button>
-              <button onClick={playNext} className="text-white/50 hover:text-white transition-colors">
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          <div className="hidden md:flex items-center justify-end gap-3 w-1/3">
-            <button onClick={() => setIsMuted(!isMuted)} className="text-white/50 hover:text-white">
-              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </button>
-            <input 
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={isMuted ? 0 : volume}
-              onChange={(e) => setAudioParam('volume', Number(e.target.value))}
-              className="w-24 h-1 bg-white/20 rounded-full appearance-none outline-none accent-[#8B5CF6] cursor-pointer"
-            />
-            <button className="text-[#8B5CF6] ml-4"><Laptop className="w-4 h-4" /></button>
-          </div>
-        </footer>
-      )}
 
       {/* MOBILE BOTTOM NAVIGATION - Replaces Top Nav for Tabs */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#050505]/95 backdrop-blur-md border-t border-white/5 flex items-center justify-around z-[70] pb-safe">
