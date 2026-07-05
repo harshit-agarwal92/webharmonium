@@ -316,18 +316,19 @@ export function useAudioEngine() {
           const data = await res.json();
           if (!data.url) throw new Error('No stream URL provided');
           
-          // FORCE CORS-SAFE PROXY for all YouTube streams
-          finalUrl = `/api/proxy-audio?url=${encodeURIComponent(data.url)}`;
+          finalUrl = data.url; // Use the direct URL (which could be Saavn fallback)
         } catch (streamErr) {
-          console.error("YouTube Stream resolution failed:", streamErr);
+          console.warn("YouTube Stream resolution failed:", streamErr);
           if (bgAudioRef.current) bgAudioRef.current.pause();
           return; 
         }
       }
 
       // Use Native Audio for streaming long tracks
+      // Saavn CDN has native CORS support (Access-Control-Allow-Origin: *), proxying it through Next.js breaks 206 Range requests and causes NotSupportedError.
       const isExternal = finalUrl.startsWith('http');
-      const playerUrl = isExternal 
+      const needsProxy = isExternal && !finalUrl.includes('saavncdn.com');
+      const playerUrl = needsProxy 
         ? `/api/proxy-audio?url=${encodeURIComponent(finalUrl)}` 
         : finalUrl;
 

@@ -16,9 +16,15 @@ export async function GET(request: Request) {
   try {
     const fetchHeaders: Record<string, string> = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Referer': 'https://www.jiosaavn.com/',
       'Accept': '*/*',
     };
+
+    if (audioUrl.includes('saavn')) {
+      fetchHeaders['Referer'] = 'https://www.jiosaavn.com/';
+    } else if (audioUrl.includes('googlevideo.com')) {
+      fetchHeaders['Origin'] = 'https://www.youtube.com';
+      fetchHeaders['Referer'] = 'https://www.youtube.com/';
+    }
 
     if (rangeHeader) {
       fetchHeaders['Range'] = rangeHeader;

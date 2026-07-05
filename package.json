@@ -9,15 +9,20 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
     "clsx": "^2.1.1",
     "firebase": "^12.13.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.0.1",
     "next": "16.2.1",
+    "play-dl": "^1.9.7",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tailwind-merge": "^3.5.0",
-    "tone": "^15.1.22"
+    "tone": "^15.1.22",
+    "youtube-ext": "^1.1.25",
+    "youtube-music-api": "^1.0.6",
+    "ytmusic-api": "^5.3.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

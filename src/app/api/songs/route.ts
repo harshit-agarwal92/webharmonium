@@ -32,10 +32,10 @@ export async function GET(request: Request) {
 
   // 1. LOCAL PUBLIC FILES SEARCH REMOVED FOR PURE STREAMING EXPERIENCE
 
-  // 2. DIRECT JIOSAAVN SEARCH & SECURE CDN RESOLVER
+  // 2. DIRECT JIOSAAVN SEARCH USING UNOFFICIAL API
   let saavnResults: any[] = [];
   try {
-    const searchUrl = `https://www.jiosaavn.com/api.php?__call=autocomplete.get&_format=json&_marker=0&cc=in&includeMetaTags=1&query=${encodeURIComponent(query)}`;
+    const searchUrl = `https://saavn.sumit.co/api/search/songs?query=${encodeURIComponent(query)}`;
     const searchRes = await fetch(searchUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -45,97 +45,71 @@ export async function GET(request: Request) {
 
     if (searchRes.ok) {
       const searchData = await searchRes.json();
-      const songsList = searchData?.songs?.data || [];
+      const songsList = searchData?.data?.results || [];
 
-      const parsedTracks = await Promise.all(
-        songsList.map(async (item: any) => {
-          try {
-            // Get exact song details to retrieve encrypted CDN keys
-            const detailUrl = `https://www.jiosaavn.com/api.php?__call=song.getDetails&cc=in&_marker=0%3F_marker%3D0&_format=json&pids=${item.id}`;
-            const detailRes = await fetch(detailUrl, {
-              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-            });
-
-            if (!detailRes.ok) return null;
-            const detailData = await detailRes.json();
-            const songDetail = Object.values(detailData)[0] as any;
-
-            if (!songDetail) return null;
-
-            const encUrl = songDetail.encrypted_media_url || songDetail.encrypted_drm_media_url;
-            if (!encUrl) return null;
-
-            // Generate direct secure CDN audio link (320kbps)
-            const tokenUrl = `https://www.jiosaavn.com/api.php?__call=song.generateAuthToken&_format=json&_marker=0&cc=in&bitrate=320&url=${encodeURIComponent(encUrl)}`;
-            const tokenRes = await fetch(tokenUrl, {
-              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-            });
-
-            if (!tokenRes.ok) return null;
-            const tokenData = await tokenRes.json();
-
-            if (tokenData.status === 'success' && tokenData.auth_url) {
-              // Upscale image resolution to 500x500 for modern premium display
-              let hiresImage = songDetail.image || item.image;
-              if (hiresImage) {
-                hiresImage = hiresImage.replace('150x150', '500x500').replace('50x50', '500x500');
-              }
-
-              const cleanName = (songDetail.song || item.title || 'Unknown Track')
-                .replace(/&quot;/g, '"')
-                .replace(/&amp;/g, '&')
-                .replace(/&#039;/g, "'");
-
-              return {
-                id: item.id,
-                name: cleanName,
-                artist: songDetail.singers || songDetail.primary_artists || item.more_info?.primary_artists || 'JioSaavn Artist',
-                album: songDetail.album || item.album || 'Single',
-                image: hiresImage,
-                url: tokenData.auth_url,
-                source: 'saavn'
-              };
-            }
-          } catch (err) {
-            // Silently skip individual track failures
-          }
-          return null;
-        })
-      );
-
-      saavnResults = parsedTracks.filter(Boolean);
+      saavnResults = songsList.map((item: any) => {
+        // Pick highest quality download URL (usually 320kbps)
+        const bestAudio = item.downloadUrl?.find((u: any) => u.quality === '320kbps') || item.downloadUrl?.[0];
+        const bestImage = item.image?.find((i: any) => i.quality === '500x500') || item.image?.[0];
+        
+        let artistsName = 'JioSaavn Artist';
+        if (item.artists && item.artists.primary && item.artists.primary.length > 0) {
+           artistsName = item.artists.primary.map((a: any) => a.name).join(', ');
+        }
+        
+        if (bestAudio?.url) {
+          return {
+            id: item.id,
+            name: item.name || item.title || 'Unknown Track',
+            artist: artistsName,
+            album: item.album?.name || 'Single',
+            image: bestImage?.url || 'https://www.jiosaavn.com/_i/3.0/artist-default-music.png',
+            url: bestAudio.url,
+            source: 'saavn'
+          };
+        }
+        return null;
+      }).filter(Boolean);
     }
   } catch (e) {
     console.error("Direct JioSaavn API retrieval failed:", e);
   }
 
-  // 3. YOUTUBE FALLBACK (IF SAAVN RETURNED INSUFFICIENT DATA)
+  // 3. YOUTUBE MUSIC API (ytmusic-api)
   let youtubeResults: any[] = [];
   if (saavnResults.length < 3 && rawQuery) {
-    const invInstances = ['https://yewtu.be', 'https://iv.ggtyler.dev'];
-    for (const inst of invInstances) {
-      try {
-        const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 6000);
-        const yRes = await fetch(`${inst}/api/v1/search?q=${encodeURIComponent(query + ' audio')}&type=video`, {
-          signal: controller.signal
-        });
-        clearTimeout(tid);
-        if (yRes.ok) {
-          const yData = await yRes.json();
-          const items = Array.isArray(yData) ? yData : (yData.items || []);
-          youtubeResults = items.map((item: any) => ({
-            id: item.videoId || item.id?.videoId,
-            name: item.title || item.snippet?.title,
-            artist: item.author || item.snippet?.channelTitle,
-            album: 'YouTube Music',
-            image: item.videoThumbnails?.[0]?.url || item.snippet?.thumbnails?.high?.url || `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`,
-            url: `/api/stream?id=${item.videoId || item.id?.videoId}`,
+    try {
+      // Dynamically import YTMusic to avoid top-level await/build issues
+      const { default: YTMusic } = await import('ytmusic-api');
+      const ytmusic = new YTMusic();
+      await ytmusic.initialize();
+      
+      const ytQuery = query + ' song';
+      const songs = await ytmusic.search(ytQuery);
+      
+      if (songs && songs.length > 0) {
+        youtubeResults = songs.map((item: any) => {
+          const videoId = item.videoId;
+          if (!videoId) return null;
+          
+          // Use highest quality thumbnail
+          const hqThumb = item.thumbnails?.reduce((prev: any, curr: any) => 
+            (prev.width > curr.width) ? prev : curr
+          );
+
+          return {
+            id: videoId,
+            name: item.name || 'Unknown Track',
+            artist: item.artist?.name || 'YouTube Music',
+            album: item.album?.name || 'YouTube Music',
+            image: hqThumb?.url || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+            url: `/api/stream?id=${videoId}&title=${encodeURIComponent(item.name || '')}&artist=${encodeURIComponent(item.artist?.name || '')}`,
             source: 'youtube'
-          })).slice(0, 10);
-          break; // Stop querying once a fallback responds
-        }
-      } catch (e) {}
+          };
+        }).filter(Boolean);
+      }
+    } catch (e) {
+      console.error("ytmusic-api fetch failed:", e);
     }
   }
 
