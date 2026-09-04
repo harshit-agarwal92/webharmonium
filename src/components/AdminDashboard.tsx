@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Users, Music, HardDriveDownload, Activity, 
   Upload, ShieldAlert, BarChart3, Trash2, 
-  Search, PlayCircle, Star, RefreshCw, AlertCircle, CheckCircle2, Plus
+  Search, PlayCircle, Star, RefreshCw, AlertCircle, Plus,
+  Info, ExternalLink
 } from 'lucide-react';
 import { 
   getAdminStats, 
@@ -33,7 +34,7 @@ export default function AdminDashboard({ currentUserEmail }: AdminDashboardProps
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4 text-center p-6">
         <ShieldAlert className="w-16 h-16 text-red-500 animate-pulse" />
         <h2 className="text-2xl font-black text-white tracking-widest uppercase">Access Denied</h2>
-        <p className="text-white/50 text-sm max-w-md">You do not have administrative clearance to access this control center.</p>
+        <p className="text-white/50 text-sm max-w-md">You do not have administrative clearance to access this control center ({currentUserEmail || 'Not logged in'}).</p>
       </div>
     );
   }
@@ -54,18 +55,42 @@ export default function AdminDashboard({ currentUserEmail }: AdminDashboardProps
         </div>
 
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-white/70">
-          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <span>{isRealSupabase ? 'Supabase Connected' : 'Supabase Client Initializing'}</span>
+          <span className={`w-2 h-2 rounded-full ${isRealSupabase ? 'bg-green-400 animate-pulse' : 'bg-amber-400'}`} />
+          <span>{isRealSupabase ? 'Supabase Connected' : 'Supabase Not Configured'}</span>
         </div>
       </div>
 
+      {/* Supabase Missing Configuration Notice for Vercel */}
+      {!isRealSupabase && (
+        <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-2">
+          <div className="flex items-center gap-2 font-black uppercase tracking-wider text-amber-400">
+            <Info className="w-4 h-4 shrink-0" />
+            <span>Supabase Environment Variables Missing on Vercel</span>
+          </div>
+          <p className="text-white/80 leading-relaxed font-normal">
+            Database operations are currently disabled because <code className="bg-black/40 px-1.5 py-0.5 rounded text-amber-200">NEXT_PUBLIC_SUPABASE_URL</code> and/or <code className="bg-black/40 px-1.5 py-0.5 rounded text-amber-200">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> are not present in your Vercel Project Settings.
+          </p>
+          <div className="pt-1 flex items-center gap-4 text-[11px] font-bold">
+            <a 
+              href="https://vercel.com/dashboard" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="inline-flex items-center gap-1 text-amber-400 hover:underline"
+            >
+              <span>Configure in Vercel Settings &rarr; Environment Variables</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Admin Nav Tabs */}
       <div className="flex flex-wrap gap-2 pb-4 border-b border-white/5">
-        <AdminTab btnTab="overview" activeTab={activeAdminTab} setTab={setActiveAdminTab} icon={<Activity />} label="Overview" />
-        <AdminTab btnTab="songs" activeTab={activeAdminTab} setTab={setActiveAdminTab} icon={<Music />} label="Manage Songs" />
-        <AdminTab btnTab="users" activeTab={activeAdminTab} setTab={setActiveAdminTab} icon={<Users />} label="Users" />
-        <AdminTab btnTab="analytics" activeTab={activeAdminTab} setTab={setActiveAdminTab} icon={<BarChart3 />} label="Analytics" />
-        <AdminTab btnTab="content" activeTab={activeAdminTab} setTab={setActiveAdminTab} icon={<Star />} label="Content Control" />
+        <AdminTab btnTab="overview" activeTab={activeAdminTab} setTab={setActiveAdminTab} icon={Activity} label="Overview" />
+        <AdminTab btnTab="songs" activeTab={activeAdminTab} setTab={setActiveAdminTab} icon={Music} label="Manage Songs" />
+        <AdminTab btnTab="users" activeTab={activeAdminTab} setTab={setActiveAdminTab} icon={Users} label="Users" />
+        <AdminTab btnTab="analytics" activeTab={activeAdminTab} setTab={setActiveAdminTab} icon={BarChart3} label="Analytics" />
+        <AdminTab btnTab="content" activeTab={activeAdminTab} setTab={setActiveAdminTab} icon={Star} label="Content Control" />
       </div>
 
       {/* Content Area */}
@@ -81,7 +106,15 @@ export default function AdminDashboard({ currentUserEmail }: AdminDashboardProps
   );
 }
 
-function AdminTab({ btnTab, activeTab, setTab, icon, label }: any) {
+interface AdminTabProps {
+  btnTab: string;
+  activeTab: string;
+  setTab: (tab: any) => void;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+}
+
+function AdminTab({ btnTab, activeTab, setTab, icon: Icon, label }: AdminTabProps) {
   const active = btnTab === activeTab;
   return (
     <button 
@@ -92,8 +125,8 @@ function AdminTab({ btnTab, activeTab, setTab, icon, label }: any) {
           : 'bg-transparent text-white/40 border border-transparent hover:text-white/80 hover:bg-white/5'
       }`}
     >
-      {React.cloneElement(icon, { className: 'w-4 h-4' })}
-      {label}
+      <Icon className="w-4 h-4" />
+      <span>{label}</span>
     </button>
   );
 }
@@ -115,10 +148,10 @@ function OverviewPanel() {
     setError(null);
     try {
       const res = await getAdminStats();
-      if (res.success && res.data) {
+      if (res && res.success && res.data) {
         setStats(res.data);
       } else {
-        setError(res.error || 'Failed to fetch database statistics.');
+        setError(res?.error || 'Failed to fetch database statistics.');
       }
     } catch (e: any) {
       setError(e?.message || 'Error communicating with Supabase.');
@@ -150,9 +183,9 @@ function OverviewPanel() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Registered Users" value={loading ? '...' : stats.usersCount} icon={<Users className="w-5 h-5 text-cyan-400" />} />
-        <StatCard title="Featured Songs" value={loading ? '...' : stats.featuredCount} icon={<Star className="w-5 h-5 text-pink-400" />} />
-        <StatCard title="Total Favorites" value={loading ? '...' : stats.favoritesCount} icon={<PlayCircle className="w-5 h-5 text-green-400" />} />
+        <StatCard title="Total Registered Users" value={loading ? '...' : (stats?.usersCount ?? 0)} icon={<Users className="w-5 h-5 text-cyan-400" />} />
+        <StatCard title="Featured Songs" value={loading ? '...' : (stats?.featuredCount ?? 0)} icon={<Star className="w-5 h-5 text-pink-400" />} />
+        <StatCard title="Total Favorites" value={loading ? '...' : (stats?.favoritesCount ?? 0)} icon={<PlayCircle className="w-5 h-5 text-green-400" />} />
         <StatCard title="Database Engine" value={isRealSupabase ? 'Supabase' : 'Standby'} icon={<HardDriveDownload className="w-5 h-5 text-purple-400" />} />
       </div>
 
@@ -162,7 +195,7 @@ function OverviewPanel() {
           <div className="flex items-center justify-between">
             <span className="text-white/40">Supabase Connection</span>
             <span className={isRealSupabase ? 'text-green-400' : 'text-amber-400'}>
-              {isRealSupabase ? '✓ Active (wvpuzajobzoymeoijzar.supabase.co)' : '⚠ Unconfigured'}
+              {isRealSupabase ? '✓ Active & Connected' : '⚠ Missing Vercel Environment Variables'}
             </span>
           </div>
           <div className="flex items-center justify-between">
@@ -194,10 +227,10 @@ function UsersPanel() {
     setError(null);
     try {
       const res = await getAdminUsers();
-      if (res.success && res.data) {
+      if (res && res.success && Array.isArray(res.data)) {
         setUsers(res.data);
       } else {
-        setError(res.error || 'Failed to fetch users list from Supabase.');
+        setError(res?.error || 'Failed to fetch users list from Supabase.');
       }
     } catch (e: any) {
       setError(e?.message || 'Error fetching users.');
@@ -221,10 +254,10 @@ function UsersPanel() {
 
     try {
       const res = await updateUserRole(userId, newRole);
-      if (res.success) {
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      if (res && res.success) {
+        setUsers(prev => (prev || []).map(u => u.id === userId ? { ...u, role: newRole } : u));
       } else {
-        alert(res.error || 'Failed to update user role');
+        alert(res?.error || 'Failed to update user role');
       }
     } catch (e: any) {
       alert(e?.message || 'Failed to update role');
@@ -243,10 +276,10 @@ function UsersPanel() {
     setActionLoading(userId);
     try {
       const res = await deleteUserRecord(userId);
-      if (res.success) {
-        setUsers(prev => prev.filter(u => u.id !== userId));
+      if (res && res.success) {
+        setUsers(prev => (prev || []).filter(u => u.id !== userId));
       } else {
-        alert(res.error || 'Failed to delete user');
+        alert(res?.error || 'Failed to delete user');
       }
     } catch (e: any) {
       alert(e?.message || 'Failed to delete user');
@@ -255,11 +288,12 @@ function UsersPanel() {
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    (u.name || '').toLowerCase().includes(search.toLowerCase()) ||
-    (u.email || '').toLowerCase().includes(search.toLowerCase()) ||
-    (u.role || '').toLowerCase().includes(search.toLowerCase()) ||
-    (u.id || '').toLowerCase().includes(search.toLowerCase())
+  const safeUsers = Array.isArray(users) ? users : [];
+  const filteredUsers = safeUsers.filter(u => 
+    (u?.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (u?.email || '').toLowerCase().includes(search.toLowerCase()) ||
+    (u?.role || '').toLowerCase().includes(search.toLowerCase()) ||
+    (u?.id || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -283,7 +317,7 @@ function UsersPanel() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
           <h3 className="text-sm font-black text-white uppercase tracking-widest">User Database (Supabase `public.users`)</h3>
-          <p className="text-[10px] font-extrabold text-white/40 uppercase tracking-wider mt-0.5">Total Registered: {users.length}</p>
+          <p className="text-[10px] font-extrabold text-white/40 uppercase tracking-wider mt-0.5">Total Registered: {safeUsers.length}</p>
         </div>
         <div className="relative w-full sm:w-auto flex items-center gap-2">
           <div className="relative flex-1 sm:w-64">
@@ -324,8 +358,8 @@ function UsersPanel() {
               <tr><td colSpan={5} className="py-8 text-center text-white/30">No users found matching query.</td></tr>
             ) : (
               filteredUsers.map((u) => {
-                const isSuperAdminUser = u.email === 'aggarwalharshit345@gmail.com';
-                const roleDisplay = isSuperAdminUser ? 'Super Admin' : (u.role === 'admin' ? 'Admin' : 'User');
+                const isSuperAdminUser = u?.email === 'aggarwalharshit345@gmail.com';
+                const roleDisplay = isSuperAdminUser ? 'Super Admin' : (u?.role === 'admin' ? 'Admin' : 'User');
                 
                 return (
                   <tr key={u.id} className="border-b border-white/5 hover:bg-white/5 transition-all">
@@ -342,7 +376,7 @@ function UsersPanel() {
                     <td className="py-4">
                       <span className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${
                         isSuperAdminUser ? 'bg-purple-500/20 text-purple-400 border border-purple-500/40' : 
-                        u.role === 'admin' ? 'bg-pink-500/20 text-pink-400 border border-pink-500/40' : 
+                        u?.role === 'admin' ? 'bg-pink-500/20 text-pink-400 border border-pink-500/40' : 
                         'bg-white/10 text-white/70'
                       }`}>
                         {roleDisplay}
@@ -356,7 +390,7 @@ function UsersPanel() {
                             disabled={actionLoading === u.id}
                             className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 text-[9px] font-black text-white uppercase tracking-wider transition-all disabled:opacity-40 cursor-pointer"
                           >
-                            {u.role === 'admin' ? 'Demote' : 'Promote Admin'}
+                            {u?.role === 'admin' ? 'Demote' : 'Promote Admin'}
                           </button>
                           <button
                             onClick={() => handleDeleteUser(u.id, u.email)}
@@ -398,7 +432,7 @@ function ContentPanel() {
     setError(null);
     try {
       const data = await getFeaturedContent(section);
-      setFeaturedSongs(data || []);
+      setFeaturedSongs(Array.isArray(data) ? data : []);
     } catch (e: any) {
       setError(e?.message || 'Failed to load featured content from Supabase.');
     } finally {
@@ -418,9 +452,10 @@ function ContentPanel() {
         try {
           const res = await fetch(`/api/songs?query=${encodeURIComponent(searchQuery.trim())}`);
           const data = await res.json();
-          setSearchResults(data.results?.slice(0, 6) || []);
+          setSearchResults(Array.isArray(data?.results) ? data.results.slice(0, 6) : []);
         } catch (e: any) {
           console.error("Failed to search songs:", e);
+          setSearchResults([]);
         } finally {
           setSearching(false);
         }
@@ -435,14 +470,15 @@ function ContentPanel() {
   const handleAddSong = async (song: any) => {
     setActionLoading(true);
     try {
-      const nextPosition = featuredSongs.length;
+      const safeSongs = Array.isArray(featuredSongs) ? featuredSongs : [];
+      const nextPosition = safeSongs.length;
       const res = await addFeaturedContentSong(section, song, nextPosition);
-      if (res.success) {
+      if (res && res.success) {
         setSearchQuery('');
         setSearchResults([]);
         await loadFeatured();
       } else {
-        alert(res.error || 'Failed to add featured song');
+        alert(res?.error || 'Failed to add featured song');
       }
     } catch (e: any) {
       alert(e?.message || 'Failed to add song to featured content');
@@ -454,15 +490,17 @@ function ContentPanel() {
   const handleRemoveSong = async (featuredId: string) => {
     try {
       const res = await removeFeaturedContentSong(featuredId);
-      if (res.success) {
+      if (res && res.success) {
         await loadFeatured();
       } else {
-        alert(res.error || 'Failed to remove featured song');
+        alert(res?.error || 'Failed to remove featured song');
       }
     } catch (e: any) {
       alert(e?.message || 'Failed to remove song');
     }
   };
+
+  const safeFeatured = Array.isArray(featuredSongs) ? featuredSongs : [];
 
   return (
     <div className="space-y-6">
@@ -553,7 +591,7 @@ function ContentPanel() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-xs font-black uppercase tracking-widest text-white/40">
-              Live Featured Entries in Database ({featuredSongs.length})
+              Live Featured Entries in Database ({safeFeatured.length})
             </h4>
             <button 
               onClick={loadFeatured}
@@ -566,13 +604,13 @@ function ContentPanel() {
 
           {loading ? (
             <div className="py-8 text-center text-xs text-white/40 font-bold uppercase">Loading Supabase Featured Content...</div>
-          ) : featuredSongs.length === 0 ? (
+          ) : safeFeatured.length === 0 ? (
             <div className="p-8 border border-white/5 rounded-xl text-center bg-black/20 text-xs font-bold text-white/30 uppercase tracking-widest">
               No featured overrides set for this section. Homepage dynamically streams live catalog.
             </div>
           ) : (
             <div className="space-y-2">
-              {featuredSongs.map((item, idx) => (
+              {safeFeatured.map((item, idx) => (
                 <div key={item.id || idx} className="flex items-center justify-between p-3.5 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-all">
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="text-xs font-black text-pink-400 w-6 shrink-0">#{idx + 1}</span>

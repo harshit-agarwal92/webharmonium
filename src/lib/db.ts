@@ -405,11 +405,14 @@ export async function getFeaturedContent(section?: string): Promise<any[]> {
     if (section) query = query.eq('section', section);
 
     const { data, error } = await query;
-    if (error) throw error;
+    if (error) {
+      console.warn('[getFeaturedContent] Supabase query notice:', error.message);
+      return [];
+    }
     return data || [];
   } catch (err: any) {
-    console.error('getFeaturedContent error:', err);
-    throw err;
+    console.warn('getFeaturedContent error:', err?.message || err);
+    return [];
   }
 }
 
