@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "*-player-script.js",
+    "scripts/**",
+    "updatePage.cjs",
+    "server.js",
+    "file.html",
   ]),
 ]);
 
