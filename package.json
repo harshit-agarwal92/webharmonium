@@ -44,5 +44,12 @@
   "bugs": {
     "url": "https://github.com/harshit-agarwal92/webharmonium/issues"
   },
-  "homepage": "https://github.com/harshit-agarwal92/webharmonium#readme"
+  "homepage": "https://github.com/harshit-agarwal92/webharmonium#readme",
+  "allowScripts": {
+    "@biomejs/biome": true,
+    "@firebase/util": true,
+    "protobufjs": true,
+    "sharp": true,
+    "unrs-resolver": true
+  }
 }
