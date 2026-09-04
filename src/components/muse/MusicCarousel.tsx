@@ -25,11 +25,11 @@ export const MusicCarousel = React.memo(function MusicCarousel({
   
   const getBadgeConfig = (b?: BadgeType) => {
     switch(b) {
-      case 'TOP CHART': return { color: 'bg-[#8B5CF6]', text: 'text-white' };
+      case 'TOP CHART': return { color: 'bg-[#00F0FF]', text: 'text-black font-black' };
       case 'JIOSAAVN': return { color: 'bg-[#EC4899]', text: 'text-white' };
       case 'AI PICK': return { color: 'bg-indigo-500', text: 'text-white' };
       case 'NEW': return { color: 'bg-emerald-500', text: 'text-white' };
-      case 'MASTI': return { color: 'bg-white', text: 'text-black' };
+      case 'MASTI': return { color: 'bg-gradient-to-r from-[#EC4899] to-[#00F0FF]', text: 'text-white font-black' };
       default: return null;
     }
   };
@@ -42,14 +42,14 @@ export const MusicCarousel = React.memo(function MusicCarousel({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {icon && (
-              <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+              <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)]">
                 {icon}
               </div>
             )}
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-bold tracking-tight text-white">{title}</h3>
+              <h3 className="text-2xl font-black tracking-tight text-white">{title}</h3>
               {badgeConfig && (
-                <span className={cn("text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest", badgeConfig.color, badgeConfig.text)}>
+                <span className={cn("text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-md", badgeConfig.color, badgeConfig.text)}>
                   {badge}
                 </span>
               )}
@@ -65,25 +65,24 @@ export const MusicCarousel = React.memo(function MusicCarousel({
           )}
         </div>
         {subtitle && (
-          <p className="text-sm text-white/40 font-medium pl-11">{subtitle}</p>
+          <p className="text-xs text-white/40 font-medium pl-11">{subtitle}</p>
         )}
       </div>
 
       <div className="flex gap-6 overflow-x-auto overscroll-x-contain pb-6 no-scrollbar-on-mobile scroll-smooth snap-x snap-mandatory pt-2 px-1">
         {loading && items.length === 0 ? (
-          // Skeletons
+          // Shimmer Skeleton Cards
           [1, 2, 3, 4, 5, 6].map(idx => (
             <div 
               key={`skeleton-${idx}`} 
               className={cn(
-                "rounded-2xl bg-[#111] animate-pulse shrink-0 border border-white/5",
+                "rounded-[20px] bg-[#111] border border-white/5 shrink-0 overflow-hidden relative p-3",
                 skeletonType === 'music' ? "w-48 h-64" : "w-72 md:w-80 h-44"
               )}
             >
-              <div className={cn(
-                "w-full bg-[#1a1a1a]",
-                skeletonType === 'music' ? "h-40 rounded-xl m-3 w-[calc(100%-24px)]" : "h-full rounded-2xl"
-              )} />
+              <div className="w-full h-40 rounded-[14px] bg-gradient-to-r from-white/5 via-white/10 to-white/5 animate-pulse mb-3" />
+              <div className="w-3/4 h-3.5 rounded-full bg-white/10 animate-pulse mb-2" />
+              <div className="w-1/2 h-2.5 rounded-full bg-white/5 animate-pulse" />
             </div>
           ))
         ) : (

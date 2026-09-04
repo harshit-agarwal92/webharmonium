@@ -1,75 +1,91 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { db, isRealFirebase } from '@/lib/firebase';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { 
+  getFavorites, 
+  addFavorite, 
+  removeFavorite, 
+  getUserPlaylists, 
+  type DbSong, 
+  type DbPlaylist 
+} from '@/lib/db';
+import { isRealSupabase } from '@/lib/supabaseClient';
 
 export function useUserLibrary() {
   const { user } = useAuth();
-  const [likedSongs, setLikedSongs] = useState<any[]>([]);
-  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [likedSongs, setLikedSongs] = useState<DbSong[]>([]);
+  const [playlists, setPlaylists] = useState<DbPlaylist[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user || !isRealFirebase || !db) {
+  const loadLibrary = useCallback(async () => {
+    if (!user) {
+      setLikedSongs([]);
+      setPlaylists([]);
       setLoading(false);
       return;
     }
 
-    const fetchLibrary = async () => {
+    setLoading(true);
+    if (isRealSupabase) {
       try {
-        const userRef = doc(db!, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          const data = userSnap.data();
-          setLikedSongs(data.likedSongs || []);
-          setPlaylists(data.playlists || []);
-        } else {
-          // Initialize empty if doesn't exist
-          await setDoc(userRef, { likedSongs: [], playlists: [] }, { merge: true });
-        }
-      } catch (err) {
-        console.error('Failed to fetch user library:', err);
+        const [favs, pls] = await Promise.all([
+          getFavorites(user.uid),
+          getUserPlaylists(user.uid)
+        ]);
+        setLikedSongs(favs || []);
+        setPlaylists(pls || []);
+      } catch (e) {
+        console.error("[useUserLibrary] Supabase library fetch error:", e);
       }
-      setLoading(false);
-    };
-
-    fetchLibrary();
+    } else {
+      const localLikes = localStorage.getItem('masti_favorites');
+      if (localLikes) {
+        try { setLikedSongs(JSON.parse(localLikes)); } catch (e) {}
+      }
+    }
+    setLoading(false);
   }, [user]);
 
-  const toggleLike = async (song: any) => {
-    if (!user || !isRealFirebase || !db) return false;
+  useEffect(() => {
+    loadLibrary();
+  }, [loadLibrary]);
 
-    const isLiked = likedSongs.some((s) => s.id === song.id);
-    const userRef = doc(db!, 'users', user.uid);
+  const toggleLike = async (song: DbSong) => {
+    if (!user) return false;
+
+    const isLiked = likedSongs.some((s) => String(s.id) === String(song.id));
 
     try {
       if (isLiked) {
-        const updated = likedSongs.filter((s) => s.id !== song.id);
+        const updated = likedSongs.filter((s) => String(s.id) !== String(song.id));
         setLikedSongs(updated);
-        await updateDoc(userRef, {
-          likedSongs: updated // Using direct array replacement to handle object comparison easily, though arrayRemove works if object reference matches perfectly.
-        });
+        localStorage.setItem('masti_favorites', JSON.stringify(updated));
+        await removeFavorite(user.uid, song.id);
         return false;
       } else {
-        const songData = { id: song.id, name: song.name, artist: song.artist, image: song.image, url: song.url };
-        setLikedSongs([...likedSongs, songData]);
-        await updateDoc(userRef, {
-          likedSongs: arrayUnion(songData)
-        });
+        const songData: DbSong = { 
+          id: String(song.id), 
+          name: song.name, 
+          artist: song.artist, 
+          image: song.image, 
+          url: song.url 
+        };
+        const updated = [songData, ...likedSongs];
+        setLikedSongs(updated);
+        localStorage.setItem('masti_favorites', JSON.stringify(updated));
+        await addFavorite(user.uid, songData);
         return true;
       }
     } catch (e) {
-      console.error("Error toggling like:", e);
+      console.error("[useUserLibrary] Error toggling like:", e);
       return isLiked;
     }
   };
 
   const isSongLiked = (songId: string) => {
-    return likedSongs.some((s) => s.id === songId);
+    return likedSongs.some((s) => String(s.id) === String(songId));
   };
 
-  return { likedSongs, playlists, loading, toggleLike, isSongLiked };
+  return { likedSongs, playlists, loading, toggleLike, isSongLiked, refreshLibrary: loadLibrary };
 }

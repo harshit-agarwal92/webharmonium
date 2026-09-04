@@ -4,12 +4,11 @@ import React from 'react';
 import { SongSearch } from '@/components/SongSearch';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Piano } from 'lucide-react';
-import { useAudioEngine } from '@/hooks/useAudioEngine';
+import { useAudio } from '@/context/AudioContext';
 
 export default function SongsPage() {
   const router = useRouter();
-  const { playBackgroundTrack, stopBackgroundTrack } = useAudioEngine();
-  const [isBGActive, setIsBGActive] = React.useState(false);
+  const { playBackgroundTrack, stopBackgroundTrack, isBGActive, setIsBGActive } = useAudio();
 
   return (
     <div className="min-h-screen bg-[#0a0500] text-amber-100 p-6 lg:p-12 selection:bg-amber-500/30 font-sans">

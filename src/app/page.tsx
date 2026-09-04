@@ -17,7 +17,7 @@ import { TopHeader } from '@/components/muse/TopHeader';
 import { MusicCarousel } from '@/components/muse/MusicCarousel';
 import { PremiumMusicCard } from '@/components/muse/PremiumMusicCard';
 import { FeaturedPlaylistCard } from '@/components/muse/FeaturedPlaylistCard';
-const VirtualHarmonium = dynamic(() => import('@/components/muse/VirtualHarmonium').then(mod => mod.VirtualHarmonium), { ssr: false });
+const VirtualHarmonium = dynamic(() => import('@/components/muse/VirtualHarmonium').then(mod => ({ default: mod.VirtualHarmonium })), { ssr: false });
 
 const FEATURED_PLAYLISTS = [
   { id: 'f-1', title: 'Top 50 Global', query: 'Global Hits', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=600&fit=crop' },
@@ -29,7 +29,8 @@ export default function FuturisticMusicPage() {
   const { 
     currentTrack, setCurrentTrack, isBGActive, setIsBGActive,
     volume, setAudioParam, isMuted, setIsMuted, recentlyPlayed,
-    queue, setQueue, playNext, playPrevious, playBackgroundTrack, setIsPlayerExpanded
+    queue, setQueue, playNext, playPrevious, playBackgroundTrack, setIsPlayerExpanded,
+    playSong, likedSongs, customPlaylists, createPlaylist
   } = useAudio();
   const { user } = useAuth();
 
@@ -78,7 +79,7 @@ export default function FuturisticMusicPage() {
 
   const fetchCategory = async (category: string, offset: number, letter: string = ''): Promise<any[]> => {
     try {
-      const res = await fetch(`/api/database?category=${category}&offset=${offset}&limit=8&letter=${letter}`);
+      const res = await fetch(`/api/database?category=${category}&offset=${offset}&limit=24&letter=${letter}`);
       const json = await res.json();
       return json.data || [];
     } catch (e) {
@@ -89,33 +90,33 @@ export default function FuturisticMusicPage() {
 
   const handleLoadMore = async (category: string) => {
     if (category === 'trending') {
-      const more = await fetchCategory('trending', trendingOffset + 8);
+      const more = await fetchCategory('trending', trendingOffset + 24);
       setTrendingSongs(prev => [...prev, ...more]);
-      setTrendingOffset(prev => prev + 8);
+      setTrendingOffset(prev => prev + 24);
     } else if (category === 'charts') {
-      const more = await fetchCategory('charts', chartsOffset + 8);
+      const more = await fetchCategory('charts', chartsOffset + 24);
       setTopCharts(prev => [...prev, ...more]);
-      setChartsOffset(prev => prev + 8);
+      setChartsOffset(prev => prev + 24);
     } else if (category === 'new') {
-      const more = await fetchCategory('new', newReleasesOffset + 8);
+      const more = await fetchCategory('new', newReleasesOffset + 24);
       setNewReleases(prev => [...prev, ...more]);
-      setNewReleasesOffset(prev => prev + 8);
+      setNewReleasesOffset(prev => prev + 24);
     } else if (category === 'artists') {
-      const more = await fetchCategory('artists', artistsOffset + 8);
+      const more = await fetchCategory('artists', artistsOffset + 24);
       setPopularArtists(prev => [...prev, ...more]);
-      setArtistsOffset(prev => prev + 8);
+      setArtistsOffset(prev => prev + 24);
     } else if (category === 'recently_added') {
-      const more = await fetchCategory('recently_added', recentlyAddedOffset + 8);
+      const more = await fetchCategory('recently_added', recentlyAddedOffset + 24);
       setRecentlyAdded(prev => [...prev, ...more]);
-      setRecentlyAddedOffset(prev => prev + 8);
+      setRecentlyAddedOffset(prev => prev + 24);
     } else if (category === 'recommended') {
-      const more = await fetchCategory('recommended', recommendedOffset + 8);
+      const more = await fetchCategory('recommended', recommendedOffset + 24);
       setRecommended(prev => [...prev, ...more]);
-      setRecommendedOffset(prev => prev + 8);
+      setRecommendedOffset(prev => prev + 24);
     } else if (category === 'az') {
-      const more = await fetchCategory('az', azOffset + 8, activeLetter);
+      const more = await fetchCategory('az', azOffset + 24, activeLetter);
       setAzSongs(prev => [...prev, ...more]);
-      setAzOffset(prev => prev + 8);
+      setAzOffset(prev => prev + 24);
     }
   };
 
@@ -171,7 +172,7 @@ export default function FuturisticMusicPage() {
     setIsSearching(true);
     setSearchLimit(24);
     try {
-      const res = await fetch(`/api/songs?query=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/songs?query=${encodeURIComponent(query)}&limit=50`);
       const data = await res.json();
       setSearchResults(data.results || []);
     } catch (e) {
@@ -203,26 +204,9 @@ export default function FuturisticMusicPage() {
       setShowAuthModal(true);
       return;
     }
-    setCurrentTrack(song);
-    if (contextQueue) setQueue(contextQueue);
-    let playUrl = song.url;
-
-    if (song.source === 'local_offline') {
-      const blobUrl = await getOfflineTrackBlobUrl(song.id);
-      if (blobUrl) playUrl = blobUrl;
-    } else if (song.source === 'saavn' && !song.url) {
-      try {
-        const res = await fetch(`/api/songs?query=${encodeURIComponent(song.name + ' ' + song.artist)}`);
-        const data = await res.json();
-        if (data.success && data.results?.length > 0) {
-          playUrl = data.results[0].url;
-          setCurrentTrack({ ...song, url: playUrl });
-        }
-      } catch (err) {}
-    }
     setIsPlayerExpanded(true);
-    setTimeout(() => playBackgroundTrack(playUrl, song.name, song.artist), 150);
-  }, [user, playBackgroundTrack, setIsPlayerExpanded, setQueue, setCurrentTrack]);
+    playSong(song, contextQueue);
+  }, [user, playSong, setIsPlayerExpanded]);
 
   if (!mounted) return <div className="min-h-screen w-full bg-[#050505]" />;
 
@@ -586,6 +570,133 @@ export default function FuturisticMusicPage() {
                     <p className="text-white/40">Loading Memories...</p>
                   </div>
                 )}
+              </motion.div>
+            )}
+
+            {activeTab === 'liked' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-2xl font-black flex items-center gap-2">
+                      <Heart className="w-6 h-6 text-[#EC4899] fill-[#EC4899]" /> Liked Songs
+                    </h3>
+                    <p className="text-xs text-white/40 mt-1 font-medium">{likedSongs.length} tracks in your personal collection</p>
+                  </div>
+                  {likedSongs.length > 0 && (
+                    <button
+                      onClick={() => handlePlaySong(likedSongs[0], likedSongs)}
+                      className="px-6 py-2.5 bg-gradient-to-r from-[#EC4899] to-[#8B5CF6] rounded-full text-xs font-bold text-white shadow-[0_0_20px_rgba(236,72,153,0.4)] hover:scale-105 transition-all"
+                    >
+                      Play All
+                    </button>
+                  )}
+                </div>
+
+                {likedSongs.length > 0 ? (
+                  <div className="flex flex-wrap gap-6">
+                    {likedSongs.map((song, i) => (
+                      <PremiumMusicCard
+                        key={i}
+                        song={song}
+                        contextQueue={likedSongs}
+                        onClick={handlePlaySong}
+                        onFav={toggleFavorite}
+                        onDl={handleDownload}
+                        isFav={favorites.some(f => f.id === song.id)}
+                        isActive={currentTrack?.id === song.id}
+                        isPlaying={isBGActive}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <Heart className="w-16 h-16 text-white/10 mb-4" />
+                    <p className="text-white/40">No liked songs yet. Click the heart icon on any song to add it here!</p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === 'playlists' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-2xl font-black flex items-center gap-2">
+                      <FolderHeart className="w-6 h-6 text-[#8B5CF6]" /> Custom Playlists
+                    </h3>
+                    <p className="text-xs text-white/40 mt-1 font-medium">{customPlaylists.length} playlists created</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const name = prompt('Enter playlist name:');
+                      if (name) createPlaylist(name);
+                    }}
+                    className="px-6 py-2.5 bg-white/10 border border-white/20 hover:bg-[#8B5CF6] hover:border-[#8B5CF6] rounded-full text-xs font-bold text-white transition-all"
+                  >
+                    + Create Playlist
+                  </button>
+                </div>
+
+                {customPlaylists.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {customPlaylists.map(pl => (
+                      <div key={pl.id} className="p-5 rounded-2xl bg-[#0f0f0f] border border-white/10 flex flex-col justify-between">
+                        <div>
+                          <h4 className="text-lg font-bold text-white">{pl.name}</h4>
+                          <p className="text-xs text-white/40 mt-1 font-medium">{pl.songs.length} tracks</p>
+                        </div>
+                        <div className="mt-6 flex items-center justify-between">
+                          {pl.songs.length > 0 ? (
+                            <button
+                              onClick={() => handlePlaySong(pl.songs[0], pl.songs)}
+                              className="px-5 py-2 rounded-full bg-[#8B5CF6] text-white text-xs font-bold hover:scale-105 transition-all"
+                            >
+                              Play Playlist
+                            </button>
+                          ) : (
+                            <span className="text-xs text-white/30 italic">Empty playlist</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <FolderHeart className="w-16 h-16 text-white/10 mb-4" />
+                    <p className="text-white/40">No custom playlists created yet. Click "+ Create Playlist" to get started!</p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === 'genres' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8">
+                <h3 className="text-2xl font-black mb-6">Moods & Genres</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+                  {[
+                    { name: 'Romantic Hits', query: 'Romantic Hits', bg: 'from-pink-600 to-rose-900' },
+                    { name: 'Party Anthems', query: 'Party Hits', bg: 'from-purple-600 to-indigo-900' },
+                    { name: 'Sad & Lofi', query: 'Sad Lofi', bg: 'from-blue-600 to-slate-900' },
+                    { name: 'Workout Energy', query: 'Workout Energy', bg: 'from-amber-600 to-orange-900' },
+                    { name: 'Devotional', query: 'Devotional', bg: 'from-emerald-600 to-teal-900' },
+                    { name: '90s Nostalgia', query: '90s Bollywood', bg: 'from-red-600 to-pink-900' }
+                  ].map(genre => (
+                    <button
+                      key={genre.name}
+                      onClick={() => {
+                        setSearchQuery(genre.query);
+                        handleSearch(genre.query);
+                        setActiveTab('search');
+                      }}
+                      className={cn(
+                        "h-28 p-4 rounded-2xl bg-gradient-to-br border border-white/10 flex flex-col justify-end text-left font-black text-lg text-white shadow-xl hover:scale-105 transition-transform",
+                        genre.bg
+                      )}
+                    >
+                      {genre.name}
+                    </button>
+                  ))}
+                </div>
               </motion.div>
             )}
 

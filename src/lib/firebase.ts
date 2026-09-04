@@ -2,9 +2,6 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { 
   getAuth,
   type Auth,
-  signInWithEmailAndPassword as fbSignInWithEmailAndPassword,
-  createUserWithEmailAndPassword as fbCreateUserWithEmailAndPassword,
-  signOut as fbSignOut,
   signInWithPopup as fbSignInWithPopup,
   GoogleAuthProvider
 } from 'firebase/auth';
@@ -12,18 +9,18 @@ import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import type { Analytics } from 'firebase/analytics';
 
-// Standard Firebase web app configuration using placeholders or env vars
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDBac2bbUICWHte4uUujGeqyrwamdD2BvA",
-  authDomain: "masti-music-cae9d.firebaseapp.com",
-  projectId: "masti-music-cae9d",
-  storageBucket: "masti-music-cae9d.firebasestorage.app",
-  messagingSenderId: "76083614699",
-  appId: "1:76083614699:web:03cfb150bb6281a620ffae",
-  measurementId: "G-SQ0D133MVS"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyDBac2bbUICWHte4uUujGeqyrwamdD2BvA",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "masti-music-cae9d.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "masti-music-cae9d",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "masti-music-cae9d.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "76083614699",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:76083614699:web:03cfb150bb6281a620ffae",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-SQ0D133MVS"
 };
 
-
+// Initialize Firebase
 let app: FirebaseApp | undefined;
 let auth: Auth | undefined;
 let db: Firestore | undefined;
@@ -38,34 +35,29 @@ try {
   storage = getStorage(app);
   if (typeof window !== 'undefined') {
     import('firebase/analytics').then(({ getAnalytics }) => {
-      analytics = getAnalytics(app!);
-    }).catch(console.error);
+      if (app) {
+        analytics = getAnalytics(app);
+      }
+    }).catch(() => {});
   }
   isRealFirebase = true;
 } catch (e) {
-  console.warn("Firebase Auth initialized in local mock simulator mode.", e);
+  console.warn("Firebase Auth fallback mode initialized.", e);
+  isRealFirebase = false;
 }
 
-export { auth, db, storage, analytics, isRealFirebase };
+export { app, auth, db, storage, analytics, isRealFirebase };
 
 export const simulateAuth = {
-  signIn: async (email: string, pass: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 800)); // Simulate network latency
-    if (email && pass.length >= 6) {
-      const username = email.split('@')[0];
-      return { user: { email, displayName: username, uid: 'mock-uid-' + Date.now() } };
-    }
-    throw new Error("Invalid email or password must be at least 6 characters.");
-  },
-  signUp: async (email: string, pass: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    if (!email.includes('@')) throw new Error("Invalid email address.");
-    if (pass.length < 6) throw new Error("Password must be at least 6 characters.");
-    const username = email.split('@')[0];
-    return { user: { email, displayName: username, uid: 'mock-uid-' + Date.now() } };
-  },
   signInWithGoogle: async () => {
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    return { user: { email: 'aggarwalharshit345@gmail.com', displayName: 'AdminVibeMaster', uid: 'google-mock-uid-' + Date.now() } };
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    return { 
+      user: { 
+        email: 'aggarwalharshit345@gmail.com', 
+        displayName: 'Harshit Agarwal', 
+        photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200',
+        uid: 'google-admin-uid-101' 
+      } 
+    };
   }
 };

@@ -1,29 +1,26 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import * as Tone from 'tone';
-
-interface AudioEngineProps {
-  volume: number;
-  reverbEnabled: boolean;
-  sustainEnabled: boolean;
-  octaveOffset: number;
-}
+import { PlaybackEngine } from '@/lib/playback/engine';
+import { SaavnPlaybackProvider } from '@/lib/playback/providers/saavn';
+import { DeezerPlaybackProvider } from '@/lib/playback/providers/deezer';
+import { YouTubePlaybackProvider } from '@/lib/playback/providers/youtube';
 
 export function useAudioEngine() {
   const samplerRef = useRef<Tone.Sampler | null>(null);
   const pianoSamplerRef = useRef<Tone.Sampler | null>(null);
   const customSamplerRef = useRef<Tone.Sampler | null>(null);
-  const organSamplerRef = useRef<Tone.Sampler | null>(null);
   const reverbRef = useRef<Tone.Reverb | null>(null);
   const filterRef = useRef<Tone.Filter | null>(null);
   const masterGainRef = useRef<Tone.Gain | null>(null);
   
-  // Background Music Layer
+  // HTML5 Audio Layer & Playback Engine
   const bgAudioRef = useRef<HTMLAudioElement | null>(null);
-  const bgNodeRef = useRef<any>(null); // Using any to avoid TS/Lint issues with native nodes in some environments
+  const bgNodeRef = useRef<any>(null); 
   const bgGainRef = useRef<Tone.Gain | null>(null);
-  
+  const playbackEngineRef = useRef<PlaybackEngine | null>(null);
+
   // Rhythm Layer
   const beatPlayerRef = useRef<Tone.Player | null>(null);
   const kickSynthRef = useRef<Tone.MembraneSynth | null>(null);
@@ -42,36 +39,36 @@ export function useAudioEngine() {
     // AUDIO GRAPH - 3 Distinct Mixing Channels
     const limiter = new Tone.Limiter(-1).toDestination();
     
-    // 1. Master Channel (Mixer with limited headroom to prevent clipping)
     const masterGain = new Tone.Gain(1.2).connect(limiter);
     const reverb = new Tone.Reverb({ decay: 3.0, wet: 0.35 }).connect(masterGain);
     const filter = new Tone.Filter(3200, "lowpass").connect(reverb);
     
-    // 2. Background Track Channel (Boosted default)
     const bgGain = new Tone.Gain(0.6).connect(masterGain);
-    
-    // 3. Rhythm Channel (Boosted default)
     const beatGain = new Tone.Gain(0.6).connect(masterGain);
 
-    // CLASSIC REED SYNTHESIS (DUAL OSCILLATORS)
+    // Initialize HTML5 Audio Element and connect to Tone.js
+    const audio = new Audio();
+    audio.crossOrigin = "anonymous";
+    audio.volume = 1;
+    bgAudioRef.current = audio;
+
+    const ctx = Tone.getContext();
+    const sourceNode = ctx.createMediaElementSource(audio);
+    Tone.connect(sourceNode, bgGain);
+    bgNodeRef.current = sourceNode;
+
+    // Instantiate PlaybackEngine with Saavn, Deezer, and YouTube Providers
+    const saavnProvider = new SaavnPlaybackProvider();
+    const deezerProvider = new DeezerPlaybackProvider();
+    const youtubeProvider = new YouTubePlaybackProvider();
+    const playbackEngine = new PlaybackEngine(audio, [saavnProvider, deezerProvider, youtubeProvider]);
+    playbackEngineRef.current = playbackEngine;
+
     const fallbackSynth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { 
-        type: "fatcustom",
-        partials: [1, 0.5, 0.3], // Simulating reed harmonics
-        spread: 15,
-        count: 2
-      },
+      oscillator: { type: "sawtooth" },
       envelope: { attack: 0.08, decay: 0.1, sustain: 1, release: 0.4 }
     }).connect(filter);
 
-    // Fine-tune the fallback synth to match user's custom sawtooth/square blend
-    fallbackSynth.set({
-      oscillator: {
-        type: "sawtooth"
-      }
-    });
-
-    // REALISTIC INSTRUMENT: Multi-Sampled Harmonium Engine (Using Offline Local Samples)
     const sampler = new Tone.Sampler({
       urls: {
         "C2": "C2.wav", "C3": "C3.wav", "C4": "C4.wav", "C5": "C5.wav",
@@ -84,7 +81,6 @@ export function useAudioEngine() {
       onerror: () => setIsLoaded(true)
     }).connect(filter);
 
-    // GRAND PIANO ENGINE (Using Salamander Grand Piano Samples)
     const pianoSampler = new Tone.Sampler({
       urls: {
         "A0": "A0.mp3", "C1": "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3",
@@ -97,7 +93,6 @@ export function useAudioEngine() {
       baseUrl: "https://tonejs.github.io/audio/salamander/",
     }).connect(filter);
 
-    // CUSTOM USER INSTRUMENT (Using User Uploaded MP3)
     const customSampler = new Tone.Sampler({
       urls: { "C4": "ishqa-ve-koshalworldcom_qBL8lWcB.mp3" },
       baseUrl: "/custom/",
@@ -127,7 +122,10 @@ export function useAudioEngine() {
       reverb.dispose();
       filter.dispose();
       masterGain.dispose();
-      bgAudioRef.current?.pause();
+      
+      if (playbackEngineRef.current) {
+        playbackEngineRef.current.cleanup();
+      }
       if (bgNodeRef.current) {
         bgNodeRef.current.disconnect();
       }
@@ -145,7 +143,6 @@ export function useAudioEngine() {
 
      if (url === 'synth') {
         setIsSynthBeat(true);
-        // START SYNTHESIZED LOOP
         Tone.getTransport().scheduleRepeat((time) => {
           kickSynthRef.current?.triggerAttackRelease("C1", "8n", time);
         }, "4n");
@@ -170,9 +167,8 @@ export function useAudioEngine() {
     samplerRef.current?.fallback?.releaseAll();
     
     beatPlayerRef.current?.stop();
-    if (bgAudioRef.current) {
-        bgAudioRef.current.pause();
-        bgAudioRef.current.currentTime = 0;
+    if (playbackEngineRef.current) {
+      playbackEngineRef.current.stop();
     }
     
     Tone.getTransport().stop();
@@ -196,31 +192,28 @@ export function useAudioEngine() {
     setIsReady(true);
   }, []);
 
-  // PLAYBACK CONTROLS
   const playNote = useCallback((note: string, velocity = 0.8, time?: number) => {
     const now = time || Tone.now();
     const transposedNote = Tone.Frequency(note).transpose(octaveOffset * 12).toNote();
     
-    // Select active instrument
     let activeSampler = samplerRef.current;
     if (currentPreset === 'piano') activeSampler = pianoSamplerRef.current;
     if (currentPreset === 'custom') activeSampler = customSamplerRef.current;
 
-    // PRESET-SPECIFIC EFFECTS (SIMULATING REEDS/STOPS)
     if (currentPreset === 'bass') {
-      filterRef.current?.frequency.rampTo(800, 0.1); // Male Reed (Deep)
+      filterRef.current?.frequency.rampTo(800, 0.1);
       // @ts-expect-error
       samplerRef.current.fallback?.set({ oscillator: { type: "sawtooth" } });
     } else if (currentPreset === 'bright' || currentPreset === 'stage') {
-      filterRef.current?.frequency.rampTo(8000, 0.1); // Female Reed (Sharp)
+      filterRef.current?.frequency.rampTo(8000, 0.1);
       // @ts-expect-error
       samplerRef.current.fallback?.set({ oscillator: { type: "sawtooth" } });
     } else if (currentPreset === 'soft') {
-      filterRef.current?.frequency.rampTo(600, 0.1); // Muffled Wood
+      filterRef.current?.frequency.rampTo(600, 0.1);
       // @ts-expect-error
       samplerRef.current.fallback?.set({ oscillator: { type: "triangle" } });
     } else {
-      filterRef.current?.frequency.rampTo(3200, 0.1); // Classic Balanced
+      filterRef.current?.frequency.rampTo(3200, 0.1);
       // @ts-expect-error
       samplerRef.current.fallback?.set({ oscillator: { type: "sawtooth" } });
     }
@@ -228,7 +221,6 @@ export function useAudioEngine() {
     if (activeSampler && activeSampler.loaded) {
         activeSampler.triggerAttack(transposedNote, now, velocity);
     } else if (samplerRef.current) {
-        // Fallback to synthesis if primary sampler not ready
         // @ts-expect-error
         samplerRef.current.fallback?.triggerAttack(transposedNote, now, velocity);
     }
@@ -257,142 +249,45 @@ export function useAudioEngine() {
   }, [sustain, octaveOffset, currentPreset]);
 
   // BACKGROUND TRACKS
-  const playBackgroundTrack = useCallback(async (url: string, songName?: string, artist?: string, onStateChange?: (playing: boolean) => void, onEnded?: () => void) => {
-    if (!bgGainRef.current || !url) return;
-    
-    // Audio timeline state is now decoupled from global context
+  const playBackgroundTrack = useCallback(async (trackOrUrl: any, songName?: string, artist?: string, onStateChange?: (playing: boolean) => void, onEnded?: () => void) => {
+    let trackObj: any = {};
+    let stateHandler = onStateChange;
+    let endHandler = onEnded;
+
+    if (typeof trackOrUrl === 'object' && trackOrUrl !== null) {
+      trackObj = { ...trackOrUrl };
+      // Handle optional function arguments when first arg is object
+      if (typeof songName === 'function') {
+        stateHandler = songName as any;
+        endHandler = artist as any;
+      }
+    } else {
+      trackObj = {
+        url: trackOrUrl || '',
+        name: songName || '',
+        artist: artist || ''
+      };
+    }
+
+    if (!trackObj.url && !trackObj.name && !trackObj.id) return;
 
     try {
-      // FORCE AUDIO RESUME
       if (Tone.getContext().state !== 'running') {
         await Tone.start();
         await Tone.getContext().resume();
       }
 
-      let finalUrl = url;
-      
-      // Check if JioSaavn URL has expired
-      const expiresMatch = url.match(/[eE]xpires=(\d+)/);
-      let isExpired = false;
-      if (expiresMatch) {
-        const expiresTime = parseInt(expiresMatch[1], 10);
-        if (Date.now() / 1000 >= expiresTime - 30) {
-          isExpired = true;
-          console.log(`JioSaavn URL has expired (Expires: ${expiresTime}, Now: ${Math.floor(Date.now() / 1000)})`);
-        }
+      if (playbackEngineRef.current) {
+        await playbackEngineRef.current.play(trackObj, stateHandler, endHandler);
       }
-
-      // AUTO-RESOLUTION for Spotify Metadata or Expired Saavn URLs
-      if (url.startsWith('@spotify:') || isExpired) {
-        console.log(`Resolving fresh audio stream for: ${songName} - ${artist}`);
-        try {
-          // Search for the track on our robust hybrid mirrors
-          const res = await fetch(`/api/songs?query=${encodeURIComponent(`${songName} ${artist} audio`)}`);
-          if (res.ok) {
-            const data = await res.json();
-            // Pick the first non-spotify result (prefer Saavn for direct cdn links)
-            const alt = data.results?.find((s: any) => s.source === 'saavn') || 
-                        data.results?.find((s: any) => s.source === 'youtube') ||
-                        data.results?.[0];
-            if (alt?.url) {
-              console.log("Found fresh playable stream:", alt.url);
-              finalUrl = alt.url;
-            } else {
-              throw new Error('No playable stream found');
-            }
-          }
-        } catch (e) {
-          console.error("Audio stream resolution failed:", e);
-          if (isExpired) return; // Abort if expired and we couldn't resolve a new one
-        }
-      }
-
-      // Handle YouTube Stream Proxy
-      if (finalUrl.startsWith('/api/stream?id=')) {
-        console.log("Resolving YouTube stream via API and Proxy...", finalUrl);
-        try {
-          const res = await fetch(finalUrl);
-          if (!res.ok) throw new Error('Stream extraction failed');
-          const data = await res.json();
-          if (!data.url) throw new Error('No stream URL provided');
-          
-          finalUrl = data.url; // Use the direct URL (which could be Saavn fallback)
-        } catch (streamErr) {
-          console.warn("YouTube Stream resolution failed:", streamErr);
-          if (bgAudioRef.current) bgAudioRef.current.pause();
-          return; 
-        }
-      }
-
-      // Use Native Audio for streaming long tracks
-      // Saavn CDN has native CORS support (Access-Control-Allow-Origin: *), proxying it through Next.js breaks 206 Range requests and causes NotSupportedError.
-      const isExternal = finalUrl.startsWith('http');
-      const needsProxy = isExternal && !finalUrl.includes('saavncdn.com');
-      const playerUrl = needsProxy 
-        ? `/api/proxy-audio?url=${encodeURIComponent(finalUrl)}` 
-        : finalUrl;
-
-      console.log(`Starting background track: ${isExternal ? 'External (Proxied)' : 'Local'}`, playerUrl);
-
-      let audio = bgAudioRef.current;
-      if (!audio) {
-        audio = new Audio();
-        audio.crossOrigin = "anonymous";
-        audio.volume = 1; // Controlled by bgGain node
-        bgAudioRef.current = audio;
-
-        // Use standard Web Audio API to create source and link to Tone.js
-        const ctx = Tone.getContext();
-        const source = ctx.createMediaElementSource(audio);
-        
-        // Connect to Tone graph
-        Tone.connect(source, bgGainRef.current);
-        bgNodeRef.current = source;
-      } else {
-        audio.pause();
-      }
-      
-      audio.src = playerUrl;
-      audio.load(); // Forces browser to load the fresh audio source
-      audio.loop = false;
-
-      // Real-time metadata listeners
-      // Real-time metadata handled locally by MiniPlayer via getBgAudio()
-      audio.onplay = () => onStateChange?.(true);
-      audio.onpause = () => onStateChange?.(false);
-      audio.onended = () => {
-        onStateChange?.(false);
-        onEnded?.();
-      };
-
-      // Start playback
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(err => {
-          if (err.name === 'AbortError') {
-            console.log("Audio play request was safely interrupted by a call to pause() or a new track load. Safe to ignore.");
-          } else {
-            console.error("Audio playback interrupted/blocked:", err);
-            // Auto-retry once on interaction if blocked
-            const retry = () => {
-                audio.play().catch(() => {});
-                window.removeEventListener('click', retry);
-            };
-            window.addEventListener('click', retry);
-          }
-        });
-      }
-      
-      console.log("Background track streaming started.");
     } catch (e) {
       console.warn("Could not start background track:", e);
     }
   }, []);
 
   const stopBackgroundTrack = useCallback(() => {
-    if (bgAudioRef.current) {
-        bgAudioRef.current.pause();
-        bgAudioRef.current.currentTime = 0;
+    if (playbackEngineRef.current) {
+      playbackEngineRef.current.stop();
     }
   }, []);
 
@@ -411,21 +306,47 @@ export function useAudioEngine() {
   const setAudioParam = useCallback((param: string, val: number | boolean | string) => {
     if (!isLoaded) return;
     switch(param) {
-      case 'volume': masterGainRef.current?.gain.rampTo(Number(val), 0.1); break;
+      case 'volume': 
+        masterGainRef.current?.gain.rampTo(Number(val), 0.1); 
+        if (playbackEngineRef.current) {
+          playbackEngineRef.current.setVolume(Number(val));
+        }
+        break;
       case 'reverb': if (reverbRef.current) reverbRef.current.wet.rampTo(Number(val), 0.1); break;
       case 'octave': setOctaveOffset(Number(val)); break;
       case 'sustain': setSustain(Boolean(val)); break;
       case 'preset': setCurrentPreset(String(val)); break;
       case 'beatVolume': beatGainRef.current?.gain.rampTo(Number(val), 0.1); break;
-      case 'bgVolume': bgGainRef.current?.gain.rampTo(Number(val), 0.1); break;
-      case 'bgRepeat': if (bgAudioRef.current) bgAudioRef.current.loop = Boolean(val); break;
-      case 'seek': if (bgAudioRef.current) bgAudioRef.current.currentTime = Number(val); break;
+      case 'bgVolume': 
+        bgGainRef.current?.gain.rampTo(Number(val), 0.1); 
+        if (playbackEngineRef.current) {
+          playbackEngineRef.current.setVolume(Number(val));
+        }
+        break;
+      case 'bgRepeat': 
+        if (bgAudioRef.current) bgAudioRef.current.loop = Boolean(val); 
+        break;
+      case 'seek': 
+        if (playbackEngineRef.current) {
+          playbackEngineRef.current.seek(Number(val));
+        }
+        break;
     }
   }, [isLoaded]);
 
-  const getBgAudio = useCallback(() => bgAudioRef.current, []);
+  // Unified API for MiniPlayer to get time/duration across HTML5 and YouTube
+  const getBgAudio = useCallback(() => {
+    if (playbackEngineRef.current && playbackEngineRef.current.getCurrentProviderName() === 'youtube') {
+      const ytProvider = playbackEngineRef.current.getCurrentProvider() as any;
+      return {
+        get currentTime() { return ytProvider ? ytProvider.getCurrentTime() : 0; },
+        get duration() { return ytProvider ? ytProvider.getDuration() : 0.1; }
+      } as any;
+    }
+    return bgAudioRef.current;
+  }, []);
 
-  return { 
+  return useMemo(() => ({ 
     isLoaded, 
     isReady, 
     initAudio, 
@@ -441,6 +362,21 @@ export function useAudioEngine() {
     playBackgroundTrack,
     stopBackgroundTrack,
     getBgAudio
-  };
+  }), [
+    isLoaded, 
+    isReady, 
+    initAudio, 
+    playNote, 
+    stopNote, 
+    setAudioParam, 
+    activeNotes,
+    octaveOffset,
+    sustain,
+    playBeat,
+    stopBeat,
+    stopAll,
+    playBackgroundTrack,
+    stopBackgroundTrack,
+    getBgAudio
+  ]);
 }
-

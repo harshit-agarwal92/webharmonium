@@ -16,7 +16,7 @@ import { TopHeader } from '@/components/muse/TopHeader';
 import { MusicCarousel } from '@/components/muse/MusicCarousel';
 import { PremiumMusicCard } from '@/components/muse/PremiumMusicCard';
 import { FeaturedPlaylistCard } from '@/components/muse/FeaturedPlaylistCard';
-const VirtualHarmonium = dynamic(() => import('@/components/muse/VirtualHarmonium').then(mod => mod.VirtualHarmonium), { ssr: false });
+const VirtualHarmonium = dynamic(() => import('@/components/muse/VirtualHarmonium').then(mod => ({ default: mod.VirtualHarmonium })), { ssr: false });
 
 const FEATURED_PLAYLISTS = [
   { id: 'f-1', title: 'Top 50 Global', query: 'Global Hits', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=600&fit=crop' },
@@ -28,7 +28,8 @@ export default function FuturisticMusicPage() {
   const { 
     currentTrack, setCurrentTrack, isBGActive, setIsBGActive,
     volume, setAudioParam, isMuted, setIsMuted, recentlyPlayed,
-    queue, setQueue, playNext, playPrevious, playBackgroundTrack, setIsPlayerExpanded
+    queue, setQueue, playNext, playPrevious, playBackgroundTrack, setIsPlayerExpanded,
+    playSong
   } = useAudio();
   const { user } = useAuth();
 
@@ -74,7 +75,7 @@ export default function FuturisticMusicPage() {
 
   const fetchCategory = async (category: string, offset: number, letter: string = ''): Promise<any[]> => {
     try {
-      const res = await fetch(`/api/database?category=${category}&offset=${offset}&limit=8&letter=${letter}`);
+      const res = await fetch(`/api/database?category=${category}&offset=${offset}&limit=24&letter=${letter}`);
       const json = await res.json();
       return json.data || [];
     } catch (e) {
@@ -85,33 +86,33 @@ export default function FuturisticMusicPage() {
 
   const handleLoadMore = async (category: string) => {
     if (category === 'trending') {
-      const more = await fetchCategory('trending', trendingOffset + 8);
+      const more = await fetchCategory('trending', trendingOffset + 24);
       setTrendingSongs(prev => [...prev, ...more]);
-      setTrendingOffset(prev => prev + 8);
+      setTrendingOffset(prev => prev + 24);
     } else if (category === 'charts') {
-      const more = await fetchCategory('charts', chartsOffset + 8);
+      const more = await fetchCategory('charts', chartsOffset + 24);
       setTopCharts(prev => [...prev, ...more]);
-      setChartsOffset(prev => prev + 8);
+      setChartsOffset(prev => prev + 24);
     } else if (category === 'new') {
-      const more = await fetchCategory('new', newReleasesOffset + 8);
+      const more = await fetchCategory('new', newReleasesOffset + 24);
       setNewReleases(prev => [...prev, ...more]);
-      setNewReleasesOffset(prev => prev + 8);
+      setNewReleasesOffset(prev => prev + 24);
     } else if (category === 'artists') {
-      const more = await fetchCategory('artists', artistsOffset + 8);
+      const more = await fetchCategory('artists', artistsOffset + 24);
       setPopularArtists(prev => [...prev, ...more]);
-      setArtistsOffset(prev => prev + 8);
+      setArtistsOffset(prev => prev + 24);
     } else if (category === 'recently_added') {
-      const more = await fetchCategory('recently_added', recentlyAddedOffset + 8);
+      const more = await fetchCategory('recently_added', recentlyAddedOffset + 24);
       setRecentlyAdded(prev => [...prev, ...more]);
-      setRecentlyAddedOffset(prev => prev + 8);
+      setRecentlyAddedOffset(prev => prev + 24);
     } else if (category === 'recommended') {
-      const more = await fetchCategory('recommended', recommendedOffset + 8);
+      const more = await fetchCategory('recommended', recommendedOffset + 24);
       setRecommended(prev => [...prev, ...more]);
-      setRecommendedOffset(prev => prev + 8);
+      setRecommendedOffset(prev => prev + 24);
     } else if (category === 'az') {
-      const more = await fetchCategory('az', azOffset + 8, activeLetter);
+      const more = await fetchCategory('az', azOffset + 24, activeLetter);
       setAzSongs(prev => [...prev, ...more]);
-      setAzOffset(prev => prev + 8);
+      setAzOffset(prev => prev + 24);
     }
   };
 
@@ -136,8 +137,45 @@ export default function FuturisticMusicPage() {
         fetchCategory('recently_added', 0),
         fetchCategory('recommended', 0)
       ]);
-      setTrendingSongs(trend);
-      setTopCharts(charts);
+
+      // Check for Supabase Admin Featured Overrides
+      try {
+        const { getFeaturedContent } = await import('@/lib/db');
+        const [featuredTrending, featuredCharts] = await Promise.all([
+          getFeaturedContent('trending_hits'),
+          getFeaturedContent('top_charts')
+        ]);
+
+        if (featuredTrending && featuredTrending.length > 0) {
+          const mappedTrending = featuredTrending.map((item: any) => ({
+            id: item.song_id || item.id,
+            name: item.song_name || item.name,
+            image: item.song_image || item.image,
+            artist: item.artist || 'Featured Artist',
+            url: item.url || ''
+          }));
+          setTrendingSongs([...mappedTrending, ...trend]);
+        } else {
+          setTrendingSongs(trend);
+        }
+
+        if (featuredCharts && featuredCharts.length > 0) {
+          const mappedCharts = featuredCharts.map((item: any) => ({
+            id: item.song_id || item.id,
+            name: item.song_name || item.name,
+            image: item.song_image || item.image,
+            artist: item.artist || 'Featured Artist',
+            url: item.url || ''
+          }));
+          setTopCharts([...mappedCharts, ...charts]);
+        } else {
+          setTopCharts(charts);
+        }
+      } catch (dbErr) {
+        setTrendingSongs(trend);
+        setTopCharts(charts);
+      }
+
       setNewReleases(newR);
       setPopularArtists(artists);
       setRecentlyAdded(recent);
@@ -160,7 +198,7 @@ export default function FuturisticMusicPage() {
   const handleSearch = async (query: string) => {
     setIsSearching(true);
     try {
-      const res = await fetch(`/api/songs?query=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/songs?query=${encodeURIComponent(query)}&limit=50`);
       const data = await res.json();
       setSearchResults(data.results || []);
     } catch (e) {
@@ -185,31 +223,14 @@ export default function FuturisticMusicPage() {
     });
   };
 
-  const handlePlaySong = async (song: any, contextQueue: any[]) => {
+  const handlePlaySong = async (song: any, contextQueue?: any[]) => {
     if (!user) {
       setAuthMessage("Sign in required to play premium streams.");
       setShowAuthModal(true);
       return;
     }
-    setCurrentTrack(song);
-    setQueue(contextQueue);
-    let playUrl = song.url;
-
-    if (song.source === 'local_offline') {
-      const blobUrl = await getOfflineTrackBlobUrl(song.id);
-      if (blobUrl) playUrl = blobUrl;
-    } else if (song.source === 'saavn' && !song.url) {
-      try {
-        const res = await fetch(`/api/songs?query=${encodeURIComponent(song.name + ' ' + song.artist)}`);
-        const data = await res.json();
-        if (data.success && data.results?.length > 0) {
-          playUrl = data.results[0].url;
-          setCurrentTrack({ ...song, url: playUrl });
-        }
-      } catch (err) {}
-    }
     setIsPlayerExpanded(true);
-    setTimeout(() => playBackgroundTrack(playUrl, song.name, song.artist), 150);
+    playSong(song, contextQueue);
   };
 
   if (!mounted) return <div className="min-h-screen w-full bg-[#050505]" />;

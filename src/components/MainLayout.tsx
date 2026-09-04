@@ -9,8 +9,8 @@ import { Menu, Piano as PianoIcon, Volume2, VolumeX, Settings2 } from 'lucide-re
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
-const Drawer = dynamic(() => import('@/components/Drawer').then(mod => mod.Drawer), { ssr: false });
-const InstallPromptModal = dynamic(() => import('@/components/InstallPromptModal').then(mod => mod.InstallPromptModal), { ssr: false });
+const Drawer = dynamic(() => import('@/components/Drawer').then(mod => ({ default: mod.Drawer })), { ssr: false });
+const InstallPromptModal = dynamic(() => import('@/components/InstallPromptModal').then(mod => ({ default: mod.InstallPromptModal })), { ssr: false });
 import Link from 'next/link';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
@@ -78,6 +78,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         if (trending.find(t => t.id === song.id)) setQueue(trending);
         else if (recentlyPlayed.find(t => t.id === song.id)) setQueue(recentlyPlayed);
     }
+    console.log("Song Object:", song);
     playBackgroundTrack(song.url, song.name, song.artist, setIsBGActive);
     setDrawerOpen(false);
   }, [trending, recentlyPlayed, setCurrentTrack, setQueue, playBackgroundTrack, setIsBGActive]);
@@ -87,6 +88,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       stopBackgroundTrack();
       setIsBGActive(false);
     } else if (currentTrack) {
+      console.log("Song Object (toggle):", currentTrack);
       playBackgroundTrack(currentTrack.url, currentTrack.name, currentTrack.artist, setIsBGActive);
     }
   }, [isBGActive, currentTrack, stopBackgroundTrack, playBackgroundTrack, setIsBGActive]);
@@ -98,9 +100,16 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative min-h-[100dvh] w-full bg-black text-white font-sans overflow-hidden flex flex-col">
+      {/* DYNAMIC AMBIENT ARTWORK BACKDROP */}
+      {currentTrack?.image && (
+        <div 
+          className="fixed inset-0 bg-cover bg-center pointer-events-none opacity-15 blur-[120px] scale-125 transition-all duration-1000 z-0"
+          style={{ backgroundImage: `url(${currentTrack.image})` }}
+        />
+      )}
       {/* BACKGROUND GRADIENTS */}
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_right,_var(--color-masti-pink),_transparent_40%)] pointer-events-none opacity-20 z-0" />
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--color-masti-cyan),_transparent_40%)] pointer-events-none opacity-20 z-0" />
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_right,_#EC4899,_transparent_45%)] pointer-events-none opacity-20 z-0" />
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_bottom_left,_#00F0FF,_transparent_45%)] pointer-events-none opacity-20 z-0" />
 
       {/* GLOBAL HEADER */}
       {!isMusicPath && (

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import https from 'https';
+import { SPOTIFY_PLAYLIST_ID } from '@/lib/providers/spotify';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,7 +79,7 @@ export async function GET(request: Request) {
       }
     }
 
-    const playlistId = '0Mm8BTdceIk3XJ1XlRisws';
+    const playlistId = SPOTIFY_PLAYLIST_ID;
     console.log(`Next.js Server (Old endpoint route): Syncing playlist ${playlistId} using token...`);
 
     let allTracks: any[] = [];

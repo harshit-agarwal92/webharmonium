@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category') || 'trending';
     const offset = parseInt(searchParams.get('offset') || '0', 10);
-    const limit = parseInt(searchParams.get('limit') || '8', 10);
+    const limit = parseInt(searchParams.get('limit') || '50', 10);
     const letter = searchParams.get('letter') || '';
 
     const playlistPath = path.join(process.cwd(), 'public', 'spotify_playlist.json');

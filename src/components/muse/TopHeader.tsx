@@ -21,8 +21,8 @@ export const TopHeader = React.memo(function TopHeader({
   handleSearch,
   setActiveTab
 }: TopHeaderProps) {
-  const { user } = useAuth();
-  const currentUser = 'users';
+  const { user, userProfile } = useAuth();
+  const currentUser = userProfile?.name?.split(' ')[0] || user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Vibe Master';
 
   const [searchFocused, setSearchFocused] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(['Late Night Drive', 'Synthwave', 'Arijit Singh']);

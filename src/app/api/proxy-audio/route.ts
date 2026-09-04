@@ -21,9 +21,6 @@ export async function GET(request: Request) {
 
     if (audioUrl.includes('saavn')) {
       fetchHeaders['Referer'] = 'https://www.jiosaavn.com/';
-    } else if (audioUrl.includes('googlevideo.com')) {
-      fetchHeaders['Origin'] = 'https://www.youtube.com';
-      fetchHeaders['Referer'] = 'https://www.youtube.com/';
     }
 
     if (rangeHeader) {

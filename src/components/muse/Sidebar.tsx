@@ -57,11 +57,17 @@ export const Sidebar = React.memo(function Sidebar({
           {/* Logo / Brand */}
           <div className="flex items-center justify-between mb-10">
             <Link href="/" className="flex items-center gap-3 group active:scale-95 transition-all">
-              <div className="w-10 h-10 bg-gradient-to-tr from-[#EC4899] to-[#8B5CF6] rounded-[14px] flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.4)] group-hover:shadow-[0_0_30px_rgba(236,72,153,0.6)] transition-all">
-                <Disc className="w-6 h-6 text-white group-hover:animate-spin-slow" />
+              <div className="w-10 h-10 bg-gradient-to-tr from-[#EC4899] via-[#8B5CF6] to-[#00F0FF] rounded-[14px] flex items-center justify-center shadow-[0_0_25px_rgba(236,72,153,0.4)] group-hover:shadow-[0_0_35px_rgba(0,240,255,0.6)] transition-all">
+                <Disc className="w-6 h-6 text-white animate-[spin_8s_linear_infinite]" />
               </div>
-              <div>
+              <div className="flex items-baseline gap-1.5">
                 <h1 className="text-2xl font-black tracking-tight text-white">Masti.</h1>
+                {/* Brand Equalizer Motif */}
+                <div className="flex items-end gap-0.5 h-3">
+                  <span className="w-0.5 bg-[#EC4899] animate-[bounce_1s_infinite_100ms] h-full" />
+                  <span className="w-0.5 bg-[#8B5CF6] animate-[bounce_1s_infinite_300ms] h-2/3" />
+                  <span className="w-0.5 bg-[#00F0FF] animate-[bounce_1s_infinite_200ms] h-4/5" />
+                </div>
               </div>
             </Link>
             
@@ -81,14 +87,22 @@ export const Sidebar = React.memo(function Sidebar({
                 <SidebarBtn icon={<Home className="w-5 h-5" />} label="Home" active={activeTab === 'home'} onClick={() => { setActiveTab('home'); setMenuOpen(false); }} />
                 <SidebarBtn icon={<Compass className="w-5 h-5" />} label="Explore" active={activeTab === 'explore'} onClick={() => { setActiveTab('explore'); setMenuOpen(false); }} />
                 <SidebarBtn icon={<Search className="w-5 h-5" />} label="Search" active={activeTab === 'search'} onClick={() => { setActiveTab('search'); setMenuOpen(false); }} />
+                <SidebarBtn icon={<Disc className="w-5 h-5" />} label="Moods & Genres" active={activeTab === 'genres'} onClick={() => { setActiveTab('genres'); setMenuOpen(false); }} />
+                {isAdmin && (
+                  <Link href="/admin" className="w-full flex items-center gap-3 py-3 px-4 rounded-2xl font-bold text-sm text-pink-400 bg-pink-500/10 border border-pink-500/20 hover:bg-pink-500/20 transition-all">
+                    <User className="w-5 h-5 text-pink-400" />
+                    <span>Admin Dashboard</span>
+                  </Link>
+                )}
               </nav>
             </div>
 
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/30 mb-4 px-2">Library</p>
               <nav className="space-y-1.5">
+                <SidebarBtn icon={<Heart className="w-5 h-5 text-[#EC4899]" />} label="Liked Songs" active={activeTab === 'liked'} onClick={() => { setActiveTab('liked'); setMenuOpen(false); }} />
+                <SidebarBtn icon={<FolderHeart className="w-5 h-5" />} label="Playlists" active={activeTab === 'playlists'} onClick={() => { setActiveTab('playlists'); setMenuOpen(false); }} />
                 <SidebarBtn icon={<Heart className="w-5 h-5" />} label="Favorites" active={activeTab === 'favorites'} count={favoritesCount} onClick={() => { setActiveTab('favorites'); setMenuOpen(false); }} />
-                <SidebarBtn icon={<FolderHeart className="w-5 h-5" />} label="Memories" active={activeTab === 'library'} onClick={() => { setActiveTab('library'); setMenuOpen(false); }} />
                 <SidebarBtn icon={<Download className="w-5 h-5" />} label="Downloads" active={activeTab === 'downloads'} count={downloadsCount} onClick={() => { setActiveTab('downloads'); setMenuOpen(false); }} />
               </nav>
             </div>
@@ -119,8 +133,12 @@ export const Sidebar = React.memo(function Sidebar({
                 className="w-full py-2.5 px-3 bg-[#111] border border-white/5 rounded-xl text-xs font-bold text-white flex items-center justify-between gap-3 hover:bg-white/5 transition-all"
               >
                 <div className="flex items-center gap-2 overflow-hidden">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#EC4899] to-[#8B5CF6] flex items-center justify-center shrink-0">
-                    <User className="w-4 h-4 text-white" />
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#EC4899] to-[#8B5CF6] flex items-center justify-center shrink-0 overflow-hidden">
+                    {user.photoURL ? (
+                      <img src={user.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-4 h-4 text-white" />
+                    )}
                   </div>
                   <span className="truncate">{user.displayName || user.email?.split('@')[0]}</span>
                 </div>
@@ -157,20 +175,20 @@ const SidebarBtn = React.memo(function SidebarBtn({ icon, label, active, count, 
     <button 
       onClick={onClick}
       className={cn(
-        "w-full flex items-center justify-between py-3 px-4 rounded-xl font-medium text-sm transition-all duration-300 group",
+        "w-full flex items-center justify-between py-3 px-4 rounded-2xl font-bold text-sm transition-all duration-200 group",
         active 
-          ? "bg-gradient-to-r from-[#8B5CF6]/20 to-transparent text-white border-l-2 border-[#8B5CF6] shadow-[inset_0_0_20px_rgba(139,92,246,0.1)]"
-          : "text-white/50 hover:text-white hover:bg-white/5 border-l-2 border-transparent"
+          ? "bg-gradient-to-r from-[#EC4899]/20 via-[#8B5CF6]/15 to-transparent text-white border-l-4 border-[#EC4899] shadow-[0_0_20px_rgba(236,72,153,0.25)]"
+          : "text-white/50 hover:text-white hover:bg-white/5 border-l-4 border-transparent"
       )}
     >
       <div className="flex items-center gap-3">
         <div className={cn(
-          "transition-transform duration-300 group-hover:scale-110",
-          active ? "text-[#8B5CF6]" : "text-white/40 group-hover:text-white"
+          "transition-transform duration-200 group-hover:scale-110",
+          active ? "text-[#EC4899]" : "text-white/40 group-hover:text-white"
         )}>
           {icon}
         </div>
-        <span>{label}</span>
+        <span className="tracking-tight">{label}</span>
       </div>
 
       {count !== undefined && count > 0 && (
